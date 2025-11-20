@@ -9,3 +9,4 @@ autobenches = false
 debug = true
 
 [dependencies]
+sbi-rt = { version = "0.0.3", features = ["legacy"] }
