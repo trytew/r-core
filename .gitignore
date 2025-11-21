@@ -7,3 +7,7 @@
 **/*.rs.bk
 
 /.idea
+user/target
+user/.idea
+os/target
+os/.idea
