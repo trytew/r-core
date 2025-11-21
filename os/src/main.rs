@@ -10,7 +10,7 @@ use core::arch::global_asm;
 
 // 加载入口汇编文件
 global_asm!(include_str!("./entry.asm"));
-// 加载应用程序
+// 加载应用程序，该汇编代码由 build.rs 生成
 global_asm!(include_str!("./linker_app.asm"));
 
 #[unsafe(no_mangle)]
