@@ -3,14 +3,13 @@
     .section .data
     .globl _num_app
 _num_app:
-    .quard 5
-    
-    .quard app_0_start
-    .quard app_1_start
-    .quard app_2_start
-    .quard app_3_start
-    .quard app_4_start
-    .quard app_4_end
+    .quad 5
+    .quad app_0_start
+    .quad app_1_start
+    .quad app_2_start
+    .quad app_3_start
+    .quad app_4_start
+    .quad app_4_end
 
     .section .data
     .globl app_0_start
