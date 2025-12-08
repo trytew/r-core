@@ -16,7 +16,24 @@ global_asm!(include_str!("./linker_app.asm"));
 
 #[unsafe(no_mangle)]
 fn rust_main() -> ! {
+    unsafe extern "C" {
+        fn stext(); // text 段起始位置
+        fn etext(); // text 段结束位置
+        fn srodata(); // 只读段起始位置
+        fn erodata(); // 只读段结束位置
+        fn sdata(); // 常量数据段起始位置
+        fn edata(); // 常量数据段结束位置
+        fn sbss(); // 全局静态变量数据段起始位置
+        fn ebss(); // 全局静态变量数据段结束位置
+        fn boot_stack_lower_bound(); // 栈底（栈的最高地址）
+        fn boot_stack_top(); // 栈顶（栈的当前已使用地址）
+    }
     clear_bss();
+
+    println!("[kernel] Hello, world!");
+    batch::init();
+    batch::run_next_app();
+
     println!("Hello world!");
     panic!("Shutdown machine!");
 }
@@ -28,7 +45,7 @@ fn rust_main() -> ! {
 ///
 /// @date: 2025/11/17
 fn clear_bss() {
-    
+
     // unsafe extern "C" {
     //     // sbss()并不是一个C库的函数，而是链接器脚本里定义的符号，只是被“当成函数指针”用来取得地址。
     //     // 为什么用 “fn sbss()” 而不是 “static sbss: u8”？因为 Rust 的 FFI 语法限制：
