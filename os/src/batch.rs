@@ -4,65 +4,6 @@ use crate::sbi::shutdown;
 use crate::sync::UpSafeCell;
 use lazy_static::lazy_static;
 
-// 内核栈大小
-const KERNEL_STACK_SIZE: usize = 4096 * 2;
-// 用户栈大小
-const USER_STACK_SIZE: usize = 4096 * 2;
-
-static KERNEL_STACK: KernelStack = KernelStack {
-    data: [0; KERNEL_STACK_SIZE],
-};
-
-static USER_STACK: UserStack = UserStack {
-    data: [0; USER_STACK_SIZE],
-};
-
-///
-/// 内核栈
-///
-/// @author: tryte
-///
-/// @date: 2025/12/2
-#[repr(align(4096))]
-struct KernelStack {
-    data: [u8; KERNEL_STACK_SIZE],
-}
-
-impl KernelStack {
-    ///
-    /// 获取栈顶
-    ///
-    /// @author: tryte
-    ///
-    /// @date: 2025/12/2
-    fn get_sp(&self) -> usize {
-        self.data.as_ptr() as usize + KERNEL_STACK_SIZE
-    }
-}
-
-///
-/// 用户栈
-///
-/// @author: tryte
-///
-/// @date: 2025/12/2
-#[repr(align(4096))]
-struct UserStack {
-    data: [u8; USER_STACK_SIZE],
-}
-
-impl UserStack {
-    ///
-    /// 获取栈顶
-    ///
-    /// @author: tryte
-    ///
-    /// @date: 2025/12/2
-    fn get_sp(&self) -> usize {
-        self.data.as_ptr() as usize + USER_STACK_SIZE
-    }
-}
-
 // 最大应用数量
 const MAX_APP_NUM: usize = 16;
 // 应用运行起始地址
@@ -187,18 +128,4 @@ pub fn init() {
 /// @date: 2025/12/2
 pub fn print_app_info() {
     APP_MANAGEER.exclusive_access().print_app_info();
-}
-
-///
-/// 运行下一个应用
-///
-/// @author: tryte
-///
-/// @date: 2025/12/2
-pub fn run_next_app() {
-    let mut app_manager = APP_MANAGEER.exclusive_access();
-    let current_app = app_manager.get_current_app();
-    app_manager.load_app(current_app);
-    app_manager.move_to_next_app();
-    drop(app_manager);
 }
