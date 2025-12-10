@@ -35,6 +35,7 @@ fn rust_main() -> ! {
     println!("[kernel] Hello, world!");
     trap::init();
     batch::init();
+    batch::run_next_app();
 
     println!("Hello world!");
     panic!("Shutdown machine!");
