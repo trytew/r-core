@@ -6,6 +6,8 @@ mod sbi;
 mod console;
 mod batch;
 mod sync;
+mod trap;
+mod syscall;
 
 use core::arch::global_asm;
 
@@ -31,6 +33,7 @@ fn rust_main() -> ! {
     clear_bss();
 
     println!("[kernel] Hello, world!");
+    trap::init();
     batch::init();
     batch::run_next_app();
 

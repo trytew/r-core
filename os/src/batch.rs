@@ -3,6 +3,7 @@ use crate::println;
 use crate::sbi::shutdown;
 use crate::sync::UpSafeCell;
 use lazy_static::lazy_static;
+use crate::trap::TrapContext;
 
 // 内核栈大小
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
@@ -37,6 +38,20 @@ impl KernelStack {
     /// @date: 2025/12/2
     fn get_sp(&self) -> usize {
         self.data.as_ptr() as usize + KERNEL_STACK_SIZE
+    }
+
+    ///
+    ///  将栈存入 context
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2025/12/10
+    pub fn push_context(&self, cx: TrapContext) -> &'static mut TrapContext {
+        let cx_ptr = ((self.get_sp()) - size_of::<TrapContext>()) as *mut TrapContext;
+        unsafe {
+            *cx_ptr = cx;
+            cx_ptr.as_mut().unwrap()
+        }
     }
 }
 
@@ -195,10 +210,20 @@ pub fn print_app_info() {
 /// @author: tryte
 ///
 /// @date: 2025/12/2
-pub fn run_next_app() {
+pub fn run_next_app() -> ! {
     let mut app_manager = APP_MANAGEER.exclusive_access();
     let current_app = app_manager.get_current_app();
     app_manager.load_app(current_app);
     app_manager.move_to_next_app();
     drop(app_manager);
+    unsafe extern "C" {
+        fn __restore(cx_addr: usize);
+    }
+    unsafe {
+        __restore(KERNEL_STACK.push_context(
+            TrapContext::app_init_context(APP_BASE_ADDRESS,USER_STACK.get_sp())
+        ) as *const TrapContext as usize);
+    }
+    // __restore 函数在正常情况下已经结束 S 特权级运行直接返回了
+    panic!("Unreachable in batch::run_current_app!");
 }
