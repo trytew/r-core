@@ -27,12 +27,13 @@ fn rust_main() -> ! {
         fn edata(); // 常量数据段结束位置
         fn sbss(); // 全局静态变量数据段起始位置
         fn ebss(); // 全局静态变量数据段结束位置
-        fn boot_stack_lower_bound(); // 栈底（栈的最高地址）
+        fn boot_stack_lower_bound(); // 栈下限位置（栈内存的最低地址）
         fn boot_stack_top(); // 栈顶（栈的当前已使用地址）
     }
     clear_bss();
 
     println!("[kernel] Hello, world!");
+    // 初始化 trap 上下文
     trap::init();
     batch::init();
     batch::run_next_app();

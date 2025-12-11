@@ -15,15 +15,17 @@
     .align 2
 
 __alltraps:
-    # 将 sscratch 当前的值读到 sp 寄存器中，然后将 sp 寄存器的旧值写入该 sscratch，这里起到的是交换 sscratch 和 sp 的效果
-    # sscratch 中间寄存器，保存切换特权级时数据使用
-    # sp 栈顶寄存器，记录栈顶地址
+    # 将 sscratch 当前的值读到 sp 寄存器中，然后将 sp 寄存器的旧值写入该 sscratch，这里起到的是交换 sscratch 和 sp 的效果，
+    # 即将用户栈的栈顶记录到 sscratch，sp 刷新成内核栈栈顶
+    # 注：
+    #   sscratch 中间寄存器，保存切换特权级时数据使用
+    #   sp 栈顶寄存器，记录栈顶地址
     csrrw sp, sscratch, sp
     # 先将 sp 寄存器的值下移34个8字节，代表栈已使用34个栈帧，方便下面保存寄存器的代码直接使用向上保存操作，这里使用的内核栈
     addi sp, sp, -34 * 8
     # 保存 x1，x3，x5-x31 寄存器的值，x0 永久为0，x2 是 sp 寄存器，x4 是 tp 特殊用途寄存器，一般不会使用，因此这三个寄存器不做保存操作
-    sd x1, 1*8(sp)
-    sd x3, 3*8(sp)
+    sd x1, 1 * 8(sp)
+    sd x3, 3 * 8(sp)
     # 循环调用汇编宏
     .set n, 5
     .rept 27
@@ -38,22 +40,25 @@ __alltraps:
     # 读取 sscratch 的值保存到内核栈，sscratch 的值是用户栈的地址
     csrr t2, sscratch
     sd t2, 2 * 8(sp)
-    # 保存内核栈栈顶值
+    # 保存内核栈栈顶值，因为 trap_handler 函数可能会修改 sp 寄存器的值
     mv a0, sp
     call trap_handler
 
     # 当 trap_handler 返回之后，使用 __restore 从保存在内核栈上的 Trap 上下文恢复寄存器。最后通过一条 sret 指令回到应用程序执行。
     # __restore 同时也是一个函数，可独立运行
 __restore:
-    # 将 a0 寄存器的值移动到 sp 寄存器
+    # 将 a0 寄存器的值移动到 sp 寄存器，即读取内核栈的栈顶
     mv sp, a0
-    # 将 sp 移动 32 个 8 位后地址的值复制给 t0 寄存器
+    # 将原来保存在内核栈的 t0，t1，t2 的值回写
     ld t0, 32 * 8(sp)
     ld t1, 33 * 8(sp)
     ld t2, 2 * 8(sp)
+    # 将 t0，t1，t2 寄存器的值回写到 sstatus，sepc，sscratch 寄存器中
     csrw sstatus, t0
     csrw sepc, t1
     csrw sscratch, t2
+
+    # 回写通用寄存器的值
     ld x1, 1 * 8(sp)
     ld x3, 3 * 8(sp)
     .set n, 5

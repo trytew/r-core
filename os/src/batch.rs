@@ -10,10 +10,12 @@ const KERNEL_STACK_SIZE: usize = 4096 * 2;
 // 用户栈大小
 const USER_STACK_SIZE: usize = 4096 * 2;
 
+// 初始化内核栈
 static KERNEL_STACK: KernelStack = KernelStack {
     data: [0; KERNEL_STACK_SIZE],
 };
 
+// 初始化用户栈
 static USER_STACK: UserStack = UserStack {
     data: [0; USER_STACK_SIZE],
 };
@@ -41,14 +43,41 @@ impl KernelStack {
     }
 
     ///
-    ///  将栈存入 context
+    ///  将 Trap 上下文压入内核栈中
     ///
     /// @author: tryte
     ///
     /// @date: 2025/12/10
     pub fn push_context(&self, cx: TrapContext) -> &'static mut TrapContext {
-        let cx_ptr = ((self.get_sp()) - size_of::<TrapContext>()) as *mut TrapContext;
+        // 返回内核栈的栈顶
+        //       high addr
+        // |                   | 栈底
+        // |        8kb        |
+        // |-------------------|
+        // |  TrapContext size |
+        // |-------------------| --> sp 栈顶
+        // |                   |
+        // |                   | boot_stack_lower_bound 栈的下限位置
+        //       lower addr
+        // 栈指针下移，为 cx 分配足够的空间
+        let cx_ptr = (self.get_sp() - size_of::<TrapContext>()) as *mut TrapContext;
         unsafe {
+            // 将 cx 的全部内容移动到栈中，*cx_ptr = cx 相当于 memcpy(sp, &cx)
+            // 这个时候的 memcpy 操作/指针内容写入 操作是遵循内存写入规则（从低到高），因此 sp 指向的是 cx 结构体的起始位置，如下：
+            //       high addr
+            // |                   | 栈底
+            // |        8kb        |
+            // |-------------------|
+            // |       sepc        |
+            // |       ....        |
+            // |      sstatus      | --> cx 内容
+            // |       ....        |
+            // |        x1         |
+            // |        x0         |
+            // |-------------------| --> sp 栈顶
+            // |                   |
+            // |                   | boot_stack_lower_bound 栈的下限位置
+            //       lower addr
             *cx_ptr = cx;
             cx_ptr.as_mut().unwrap()
         }
@@ -212,17 +241,26 @@ pub fn print_app_info() {
 /// @date: 2025/12/2
 pub fn run_next_app() -> ! {
     let mut app_manager = APP_MANAGEER.exclusive_access();
+    // 获取当前应用
     let current_app = app_manager.get_current_app();
+    // 加载应用程序到内存中
     app_manager.load_app(current_app);
+    // 将当前应用指针指向到下一个应用
     app_manager.move_to_next_app();
+    // 主动释放 app_manager 的引用，因为在执行完 __restore 后会切换到用户态，栈也会切换到用户栈，这个时候在内核栈记录的 app_manager 引用将无法正确释放，
+    // 无法释放 app_manager 引用会导致引用计数器计量数错误
     drop(app_manager);
     unsafe extern "C" {
         fn __restore(cx_addr: usize);
     }
     unsafe {
-        __restore(KERNEL_STACK.push_context(
-            TrapContext::app_init_context(APP_BASE_ADDRESS,USER_STACK.get_sp())
-        ) as *const TrapContext as usize);
+        // 恢复用户栈并将特权级切换成用户级
+        __restore(
+            // 根据用户态的栈信息和寄存器信息创建 Trap Context 并压入内核栈中
+            KERNEL_STACK.push_context(
+                TrapContext::app_init_context(APP_BASE_ADDRESS,USER_STACK.get_sp())
+            ) as *const TrapContext as usize,
+        );
     }
     // __restore 函数在正常情况下已经结束 S 特权级运行直接返回了
     panic!("Unreachable in batch::run_current_app!");

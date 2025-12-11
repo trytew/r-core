@@ -7,6 +7,11 @@ mod lang_items;
 
 use syscall::*;
 
+///
+/// 函数 _start()、main()、clear_bss() 都只是为了 qemu-riscv64 实验使用，注释后不影响 os 加载运行应用程序
+///
+///
+
 // 使用 Rust 的宏将 _start 这段代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中，
 // 方便我们在后续链接的时候调整它的位置使得它能够作为用户库的入口
 #[unsafe(no_mangle)]
