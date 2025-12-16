@@ -1,9 +1,9 @@
-use core::arch::asm;
 use crate::println;
 use crate::sbi::shutdown;
 use crate::sync::UpSafeCell;
-use lazy_static::lazy_static;
 use crate::trap::TrapContext;
+use core::arch::asm;
+use lazy_static::lazy_static;
 
 // 内核栈大小
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
@@ -68,7 +68,7 @@ impl KernelStack {
             // |                   | 栈底
             // |        8kb        |
             // |-------------------|
-            // |       sepc        |
+            // |       sepc        | -- 第34个地址，偏移量 33 * 8（x0 的偏移量是0）
             // |       ....        |
             // |      sstatus      | --> cx 内容
             // |       ....        |
@@ -157,12 +157,14 @@ impl AppManager {
         }
         println!("[kernel] Loading app_{}", app_id);
         unsafe {
-            // 回收应用内存
+            // 清空上个应用的内容
             core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, APP_SIZE_LIMIT).fill(0);
+            // 读取下个应用的内容
             let app_src = core::slice::from_raw_parts(
                 self.app_start[app_id] as *const u8,
                 self.app_start[app_id + 1] - self.app_start[app_id],
             );
+            // 将下个应用的内容加载到地址 0x80400000
             let app_dst = core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, app_src.len());
             app_dst.copy_from_slice(app_src);
             // 关于获取指令内存的内存栅栏
@@ -258,7 +260,7 @@ pub fn run_next_app() -> ! {
         __restore(
             // 根据用户态的栈信息和寄存器信息创建 Trap Context 并压入内核栈中
             KERNEL_STACK.push_context(
-                TrapContext::app_init_context(APP_BASE_ADDRESS,USER_STACK.get_sp())
+                TrapContext::app_init_context(APP_BASE_ADDRESS, USER_STACK.get_sp())
             ) as *const TrapContext as usize,
         );
     }

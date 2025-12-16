@@ -15,7 +15,7 @@ pub struct TrapContext {
     pub x: [usize; 32],
     // CSR 状态
     pub sstatus: Sstatus,
-    // CSR spec
+    // CSR spec，这里记录的是应用程序的执行地址，非常重要
     pub sepc: usize,
 }
 
@@ -44,7 +44,7 @@ impl TrapContext {
         let mut cx = Self {
             x: [0; 32],
             sstatus,
-            sepc: entry,
+            sepc: entry, // 记录应用的起始执行地址，每次都会通过 trap.asm 重置指令执行寄存器的值
         };
         // 记录用户栈栈顶
         //    high addr

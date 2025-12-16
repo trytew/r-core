@@ -14,7 +14,9 @@
     .globl __restore
     .align 2
 
+    # 当陷入 trap 的时候执行的逻辑
 __alltraps:
+    # 先将用户态下寄存器的内容记录到内核栈
     # 将 sscratch 当前的值读到 sp 寄存器中，然后将 sp 寄存器的旧值写入该 sscratch，这里起到的是交换 sscratch 和 sp 的效果，
     # 即将用户栈的栈顶记录到 sscratch，sp 刷新成内核栈栈顶
     # 注：
@@ -42,10 +44,12 @@ __alltraps:
     sd t2, 2 * 8(sp)
     # 保存内核栈栈顶值，因为 trap_handler 函数可能会修改 sp 寄存器的值
     mv a0, sp
+    # 执行 trap 回调
     call trap_handler
 
     # 当 trap_handler 返回之后，使用 __restore 从保存在内核栈上的 Trap 上下文恢复寄存器。最后通过一条 sret 指令回到应用程序执行。
     # __restore 同时也是一个函数，可独立运行
+    # 将用户态的寄存器状态恢复，从内核栈的内容中读取
 __restore:
     # 将 a0 寄存器的值移动到 sp 寄存器，即读取内核栈的栈顶
     mv sp, a0
@@ -55,6 +59,7 @@ __restore:
     ld t2, 2 * 8(sp)
     # 将 t0，t1，t2 寄存器的值回写到 sstatus，sepc，sscratch 寄存器中
     csrw sstatus, t0
+    # 将用户栈中 sepc 记录的地址设置到指令执行寄存器 PC 中，在 sret 指令执行后生效
     csrw sepc, t1
     csrw sscratch, t2
 
