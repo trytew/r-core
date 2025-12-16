@@ -4,10 +4,11 @@
 mod lang_items;
 mod sbi;
 mod console;
-mod batch;
+mod loader;
 mod sync;
 mod trap;
 mod syscall;
+mod config;
 
 use core::arch::global_asm;
 
@@ -16,31 +17,6 @@ global_asm!(include_str!("./entry.asm"));
 // 加载应用程序，该汇编代码由 build.rs 生成
 global_asm!(include_str!("./linker_app.asm"));
 
-#[unsafe(no_mangle)]
-fn rust_main() -> ! {
-    unsafe extern "C" {
-        fn stext(); // text 段起始位置
-        fn etext(); // text 段结束位置
-        fn srodata(); // 只读段起始位置
-        fn erodata(); // 只读段结束位置
-        fn sdata(); // 常量数据段起始位置
-        fn edata(); // 常量数据段结束位置
-        fn sbss(); // 全局静态变量数据段起始位置
-        fn ebss(); // 全局静态变量数据段结束位置
-        fn boot_stack_lower_bound(); // 栈下限位置（栈内存的最低地址）
-        fn boot_stack_top(); // 栈顶（栈的当前已使用地址）
-    }
-    clear_bss();
-
-    println!("[kernel] Hello, world!");
-    // 初始化 trap 上下文
-    trap::init();
-    batch::init();
-    batch::run_next_app();
-
-    println!("Hello world!");
-    panic!("Shutdown machine!");
-}
 
 ///
 /// 清空栈数据
@@ -75,4 +51,29 @@ fn clear_bss() {
             p = p.add(1);
         }
     }
+}
+
+#[unsafe(no_mangle)]
+fn rust_main() -> ! {
+    unsafe extern "C" {
+        fn stext(); // text 段起始位置
+        fn etext(); // text 段结束位置
+        fn srodata(); // 只读段起始位置
+        fn erodata(); // 只读段结束位置
+        fn sdata(); // 常量数据段起始位置
+        fn edata(); // 常量数据段结束位置
+        fn sbss(); // 全局静态变量数据段起始位置
+        fn ebss(); // 全局静态变量数据段结束位置
+        fn boot_stack_lower_bound(); // 栈下限位置（栈内存的最低地址）
+        fn boot_stack_top(); // 栈顶（栈的当前已使用地址）
+    }
+    clear_bss();
+
+    println!("[kernel] Hello, world!");
+    // 初始化 trap 上下文
+    trap::init();
+    loader::load_apps();
+
+    println!("Hello world!");
+    panic!("Shutdown machine!");
 }

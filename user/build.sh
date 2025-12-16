@@ -1,6 +1,11 @@
 #!/bin/bash
 
+cd ../script/
 cargo build --release
+mv target/release/user_build ../user/
+cd ../user
+./user_build
+rm -f ./user_build
 
 rust-objcopy --binary-architecture=riscv64 --strip-all target/riscv64gc-unknown-none-elf/release/00_hello_world \
   -O binary target/riscv64gc-unknown-none-elf/release/00_hello_world.bin

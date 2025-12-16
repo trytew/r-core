@@ -1,16 +1,16 @@
 mod context;
 
+use crate::loader::run_next_app;
+use crate::println;
+use crate::syscall::sys_call;
+pub use context::TrapContext;
 use core::arch::global_asm;
 use riscv::register::mtvec::TrapMode;
 use riscv::register::scause;
-use riscv::register::stval;
-use riscv::register::stvec;
 use riscv::register::scause::Exception;
 use riscv::register::scause::Trap;
-pub use context::TrapContext;
-use crate::batch::run_next_app;
-use crate::println;
-use crate::syscall::sys_call;
+use riscv::register::stval;
+use riscv::register::stvec;
 
 global_asm!(include_str!("./trap.asm"));
 
