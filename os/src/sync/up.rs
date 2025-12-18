@@ -19,6 +19,12 @@ impl<T> UpSafeCell<T> {
         }
     }
 
+    ///
+    /// 获取可变借用
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2025/12/18
     pub fn exclusive_access(&self) -> RefMut<'_, T> {
         self.inner.borrow_mut()
     }
