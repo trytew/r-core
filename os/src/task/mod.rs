@@ -142,6 +142,7 @@ impl TaskManager {
             inner.current_task = next;
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
+
             drop(inner);
             unsafe {
                 __switch(current_task_cx_ptr, next_task_cx_ptr);

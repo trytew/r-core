@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
     // riscv64 架构芯片 应用程序 运行起始地址为：0x80400000，代码决定
     // 应用起始地址
     let base_address: u64 = 0x8040_0000;
-    let step: u64 = 0x2_0000;
+    let step: u64 = 0x20_0000;
     let linker = "src/linker.ld";
 
     let mut app_id: u64 = 0;

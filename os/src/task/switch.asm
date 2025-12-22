@@ -30,14 +30,14 @@ __switch:
 
     # 阶段【3】
     # 加载下一个任务的 ra & s0~s11 寄存器
-    ld ra, 0(a1)
+    ld ra, 0 * 8(a1)
     .set n, 0
     .rept 12
         LOAD_SN %n
         .set n, n + 1
     .endr
     # 加载下一个任务的内核栈
-    ld sp, 8(a1)
+    ld sp, 1 * 8(a1)
 
     # 阶段【4】
     ret
