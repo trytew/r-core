@@ -8,6 +8,7 @@ mod lang_items;
 use syscall::*;
 
 // 使用 Rust 的宏将 _start 这段代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中，
+// 在 linker.ld 脚本中指定了 .text.entry 在最开始的位置
 // 方便我们在后续链接的时候调整它的位置使得它能够作为用户库的入口
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
