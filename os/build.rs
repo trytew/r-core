@@ -1,7 +1,7 @@
-use std::fs::{File, read_dir};
+use std::fs::read_dir;
+use std::fs::File;
 use std::io::Result;
 use std::io::Write;
-use std::process::id;
 
 static TARGET_PATH: &str = "../user/target/riscv64gc-unknown-none-elf/release/";
 

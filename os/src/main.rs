@@ -74,6 +74,7 @@ fn rust_main() -> ! {
     // 初始化 trap 上下文
     trap::init();
     loader::load_apps();
+    task::run_first_task();
 
     println!("Hello world!");
     panic!("Shutdown machine!");

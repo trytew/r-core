@@ -3,14 +3,14 @@ use crate::trap::TrapContext;
 use core::arch::asm;
 
 // 初始化内核栈
-static KERNEL_STACK: KernelStack = KernelStack {
+static KERNEL_STACK: [KernelStack; MAX_APP_NUM] = [KernelStack {
     data: [0; KERNEL_STACK_SIZE],
-};
+}; MAX_APP_NUM];
 
 // 初始化用户栈
-static USER_STACK: UserStack = UserStack {
+static USER_STACK: [UserStack; MAX_APP_NUM] = [UserStack {
     data: [0; USER_STACK_SIZE],
-};
+}; MAX_APP_NUM];
 
 ///
 /// 内核栈
@@ -19,6 +19,7 @@ static USER_STACK: UserStack = UserStack {
 ///
 /// @date: 2025/12/2
 #[repr(align(4096))]
+#[derive(Clone, Copy)]
 struct KernelStack {
     data: [u8; KERNEL_STACK_SIZE],
 }
@@ -40,7 +41,7 @@ impl KernelStack {
     /// @author: tryte
     ///
     /// @date: 2025/12/10
-    pub fn push_context(&self, cx: TrapContext) -> &'static mut TrapContext {
+    pub fn push_context(&self, trap_cx: TrapContext) -> usize {
         // 返回内核栈的栈顶
         //       high addr
         // |                   | 栈底
@@ -52,7 +53,7 @@ impl KernelStack {
         // |                   | boot_stack_lower_bound 栈的下限位置
         //       lower addr
         // 栈指针下移，为 cx 分配足够的空间
-        let cx_ptr = (self.get_sp() - size_of::<TrapContext>()) as *mut TrapContext;
+        let trap_cx_ptr = (self.get_sp() - size_of::<TrapContext>()) as *mut TrapContext;
         unsafe {
             // 将 cx 的全部内容移动到栈中，*cx_ptr = cx 相当于 memcpy(sp, &cx)
             // 这个时候的 memcpy 操作/指针内容写入 操作是遵循内存写入规则（从低到高），因此 sp 指向的是 cx 结构体的起始位置，如下：
@@ -70,9 +71,9 @@ impl KernelStack {
             // |                   |
             // |                   | boot_stack_lower_bound 栈的下限位置
             //       lower addr
-            *cx_ptr = cx;
-            cx_ptr.as_mut().unwrap()
+            *trap_cx_ptr = trap_cx;
         }
+        trap_cx_ptr as usize
     }
 }
 
@@ -83,6 +84,7 @@ impl KernelStack {
 ///
 /// @date: 2025/12/2
 #[repr(align(4096))]
+#[derive(Clone, Copy)]
 struct UserStack {
     data: [u8; USER_STACK_SIZE],
 }
@@ -178,4 +180,19 @@ pub fn load_apps() {
     unsafe {
         asm!("fence.i");
     }
+}
+
+///
+/// 初始化 app
+///
+/// @author: tryte
+///
+/// @date: 2025/12/22
+pub fn init_app_cx(app_id: usize) -> usize {
+    KERNEL_STACK[app_id].push_context(
+        TrapContext::app_init_context(
+            get_base_i(app_id),
+            USER_STACK[app_id].get_sp(),
+        ),
+    )
 }

@@ -28,7 +28,7 @@ impl TaskContext {
     }
 
     ///
-    /// 调用 __restore 函数
+    /// 设置 __restore 函数位置
     ///
     /// @author: tryte
     ///
@@ -38,7 +38,7 @@ impl TaskContext {
             unsafe fn __restore();
         }
         Self {
-            ra: __restore as usize,
+            ra: __restore as *const () as usize,
             sp: k_stack_ptr,
             s: [0; 12],
         }
