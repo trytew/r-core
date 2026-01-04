@@ -10,8 +10,11 @@ mod trap;
 mod syscall;
 mod config;
 mod task;
+mod timer;
+mod boards;
 
 use core::arch::global_asm;
+
 
 // 加载入口汇编文件
 global_asm!(include_str!("./entry.asm"));
@@ -74,6 +77,8 @@ fn rust_main() -> ! {
     // 初始化 trap 上下文
     trap::init();
     loader::load_apps();
+    trap::enable_timer_interrupt();
+    timer::set_next_tigger();
     task::run_first_task();
 
     println!("Hello world!");

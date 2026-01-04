@@ -1,4 +1,3 @@
-
 ///
 /// 打印字符
 ///
@@ -17,7 +16,6 @@ pub fn console_put_char(c: usize) {
 ///
 /// @date: 2025/11/18
 pub fn shutdown(failure: bool) -> ! {
-
     use sbi_rt::NoReason;
     use sbi_rt::Shutdown;
     use sbi_rt::SystemFailure;
@@ -29,4 +27,14 @@ pub fn shutdown(failure: bool) -> ! {
         system_reset(Shutdown, SystemFailure);
     }
     unreachable!()
+}
+
+///
+/// 设置定时中断
+///
+/// @author: tryte
+///
+/// @date: 2026/1/4
+pub fn set_timer(timer: usize) {
+    sbi_rt::set_timer(timer as _);
 }

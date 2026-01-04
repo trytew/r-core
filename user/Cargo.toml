@@ -28,6 +28,26 @@ name = "04_priv_csr"
 test = false
 bench = false
 
+[[bin]]
+name = "05_power_3"
+test = false
+bench = false
+
+[[bin]]
+name = "06_power_5"
+test = false
+bench = false
+
+[[bin]]
+name = "07_power_7"
+test = false
+bench = false
+
+[[bin]]
+name = "08_sleep"
+test = false
+bench = false
+
 [lib]
 test = false
 bench = false

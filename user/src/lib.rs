@@ -81,3 +81,23 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
 pub fn exit(exit_code: i32) -> isize {
     sys_exit(exit_code)
 }
+
+///
+/// 让出时间片
+///
+/// @author: tryte
+///
+/// @date: 2026/1/4
+pub fn yield_() -> isize {
+    sys_yield()
+}
+
+///
+/// 获取时间
+///
+/// @author: tryte
+///
+/// @date: 2026/1/4
+pub fn get_time() -> isize {
+    sys_get_time()
+}
