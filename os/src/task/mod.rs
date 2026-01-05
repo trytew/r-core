@@ -37,7 +37,7 @@ lazy_static! {
             inner: unsafe {
                 UpSafeCell::new(TaskManagerInner {
                     tasks,
-                    current_task:0,
+                    current_task: 0,
                 })
             }
         }
