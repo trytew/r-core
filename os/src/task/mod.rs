@@ -76,7 +76,9 @@ impl TaskManager {
     fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
         let task_0 = &mut inner.tasks[0];
+        // 设置第一个应用状态为运行中
         task_0.task_status = TaskStatus::Running;
+        // 获取第一个任务的上下文
         let next_task_cx_ptr = &task_0.task_cx as *const TaskContext;
         drop(inner);
         let mut unused = TaskContext::zero_init();

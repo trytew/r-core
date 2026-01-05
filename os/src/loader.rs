@@ -43,10 +43,8 @@ impl KernelStack {
     /// @date: 2025/12/10
     pub fn push_context(&self, trap_cx: TrapContext) -> usize {
         // 返回内核栈的栈顶
-        //       high addr
-        // |                   | 栈底
-        // |        8kb        |
-        // |-------------------|
+        //       high addr - boot_stack_lower_bound = 8kb
+        // |-------------------| 栈底
         // |  TrapContext size |
         // |-------------------| --> sp 栈顶
         // |                   |
@@ -57,10 +55,8 @@ impl KernelStack {
         unsafe {
             // 将 cx 的全部内容移动到栈中，*cx_ptr = cx 相当于 memcpy(sp, &cx)
             // 这个时候的 memcpy 操作/指针内容写入 操作是遵循内存写入规则（从低到高），因此 sp 指向的是 cx 结构体的起始位置，如下：
-            //       high addr
-            // |                   | 栈底
-            // |        8kb        |
-            // |-------------------|
+            //       high addr - boot_stack_lower_bound = 8kb
+            // |-------------------| 栈底
             // |       sepc        | -- 第34个地址，偏移量 33 * 8（x0 的偏移量是0）
             // |       ....        |
             // |      sstatus      | --> cx 内容
