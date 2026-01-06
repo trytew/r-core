@@ -7,3 +7,4 @@ cargo build --release
 ./run.sh
 # 打开另一个终端，启动 gdb 连接qemu 发送调试指令
 ./debug.sh
+```
