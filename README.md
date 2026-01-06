@@ -12,4 +12,5 @@ user:
 ```shell
 cd user
 ./build.sh
+./run.sh
 ```
