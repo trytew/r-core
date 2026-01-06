@@ -3,8 +3,7 @@
 os:
 ```shell
 cd os
-cargo build --release
-./objcopy.sh
+./build.sh
 ./run.sh
 ```
 
