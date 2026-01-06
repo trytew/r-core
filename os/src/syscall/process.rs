@@ -8,7 +8,7 @@ use crate::task::exit_current_and_run_next;
 ///
 /// @date: 2025/12/10
 pub fn sys_exit(exit_code: i32) -> ! {
-    println!("[kernel] Application exited with code {}", exit_code);
+    println!("[kernel] Application exited with code {}\n", exit_code);
     exit_current_and_run_next();
     panic!("Unreachable in sys_exit!");
 }
