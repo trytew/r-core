@@ -5,8 +5,10 @@ edition = "2024"
 autotests = false
 autobenches = false
 
-[profile.release]
-debug = true
+[[bin]]
+name = "r-core"
+test = false
+bench = false
 
 [dependencies]
 sbi-rt = { version = "0.0.3", features = ["legacy"] }
