@@ -18,7 +18,6 @@ global_asm!(include_str!("./entry.asm"));
 // 加载应用程序，该汇编代码由 build.rs 生成
 global_asm!(include_str!("./linker_app.asm"));
 
-
 ///
 /// 清空栈数据
 ///
