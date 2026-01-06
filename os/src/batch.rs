@@ -189,10 +189,10 @@ impl AppManager {
     ///
     /// @date: 2025/11/28
     pub fn print_app_info(&self) {
-        println!("[kernel] num_app = {}", self.num_app);
+        println!("[kernel] num_app = {}\n", self.num_app);
         for i in 0..self.num_app {
             println!(
-                "[kernel] app_{} [{:#x}, {:#x})",
+                "[kernel] app_{} [{:#x}, {:#x})\n",
                 i,
                 self.app_start[i],
                 self.app_start[i + 1],

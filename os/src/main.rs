@@ -32,7 +32,7 @@ fn rust_main() -> ! {
     }
     clear_bss();
 
-    println!("[kernel] Hello, world!");
+    println!("[kernel] Hello, world!\n");
     // 初始化 trap 上下文
     trap::init();
     batch::init();

@@ -8,6 +8,6 @@ use crate::println;
 ///
 /// @date: 2025/12/10
 pub fn sys_exit(exit_code: i32) -> ! {
-    println!("[kernel] Application exited with code {}", exit_code);
+    println!("[kernel] Application exited with code {}\n", exit_code);
     run_next_app();
 }
