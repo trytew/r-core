@@ -57,11 +57,11 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             cx.x[10] = sys_call(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
         }
         Trap::Exception(Exception::StoreFault) | Trap::Exception(Exception::StorePageFault) => {
-            println!("[kernel] PageFault in application, kernel killed it.");
+            println!("[kernel] PageFault in application, kernel killed it.\n");
             exit_current_and_run_next();
         }
         Trap::Exception(Exception::IllegalInstruction) => {
-            println!("[kernel] IllegalInstruction in application, kernel killed it.");
+            println!("[kernel] IllegalInstruction in application, kernel killed it.\n");
             exit_current_and_run_next();
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
