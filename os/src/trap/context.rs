@@ -1,5 +1,5 @@
 use riscv::register::sstatus;
-use riscv::register::sstatus::{Sstatus, SPP};
+use riscv::register::sstatus::{SPP, Sstatus};
 
 ///
 /// Trap 上下文
@@ -60,4 +60,3 @@ impl TrapContext {
         cx
     }
 }
-

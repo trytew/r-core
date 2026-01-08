@@ -1,0 +1,111 @@
+use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
+use riscv::addr::Page;
+
+///
+/// 当开启 MMU 后，所有内存地址访问都由直接物理内存访问变为虚拟内存访问，
+/// 路径是指令访问虚拟地址后由 MMU 转换成物理地址再由 satp 这个特殊 CSR 来访问物理地址
+/// 其中 MMU 的使能也是由 satp 来控制，satp 的字段分布如下：
+///
+/// ```
+/// 63        60|59       44|43        0
+///
+/// |MODE (WARL)|ASID (WARL)|PPN (WARL)|
+/// ```
+///
+/// - MODE 控制 CPU 使用哪种页表实现；当为 0 时代表直接访问物理地址
+///
+/// - ASID 表示地址空间标识符，这里还没有涉及到进程的概念，我们不需要管这个地方；
+///
+/// - PPN（Physical Page Number）存的是根页表所在的物理页号。这样，给定一个虚拟页号，CPU 就可以从三级页表的根页表开始一步步的将其映射到一个物理页号。
+///
+///
+/// 由上面可以看出物理页号是有 44 位的，再加上页内地址偏移 12 位（512 byte）一共是 56 位，但是虚拟内存的页号只支持到 39 位，因此高地址多出 5 位是预留的
+/// 物理内存地址的页内偏移和虚拟内存的页内偏移是一样的，因为采用内存分页管理它们的大小都是 4Kb(bit)
+///
+
+/// 物理地址长度
+const PA_WIDTH_SV39: usize = 56;
+
+/// 物理页号长度
+const PPN_WIDTH_SV39: usize = PA_WIDTH_SV39 - PAGE_SIZE_BITS;
+
+/// 虚拟内存地址长度
+const VA_WIDTH_SV39: usize = 39;
+
+/// 虚拟页号（Virtual Page Number）长度
+const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SIZE_BITS;
+
+/// 物理内存地址
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct PhysAddr(pub usize);
+
+/// 物理内存页号
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct PhysPageNum(pub usize);
+
+/// 虚拟内存地址
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct VirtAddr(pub usize);
+
+/// 虚拟内存页号
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct VirtPageNum(pub usize);
+
+impl PhysAddr {
+    ///
+    /// 向上取整
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn ceil(&self) -> PhysPageNum {
+        if self.0 == 0 {
+            PhysPageNum(0)
+        } else {
+            PhysPageNum((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
+        }
+    }
+
+    ///
+    /// 向下取整
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn floor(&self) -> PhysPageNum {
+        PhysPageNum(self.0 / PAGE_SIZE)
+    }
+
+    ///
+    /// 获取页偏移
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn page_offset(&self) -> usize {
+        // 页偏移 = 4095 & 已使用的空间
+        self.0 & (PAGE_SIZE - 1)
+    }
+
+    ///
+    /// 判断是否对齐
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn aligned(&self) -> bool {
+        self.page_offset() == 0
+    }
+}
+
+impl From<usize> for PhysAddr {
+    fn from(value: usize) -> Self {
+        Self(value & ((1 << PA_WIDTH_SV39) - 1))
+    }
+}
+
+impl From<PhysPageNum> for PhysAddr {
+    fn from(value: PhysPageNum) -> Self {
+        Self(value.0 << PAGE_SIZE_BITS)
+    }
+}

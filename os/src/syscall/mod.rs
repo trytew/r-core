@@ -4,16 +4,16 @@ use crate::syscall::process::{sys_exit, sys_get_time, sys_yield};
 mod fs;
 mod process;
 
-// 写入中断号
+/// 写入中断号
 const SYSCALL_WRITE: usize = 64;
 
-// 退出中断号
+/// 退出中断号
 const SYSCALL_EXIT: usize = 93;
 
-// 时间中断号
+/// 时间中断号
 const SYSCALL_YIELD: usize = 124;
 
-// 获取时间中断号
+/// 获取时间中断号
 const SYSCALL_GET_TIME: usize = 169;
 
 ///

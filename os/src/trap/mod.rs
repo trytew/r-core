@@ -67,7 +67,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             set_next_tigger();
             suspend_current_and_run_next();
-        },
+        }
         _ => {
             panic!(
                 "Unsupported trap {:?}, stval = {:#x}!",
