@@ -1,5 +1,7 @@
 简单使用CPU输出字符串
 
+第一章第七节
+
 ```shell
 cargo build --release
 ./objcopy.sh
