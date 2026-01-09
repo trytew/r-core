@@ -3,5 +3,35 @@ name = "user_lib"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "00_hello_world"
+test = false
+bench = false
+
+[[bin]]
+name = "01_store_fault"
+test = false
+bench = false
+
+[[bin]]
+name = "02_power"
+test = false
+bench = false
+
+[[bin]]
+name = "03_priv_inst"
+test = false
+bench = false
+
+[[bin]]
+name = "04_priv_csr"
+test = false
+bench = false
+
+[lib]
+name = "user_lib"
+test = false
+bench = false
+
 [dependencies]
 riscv = "0.15.0"

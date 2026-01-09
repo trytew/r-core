@@ -2,8 +2,8 @@
 
 cargo build --release
 
-rust-objcopy --binary-architecture=riscv64 --strip-all target/riscv64gc-unknown-none-elf/release/00_hello_word \
-  -O binary target/riscv64gc-unknown-none-elf/release/00_hello_word.bin
+rust-objcopy --binary-architecture=riscv64 --strip-all target/riscv64gc-unknown-none-elf/release/00_hello_world \
+  -O binary target/riscv64gc-unknown-none-elf/release/00_hello_world.bin
 
 rust-objcopy --binary-architecture=riscv64 --strip-all target/riscv64gc-unknown-none-elf/release/01_store_fault \
   -O binary target/riscv64gc-unknown-none-elf/release/01_store_fault.bin

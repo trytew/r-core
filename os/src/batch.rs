@@ -120,14 +120,21 @@ lazy_static! {
             unsafe extern "C" {
                 fn _num_app();
             }
+            // 获取 _num_app 标记的地址（在 linker_app.asm 汇编文件中，该文件由 build.rs 构建程序生成）
             let num_app_ptr = _num_app as *const () as *const usize;
+            // 读取应用数量，_num_app 是一个数组，应用数量是第一个元素
             let num_app = num_app_ptr.read_volatile();
+            // 创建数组存放每个应用的起始地址
             let mut app_start: [usize;MAX_APP_NUM+1] = [0;MAX_APP_NUM+1];
+            // 读取指针内容并按 *const usize 即一个指针地址大小分隔内容返回切片
             let app_start_raw: &[usize] = core::slice::from_raw_parts(
+                // 从第二地址读取，因为第一个地址存放的是应用数量
                 num_app_ptr.add(1),
                 num_app+1,
             );
+            // 将每个应用的起始地址存入 app_start 数组
             app_start[..=num_app].copy_from_slice(app_start_raw);
+            // 初始化应用管理器
             AppManager{
                 num_app,
                 current_app: 0,
