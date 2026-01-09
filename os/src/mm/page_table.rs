@@ -1,3 +1,4 @@
+use crate::mm::address::PhysPageNum;
 use bitflags::*;
 
 ///
@@ -8,6 +9,17 @@ use bitflags::*;
 /// | Reserved | PPN[2] | PPN[1] | PPN[0] | RSW |D|A|G|U|X|W|R|V|
 /// |    10    |   26   |    9   |    9   |  2  |1|1|1|1|1|1|1|1|
 /// ```
+///
+/// 字段说明：
+/// - V(Valid)：仅当位 V 为 1 时，页表项才是合法的；
+/// - R(Read)/W(Write)/X(eXecute)：分别控制索引到这个页表项的对应虚拟页面是否允许读/写/执行；
+/// - U(User)：控制索引到这个页表项的对应虚拟页面是否在 CPU 处于 U 特权级的情况下是否被允许访问；
+/// - G：暂且不理会；
+/// - A(Accessed)：处理器记录自从页表项上的这一位被清零之后，页表项的对应虚拟页面是否被访问过；
+/// - D(Dirty)：处理器记录自从页表项上的这一位被清零之后，页表项的对应虚拟页面是否被修改过。
+///
+/// > 除了 G 外的上述位可以被操作系统设置，只有 A 位和 D 位会被处理器动态地直接设置为 1 ，表示对应的页被访问过或修过（ 注：A 位和 D 位能否被处理器硬件直接修改，取决于处理器的具体实现）。
+///
 ///
 /// 使用流程：
 ///
@@ -63,6 +75,12 @@ use bitflags::*;
 ///
 
 bitflags! {
+    ///
+    /// 页表项标志位
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/9
     pub struct PTEFlags: u8 {
         const V = 1 << 0;
         const R = 1 << 1;
@@ -72,5 +90,61 @@ bitflags! {
         const G = 1 << 5;
         const A = 1 << 6;
         const D = 1 << 7;
+    }
+}
+
+///
+/// 页表项
+///
+/// @author: tryte
+///
+/// @date: 2026/1/9
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct PageTableEntry {
+    pub bits: usize,
+}
+
+impl PageTableEntry {
+    ///
+    /// 实例化
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/9
+    pub fn new(ppn: PhysPageNum, flags: PTEFlags) -> Self {
+        PageTableEntry {
+            bits: ppn.0 << 10 | flags.bits as usize,
+        }
+    }
+
+    ///
+    /// 清空
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/9
+    pub fn empty() -> Self {
+        PageTableEntry { bits: 0 }
+    }
+
+    ///
+    /// 转换成物理页码
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/9
+    pub fn ppn(&self) -> PhysPageNum {
+        (self.bits >> 10 & ((1usize << 44) - 1)).into()
+    }
+
+    ///
+    /// 获取页表项标志位
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/9
+    pub fn flags(&self) -> PTEFlags {
+        PTEFlags::from_bits(self.bits as u8).unwrap()
     }
 }
