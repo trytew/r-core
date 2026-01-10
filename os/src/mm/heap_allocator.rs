@@ -1,6 +1,5 @@
 use crate::config::KERNEL_HEAP_SIZE;
 use crate::println;
-use alloc::boxed::Box;
 use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
 

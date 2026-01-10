@@ -1,4 +1,6 @@
-use crate::config::PAGE_SIZE_BITS;
+use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
+use crate::mm::page_table::PageTableEntry;
+use riscv::addr::Page;
 
 ///
 /// 当开启 MMU 后，所有内存地址访问都由直接物理内存访问变为虚拟内存访问，
@@ -20,7 +22,6 @@ use crate::config::PAGE_SIZE_BITS;
 ///
 /// 由上面可以看出物理页号是有 44 位的，再加上页内地址偏移 12 位（512 byte）一共是 56 位，但是虚拟内存的页号只支持到 39 位，因此高地址多出 5 位是预留的
 /// 物理内存地址的页内偏移和虚拟内存的页内偏移是一样的，因为采用内存分页管理它们的大小都是 4Kb(bit)
-///
 ///
 
 /// 物理地址长度
@@ -51,6 +52,53 @@ pub struct VirtAddr(pub usize);
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct VirtPageNum(pub usize);
 
+impl PhysAddr {
+    ///
+    /// 向上取整
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn ceil(&self) -> PhysPageNum {
+        if self.0 == 0 {
+            PhysPageNum(0)
+        } else {
+            PhysPageNum((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
+        }
+    }
+
+    ///
+    /// 向下取整
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn floor(&self) -> PhysPageNum {
+        PhysPageNum(self.0 / PAGE_SIZE)
+    }
+
+    ///
+    /// 获取页偏移
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn page_offset(&self) -> usize {
+        // 页偏移 = 4095 & 已使用的空间
+        self.0 & (PAGE_SIZE - 1)
+    }
+
+    ///
+    /// 判断是否对齐
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/8
+    pub fn aligned(&self) -> bool {
+        self.page_offset() == 0
+    }
+}
+
 impl From<usize> for PhysAddr {
     fn from(value: usize) -> Self {
         Self(value & ((1 << PA_WIDTH_SV39) - 1))
@@ -62,6 +110,19 @@ impl From<PhysPageNum> for PhysAddr {
         Self(value.0 << PAGE_SIZE_BITS)
     }
 }
+
+// impl PhysPageNum {
+//     ///
+//     /// 获取页表页的所有页表项
+//     ///
+//     /// @author: tryte
+//     ///
+//     /// @date: 2026/1/9
+//     pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
+//         let pa: PhysAddr = (*self).into();
+//         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
+//     }
+// }
 
 impl From<usize> for PhysPageNum {
     fn from(value: usize) -> Self {
