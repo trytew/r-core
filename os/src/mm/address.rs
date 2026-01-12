@@ -111,18 +111,29 @@ impl From<PhysPageNum> for PhysAddr {
     }
 }
 
-// impl PhysPageNum {
-//     ///
-//     /// 获取页表页的所有页表项
-//     ///
-//     /// @author: tryte
-//     ///
-//     /// @date: 2026/1/9
-//     pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
-//         let pa: PhysAddr = (*self).into();
-//         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
-//     }
-// }
+impl PhysPageNum {
+    ///
+    /// 获取页表页的所有页表项
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/9
+    pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
+        let pa: PhysAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
+    }
+
+    ///
+    /// 获取页表内容
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/12
+    pub fn get_bytes_array(&self) -> &'static mut [u8] {
+        let pa: PhysAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
+    }
+}
 
 impl From<usize> for PhysPageNum {
     fn from(value: usize) -> Self {

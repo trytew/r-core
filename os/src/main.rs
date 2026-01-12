@@ -60,9 +60,10 @@ fn clear_bss() {
 
 #[unsafe(no_mangle)]
 fn rust_main() -> ! {
-    // 测试堆分配
+    // 测试内存页的分配和回收
     mm::init_heap();
-    mm::heap_test();
+    mm::init_frame_allocator();
+    mm::frame_allocator_test();
 
     unsafe extern "C" {
         fn stext(); // text 段起始位置
