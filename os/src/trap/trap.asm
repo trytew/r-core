@@ -42,7 +42,9 @@ __alltraps:
     # 读取 sscratch 的值保存到内核栈，sscratch 的值是用户栈的地址
     csrr t2, sscratch
     sd t2, 2 * 8(sp)
-    # 保存内核栈栈顶值，因为 trap_handler 函数可能会修改 sp 寄存器的值
+    # 保存内核栈栈顶值，因为 trap_handler 函数中会有直接调用 __restore 函数的情况，当 __restore 函数执行到 sret 后会直接切换回用户态
+    # 这个时候 trap_handler 不会正常返回，而是终止当前应用启动下一个应用，因此使用的内核栈不会正常弹出（sp 不会正常恢复），所以需要保存
+    # sp 的值到 a0
     mv a0, sp
     # 执行 trap 回调
     call trap_handler
