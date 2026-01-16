@@ -1,4 +1,7 @@
-use crate::mm::address::PhysPageNum;
+use crate::mm::address::{PhysPageNum, VirtPageNum};
+use crate::mm::frame_allocator::{FrameTracker, frame_alloc};
+use alloc::vec;
+use alloc::vec::Vec;
 use bitflags::*;
 
 ///
@@ -82,10 +85,10 @@ bitflags! {
     ///
     /// @date: 2026/1/9
     pub struct PTEFlags: u8 {
-        const V = 1 << 0;
+        const V = 1 << 0;  // 仅当位 V 为 1 时，页表项才是合法的
         const R = 1 << 1;
         const W = 1 << 2;
-        const X = 1 << 3;
+        const X = 1 << 3; // R(Read)/W(Write)/X(eXecute)：分别控制索引到这个页表项的对应虚拟页面是否允许读/写/执行；
         const U = 1 << 4;
         const G = 1 << 5;
         const A = 1 << 6;
@@ -146,5 +149,146 @@ impl PageTableEntry {
     /// @date: 2026/1/9
     pub fn flags(&self) -> PTEFlags {
         PTEFlags::from_bits(self.bits as u8).unwrap()
+    }
+
+    ///
+    /// 判断页表项是否有效
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn is_valid(&self) -> bool {
+        (self.flags() & PTEFlags::V) != PTEFlags::empty()
+    }
+}
+
+pub struct PageTable {
+    // 根页号
+    root_ppn: PhysPageNum,
+    // 页帧
+    frames: Vec<FrameTracker>,
+}
+
+impl PageTable {
+    ///
+    /// 初始化页表
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/14
+    pub fn new() -> Self {
+        let frame = frame_alloc().unwrap();
+        PageTable {
+            root_ppn: frame.ppn,
+            frames: vec![frame],
+        }
+    }
+
+    ///
+    /// 临时用于从用户空间获取参数
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/16
+    pub fn from_token(satp: usize) -> Self {
+        Self {
+            root_ppn: PhysPageNum::from(satp & ((1usize << 44) - 1)),
+            frames: Vec::new(),
+        }
+    }
+
+    ///
+    /// 查找页表项，不存在则创建
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
+        // 切割虚拟地址为3段，虚拟地址每段都相当于页表页的索引
+        let idxs = vpn.indexes();
+        // 页表根地址
+        let mut ppn = self.root_ppn;
+        // 空页表项
+        let mut result: Option<&mut PageTableEntry> = None;
+        // 循环虚拟地址分段
+        for (i, idx) in idxs.iter().enumerate() {
+            // 获取当前级页表的页表项来查找下一级页表项
+            let pte = &mut ppn.get_pte_array()[*idx];
+            if i == 2 {
+                result = Some(pte);
+                break;
+            }
+            // 判断该页表项是否有效，无效代表下一级页表不存在，需要创建
+            if !pte.is_valid() {
+                // 创建下一级页表页
+                let frame = frame_alloc().unwrap();
+                // 创建页表页的页表项
+                *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
+                // 记录页帧
+                self.frames.push(frame);
+            }
+            // 切换到下一级页表的起始物理内存地址
+            ppn = pte.ppn();
+        }
+        // 返回三级页表的页表项
+        result
+    }
+
+    ///
+    /// 查找页表项
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    fn find_pte(&self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
+        let idxs = vpn.indexes();
+        let mut ppn = self.root_ppn;
+        let mut result: Option<&mut PageTableEntry> = None;
+        for (i, idx) in idxs.iter().enumerate() {
+            let pte = &mut ppn.get_pte_array()[*idx];
+            if i == 2 {
+                result = Some(pte);
+                break;
+            }
+            if !pte.is_valid() {
+                return None;
+            }
+            ppn = pte.ppn();
+        }
+        result
+    }
+
+    ///
+    /// 在多级页表中插入一个键值对
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
+        let pte = self.find_pte_create(vpn).unwrap();
+        assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
+        *pte = PageTableEntry::new(ppn, flags | PTEFlags::V)
+    }
+
+    ///
+    /// 在多级页表中删除一个键值对
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn unmap(&mut self, vpn: VirtPageNum) {
+        let pte = self.find_pte(vpn).unwrap();
+        assert!(pte.is_valid(), "vpn {:?} is invaild before unmapping", vpn);
+        *pte = PageTableEntry::empty();
+    }
+
+    ///
+    /// 虚拟地址转页表项
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/16
+    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+        self.find_pte(vpn).map(|pte| *pte)
     }
 }

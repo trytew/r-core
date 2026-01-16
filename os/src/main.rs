@@ -14,6 +14,7 @@ mod task;
 mod timer;
 mod trap;
 
+use crate::mm::{PTEFlags, PhysPageNum, VirtPageNum};
 use core::arch::global_asm;
 
 extern crate alloc;
@@ -63,7 +64,6 @@ fn rust_main() -> ! {
     // 测试内存页的分配和回收
     mm::init_heap();
     mm::init_frame_allocator();
-    mm::frame_allocator_test();
 
     unsafe extern "C" {
         fn stext(); // text 段起始位置

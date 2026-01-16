@@ -1,6 +1,6 @@
 use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
 use crate::mm::page_table::PageTableEntry;
-use riscv::addr::Page;
+use core::fmt::{Debug, Formatter};
 
 ///
 /// 当开启 MMU 后，所有内存地址访问都由直接物理内存访问变为虚拟内存访问，
@@ -133,10 +133,105 @@ impl PhysPageNum {
         let pa: PhysAddr = (*self).into();
         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
     }
+
+    ///
+    /// 获取可变引用
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/16
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let pa: PhysAddr = self.clone().into();
+        unsafe { (pa.0 as *mut T).as_mut().unwrap() }
+    }
 }
 
 impl From<usize> for PhysPageNum {
     fn from(value: usize) -> Self {
         Self(value & ((1 << PPN_WIDTH_SV39) - 1))
+    }
+}
+
+impl VirtAddr {
+    ///
+    /// 向上取整
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn ceil(&self) -> VirtPageNum {
+        if self.0 == 0 {
+            VirtPageNum(0)
+        } else {
+            VirtPageNum((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
+        }
+    }
+
+    ///
+    /// 向下取整
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn floor(&self) -> VirtPageNum {
+        VirtPageNum(self.0 / PAGE_SIZE)
+    }
+
+    ///
+    /// 计算页偏移
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn page_offset(&self) -> usize {
+        self.0 & (PAGE_SIZE - 1)
+    }
+
+    ///
+    /// 检查页是否对齐
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn aligned(&self) -> bool {
+        self.page_offset() == 0
+    }
+}
+
+impl From<VirtPageNum> for VirtAddr {
+    fn from(value: VirtPageNum) -> Self {
+        Self(value.0 << PAGE_SIZE_BITS)
+    }
+}
+
+impl VirtPageNum {
+    ///
+    /// 分隔虚拟地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/15
+    pub fn indexes(&self) -> [usize; 3] {
+        let mut vpn = self.0;
+        let mut idx = [0usize; 3];
+        // 翻转顺序返回虚拟地址段内容，一级页表索引在第一位
+        for i in (0..3).rev() {
+            idx[i] = vpn & 511;
+            vpn >>= 9;
+        }
+        idx
+    }
+}
+
+impl From<VirtAddr> for VirtPageNum {
+    fn from(value: VirtAddr) -> Self {
+        assert_eq!(value.page_offset(), 0);
+        value.floor()
+    }
+}
+
+impl Debug for VirtPageNum {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("VA:{:#x}", self.0))
     }
 }
