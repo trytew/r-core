@@ -2,7 +2,8 @@ mod context;
 
 use crate::println;
 use crate::syscall::sys_call;
-use crate::task::{exit_current_and_run_next, suspend_current_and_run_next};
+use crate::task::exit_current_and_run_next;
+use crate::task::suspend_current_and_run_next;
 use crate::timer::set_next_tigger;
 pub use context::TrapContext;
 use core::arch::global_asm;
