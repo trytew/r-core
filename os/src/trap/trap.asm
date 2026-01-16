@@ -42,18 +42,20 @@ __alltraps:
     # 读取 sscratch 的值保存到内核栈，sscratch 的值是用户栈的地址
     csrr t2, sscratch
     sd t2, 2 * 8(sp)
-    # 保存内核栈栈顶值，因为 trap_handler 函数中会有直接调用 __restore 函数的情况，当 __restore 函数执行到 sret 后会直接切换回用户态
-    # 这个时候 trap_handler 不会正常返回，而是终止当前应用启动下一个应用，因此使用的内核栈不会正常弹出（sp 不会正常恢复），所以需要保存
-    # sp 的值到 a0
+    # 保存内核栈栈顶值，为 __restore 函数做兼容，在 RISC-V ABI 中 a0 寄存器存放函数第一个入参值以及第一个返回值
     mv a0, sp
-    # 执行 trap 回调
+    # 执行 trap 回调，trap_handler效果如下：
+    # 1.因为 trap_handler 函数中会有直接调用 __restore 函数的情况，当 __restore 函数执行到 sret 后会直接切换回用户态，
+    #   这个时候 trap_handler 不会正常返回，而是终止当前应用启动下一个应用，因此使用的内核栈不会正常弹出（sp 不会正常恢复）
+    # 2.正常返回，使用的内核栈会正常弹出（sp 会自动恢复成执行前的值）
     call trap_handler
 
-    # 当 trap_handler 返回之后，使用 __restore 从保存在内核栈上的 Trap 上下文恢复寄存器。最后通过一条 sret 指令回到应用程序执行。
-    # __restore 同时也是一个函数，可独立运行
     # 将用户态的寄存器状态恢复，从内核栈的内容中读取
+    # __restore 有两种执行时机：
+    # 1.当 trap_handler 正常返回之后，会继续执行，即执行到 __restore 函数，使用保存在 a0 寄存器的内核栈上的 Trap 上下文恢复寄存器。
+    # 2.__restore 同时也是一个函数，可主动调用运行
 __restore:
-    # 将 a0 寄存器的值移动到 sp 寄存器，即读取内核栈的栈顶
+    # 将 a0 寄存器的值移动到 sp 寄存器，即读取内核栈的栈顶，a0 既可能是上面 __alltraps 函数保存的值，也可能是 __restore 的入参值
     mv sp, a0
     # 将原来保存在内核栈的 t0，t1，t2 的值回写
     ld t0, 32 * 8(sp)
@@ -61,7 +63,7 @@ __restore:
     ld t2, 2 * 8(sp)
     # 将 t0，t1，t2 寄存器的值回写到 sstatus，sepc，sscratch 寄存器中
     csrw sstatus, t0
-    # 将用户栈中 sepc 记录的地址设置到指令执行寄存器 PC 中，在 sret 指令执行后生效
+    # 将用户栈中 sepc 记录的地址设置到指令执行寄存器 PC 中，在 sret 指令执行后会跳转到该地址执行，即切换成新应用的起始地址
     csrw sepc, t1
     csrw sscratch, t2
 
@@ -78,5 +80,6 @@ __restore:
     addi sp, sp, 34 * 8
     # 再次交换 sscratch 和 sp，现在 sp 重新指向用户栈栈顶，sscratch 也依然保存进入 Trap 之前的状态并指向内核栈栈顶
     csrrw sp, sscratch, sp
+    # 执行 sret 后会回到用户态，从触发中断后的代码继续执行
     sret
 
