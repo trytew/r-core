@@ -80,6 +80,6 @@ __restore:
     addi sp, sp, 34 * 8
     # 再次交换 sscratch 和 sp，现在 sp 重新指向用户栈栈顶，sscratch 也依然保存进入 Trap 之前的状态并指向内核栈栈顶
     csrrw sp, sscratch, sp
-    # 执行 sret 后会回到用户态，从触发中断后的代码继续执行
+    # 执行 sret 后会回到用户态，从触发中断后的代码（即 spec 寄存器存放的地址）继续执行
     sret
 
