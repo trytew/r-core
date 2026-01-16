@@ -40,11 +40,15 @@ pub fn heap_test() {
         fn sbss();
         fn ebss();
     }
+    // 获取堆空间地址范围
     let bss_range = sbss as *const () as usize..ebss as *const () as usize;
+    // 实例化变量 a，Box::new() 底层会调用 HEAP_ALLOCATOR 这个全局堆内存分配器
     let a = Box::new(5);
     assert_eq!(*a, 5);
+    // 查看变量 a 的堆内存地址是否在 bss_range 内
     assert!(bss_range.contains(&(a.as_ref() as *const _ as usize)));
     drop(a);
+    // 实例化变量 v，Vec::new() 底层会调用 HEAP_ALLOCATOR 这个全局堆内存分配器
     let mut v: Vec<usize> = Vec::new();
     for i in 0..500 {
         v.push(i);
@@ -52,6 +56,7 @@ pub fn heap_test() {
     for i in 0..500 {
         assert_eq!(v[i], i);
     }
+    // 查看变量 v 的堆内存地址是否在 bss_range 内
     assert!(bss_range.contains(&(v.as_ptr() as usize)));
     drop(v);
     println!("heap_test passed!");
