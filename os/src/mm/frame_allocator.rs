@@ -1,9 +1,11 @@
 use crate::boards::MEMORY_END;
-use crate::mm::address::{PhysAddr, PhysPageNum};
+use crate::mm::address::PhysAddr;
+use crate::mm::address::PhysPageNum;
 use crate::println;
 use crate::sync::UpSafeCell;
 use alloc::vec::Vec;
-use core::fmt::{Debug, Formatter};
+use core::fmt::Debug;
+use core::fmt::Formatter;
 use lazy_static::lazy_static;
 
 type FrameAllocatorImpl = StackFrameAllocator;

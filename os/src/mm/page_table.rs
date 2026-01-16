@@ -1,5 +1,7 @@
-use crate::mm::address::{PhysPageNum, VirtPageNum};
-use crate::mm::frame_allocator::{FrameTracker, frame_alloc};
+use crate::mm::address::PhysPageNum;
+use crate::mm::address::VirtPageNum;
+use crate::mm::frame_allocator::FrameTracker;
+use crate::mm::frame_allocator::frame_alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;

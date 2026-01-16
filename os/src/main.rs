@@ -14,7 +14,6 @@ mod task;
 mod timer;
 mod trap;
 
-use crate::mm::{PTEFlags, PhysPageNum, VirtPageNum};
 use core::arch::global_asm;
 
 extern crate alloc;
