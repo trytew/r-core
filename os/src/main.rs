@@ -64,16 +64,6 @@ fn rust_main() -> ! {
     mm::init_heap();
     mm::init_frame_allocator();
 
-    unsafe extern "C" {
-        fn stext(); // text 段起始位置
-        fn etext(); // text 段结束位置
-        fn srodata(); // 只读段起始位置
-        fn erodata(); // 只读段结束位置
-        fn sdata(); // 常量数据段起始位置
-        fn edata(); // 常量数据段结束位置
-        fn boot_stack_lower_bound(); // 栈下限位置（栈内存的最低地址）
-        fn boot_stack_top(); // 栈顶（栈的当前已使用地址）
-    }
     clear_bss();
 
     println!("[kernel] Hello, world!\n");

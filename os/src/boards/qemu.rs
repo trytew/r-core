@@ -13,3 +13,11 @@ pub const CLOCK_FREQ: usize = 12_500_000;
 ///
 /// @date: 2026/1/9
 pub const MEMORY_END: usize = 0x88_000_000;
+
+///
+/// MMU 相关寄存器
+///
+/// @author: tryte
+///
+/// @date: 2026/1/17
+pub const MMIO: &[(usize, usize)] = &[(0x0010_0000, 0x00_2000)];

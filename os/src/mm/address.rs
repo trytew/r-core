@@ -1,6 +1,7 @@
 use crate::config::PAGE_SIZE;
 use crate::config::PAGE_SIZE_BITS;
 use crate::mm::page_table::PageTableEntry;
+use alloc::vec::IntoIter;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
@@ -154,6 +155,13 @@ impl From<usize> for PhysPageNum {
     }
 }
 
+impl From<PhysAddr> for PhysPageNum {
+    fn from(value: PhysAddr) -> Self {
+        assert_eq!(value.page_offset(), 0);
+        value.floor()
+    }
+}
+
 impl VirtAddr {
     ///
     /// 向上取整
@@ -206,6 +214,12 @@ impl From<VirtPageNum> for VirtAddr {
     }
 }
 
+impl From<usize> for VirtAddr {
+    fn from(value: usize) -> Self {
+        Self(value & ((1 << VA_WIDTH_SV39) - 1))
+    }
+}
+
 impl VirtPageNum {
     ///
     /// 分隔虚拟地址
@@ -232,8 +246,99 @@ impl From<VirtAddr> for VirtPageNum {
     }
 }
 
+impl From<usize> for VirtPageNum {
+    fn from(value: usize) -> Self {
+        Self(value & ((1 << VA_WIDTH_SV39) - 1))
+    }
+}
+
 impl Debug for VirtPageNum {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_fmt(format_args!("VA:{:#x}", self.0))
     }
 }
+
+pub trait StepByOne {
+    fn step(&mut self);
+}
+
+impl StepByOne for VirtPageNum {
+    fn step(&mut self) {
+        self.0 += 1;
+    }
+}
+
+pub struct SimpleRangeIterator<T>
+where
+    T: StepByOne + Copy + PartialEq + PartialOrd + Debug,
+{
+    current: T,
+    end: T,
+}
+
+impl<T> SimpleRangeIterator<T>
+where
+    T: StepByOne + Copy + PartialEq + PartialOrd + Debug,
+{
+    pub fn new(l: T, r: T) -> Self {
+        Self { current: l, end: r }
+    }
+}
+
+impl<T> Iterator for SimpleRangeIterator<T>
+where
+    T: StepByOne + Copy + PartialEq + PartialOrd + Debug,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current == self.end {
+            None
+        } else {
+            let t = self.current;
+            self.current.step();
+            Some(t)
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct SimpleRange<T>
+where
+    T: StepByOne + Copy + PartialEq + PartialOrd + Debug,
+{
+    l: T,
+    r: T,
+}
+
+impl<T> SimpleRange<T>
+where
+    T: StepByOne + Copy + PartialEq + PartialOrd + Debug,
+{
+    pub fn new(start: T, end: T) -> Self {
+        assert!(start <= end, "start: {:?} > end {:?}!", start, end);
+        Self { l: start, r: end }
+    }
+
+    pub fn get_start(&self) -> T {
+        self.l
+    }
+
+    pub fn get_end(&self) -> T {
+        self.r
+    }
+}
+
+impl<T> IntoIterator for SimpleRange<T>
+where
+    T: StepByOne + Copy + PartialEq + PartialOrd + Debug,
+{
+    type Item = T;
+    type IntoIter = SimpleRangeIterator<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        SimpleRangeIterator::new(self.l, self.r)
+    }
+}
+
+pub type VPNRange = SimpleRange<VirtPageNum>;

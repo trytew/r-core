@@ -13,6 +13,10 @@ pub const PAGE_SIZE: usize = 0x1_000;
 /// 页容量长度（偏移位数量）12
 pub const PAGE_SIZE_BITS: usize = 0x0C;
 
+pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
+
+pub use crate::boards::*;
+
 /// 最大 app 数量
 pub const MAX_APP_NUM: usize = 9;
 
