@@ -14,6 +14,7 @@ mod task;
 mod timer;
 mod trap;
 
+use crate::config::KERNEL_STACK_SIZE;
 use core::arch::global_asm;
 
 extern crate alloc;
@@ -39,7 +40,8 @@ fn clear_bss() {
         fn ebss();
     }
 
-    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) })
+    (sbss as *const () as usize..ebss as *const () as usize)
+        .for_each(|a| unsafe { (a as *mut u8).write_volatile(0) })
 
     // 上面和以下的两种方式只能全局使用一种，如果 fn sbss() 和 static mut sbss 混用则会报符号命名重复
     // unsafe extern "C" {
@@ -60,19 +62,10 @@ fn clear_bss() {
 
 #[unsafe(no_mangle)]
 fn rust_main() -> ! {
-    // 测试内存页的分配和回收
-    mm::init_heap();
-    mm::init_frame_allocator();
-
     clear_bss();
 
-    println!("[kernel] Hello, world!\n");
-    // 初始化 trap 上下文
-    trap::init();
-    loader::load_apps();
-    trap::enable_timer_interrupt();
-    timer::set_next_tigger();
-    task::run_first_task();
+    mm::init();
+    mm::remap_test();
 
     println!("Hello world!");
     panic!("Shutdown machine!");

@@ -258,6 +258,34 @@ impl Debug for VirtPageNum {
     }
 }
 
+impl From<PhysAddr> for usize {
+    fn from(value: PhysAddr) -> Self {
+        value.0
+    }
+}
+
+impl From<PhysPageNum> for usize {
+    fn from(value: PhysPageNum) -> Self {
+        value.0
+    }
+}
+
+impl From<VirtAddr> for usize {
+    fn from(value: VirtAddr) -> Self {
+        if value.0 >= ((1 << VA_WIDTH_SV39) - 1) {
+            value.0 | (!((1 << VA_WIDTH_SV39) - 1))
+        } else {
+            value.0
+        }
+    }
+}
+
+impl From<VirtPageNum> for usize {
+    fn from(value: VirtPageNum) -> Self {
+        value.0
+    }
+}
+
 pub trait StepByOne {
     fn step(&mut self);
 }

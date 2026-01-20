@@ -2,6 +2,7 @@ use crate::mm::address::PhysPageNum;
 use crate::mm::address::VirtPageNum;
 use crate::mm::frame_allocator::FrameTracker;
 use crate::mm::frame_allocator::frame_alloc;
+use crate::mm::memory_set::MapType::Framed;
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
@@ -162,6 +163,18 @@ impl PageTableEntry {
     pub fn is_valid(&self) -> bool {
         (self.flags() & PTEFlags::V) != PTEFlags::empty()
     }
+
+    pub fn readable(&self) -> bool {
+        (self.flags() & PTEFlags::R) != PTEFlags::empty()
+    }
+
+    pub fn writable(&self) -> bool {
+        (self.flags() & PTEFlags::W) != PTEFlags::empty()
+    }
+
+    pub fn executable(&self) -> bool {
+        (self.flags() & PTEFlags::X) != PTEFlags::empty()
+    }
 }
 
 pub struct PageTable {
@@ -216,6 +229,7 @@ impl PageTable {
         for (i, idx) in idxs.iter().enumerate() {
             // 获取当前级页表的页表项来查找下一级页表项
             let pte = &mut ppn.get_pte_array()[*idx];
+            // 到3级后退出
             if i == 2 {
                 result = Some(pte);
                 break;

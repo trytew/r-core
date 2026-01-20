@@ -98,9 +98,9 @@ trait FrameAllocator {
 ///
 /// @date: 2026/1/9
 pub struct StackFrameAllocator {
-    // 空闲内存的起始物理页号
+    // 当前物理页号
     current: usize,
-    // 空闲内存的结束物理页号
+    // 结束物理页号
     end: usize,
     // 以后入先出的方式保存了被回收的物理页号
     recycled: Vec<usize>,
@@ -160,6 +160,7 @@ pub fn init_frame_allocator() {
         fn ekernel();
     }
 
+    // 设置物理内存空间大小
     FRAME_ALLOCATOR.exclusive_access().init(
         PhysAddr::from(ekernel as *const () as usize).ceil(),
         PhysAddr::from(MEMORY_END).floor(),
