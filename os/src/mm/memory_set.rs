@@ -31,10 +31,16 @@ bitflags! {
     }
 }
 
+///
+/// 内存地址映射类型
+///
+/// @author: tryte
+///
+/// @date: 2026/1/21
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum MapType {
-    Identical,
-    Framed,
+    Identical, // 恒等映射
+    Framed,    // 每个虚拟页面都有一个新分配的物理页帧与之对应
 }
 
 ///
@@ -44,14 +50,10 @@ pub enum MapType {
 ///
 /// @date: 2026/1/21
 pub struct MapArea {
-    // 虚拟内存区间
-    vpn_range: VPNRange,
-    // 虚拟内存页号和物理内存页号映射
-    data_frames: BTreeMap<VirtPageNum, FrameTracker>,
-    // 内存页类型
-    map_type: MapType,
-    // 内存页权限
-    map_perm: MapPermission,
+    vpn_range: VPNRange,                              // 虚拟内存区间
+    data_frames: BTreeMap<VirtPageNum, FrameTracker>, // 虚拟内存页号和物理内存页号映射
+    map_type: MapType,                                // 内存页类型
+    map_perm: MapPermission,                          // 内存页权限
 }
 
 impl MapArea {
@@ -178,7 +180,7 @@ pub struct MemorySet {
 
 impl MemorySet {
     ///
-    /// 创建内核区域集合
+    /// 创建内存区域集合
     ///
     /// @author: tryte
     ///
@@ -230,9 +232,13 @@ impl MemorySet {
     }
 
     pub fn new_kernel() -> Self {
+        // 内存区域集合
         let mut memory_set = Self::new_bare();
+
+        // 映射跳板内存
         memory_set.map_trampoline();
 
+        // 以恒等映射方式将内核各段代码映射到内存区域描述
         println!(
             ".text [{:#x}, {:#x})",
             stext as *const () as usize, etext as *const () as usize,
@@ -293,6 +299,7 @@ impl MemorySet {
             None,
         );
 
+        // 将内核使用的堆空间映射以恒等映射方式到虚拟地址
         println!("mapping physical memory");
         memory_set.push(
             MapArea::new(
@@ -304,6 +311,8 @@ impl MemorySet {
             None,
         );
 
+        // 将 MMIO 以恒等映射方式映射到虚拟内存
+        // Memory-Mapped I/O 是一种将硬件设备寄存器映射到 CPU 的内存地址空间 的方式
         println!("mapping memory-mapped registers");
         for pair in MMIO {
             memory_set.push(
@@ -396,6 +405,12 @@ impl MemorySet {
         )
     }
 
+    ///
+    /// 打开 MMU
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/21
     pub fn activate(&self) {
         let satp = self.page_table.token();
         unsafe {
