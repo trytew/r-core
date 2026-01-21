@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 
 type FrameAllocatorImpl = StackFrameAllocator;
 lazy_static! {
-    // 创建全局堆内存分配器
+    // 创建全局物理页帧管理器
     pub static ref FRAME_ALLOCATOR: UpSafeCell<FrameAllocatorImpl> =
         unsafe { UpSafeCell::new(FrameAllocatorImpl::new()) };
 }
@@ -107,7 +107,14 @@ pub struct StackFrameAllocator {
 }
 
 impl StackFrameAllocator {
+    ///
+    /// 初始化栈式物理页帧管理器
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/21
     pub fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
+        // 设置页帧的物理起始和结束页号
         self.current = l.0;
         self.end = r.0;
     }

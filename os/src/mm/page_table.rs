@@ -229,7 +229,7 @@ impl PageTable {
         for (i, idx) in idxs.iter().enumerate() {
             // 获取当前级页表的页表项来查找下一级页表项
             let pte = &mut ppn.get_pte_array()[*idx];
-            // 到3级后退出
+            // 到3级后退出，三级页表项已经是实际映射页了，不是树节点
             if i == 2 {
                 result = Some(pte);
                 break;

@@ -37,21 +37,39 @@ pub enum MapType {
     Framed,
 }
 
+///
+/// 内存区域描述
+///
+/// @author: tryte
+///
+/// @date: 2026/1/21
 pub struct MapArea {
+    // 虚拟内存区间
     vpn_range: VPNRange,
+    // 虚拟内存页号和物理内存页号映射
     data_frames: BTreeMap<VirtPageNum, FrameTracker>,
+    // 内存页类型
     map_type: MapType,
+    // 内存页权限
     map_perm: MapPermission,
 }
 
 impl MapArea {
+    ///
+    /// 创建内存区域描述
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/21
     pub fn new(
         start_va: VirtAddr,
         end_va: VirtAddr,
         map_type: MapType,
         map_perm: MapPermission,
     ) -> Self {
+        // 获取起始虚拟页号
         let start_vpn: VirtPageNum = start_va.floor();
+        // 获取结束虚拟页号
         let end_vpn: VirtPageNum = end_va.ceil();
         Self {
             vpn_range: VPNRange::new(start_vpn, end_vpn),
@@ -147,12 +165,24 @@ unsafe extern "C" {
     fn strampoline();
 }
 
+///
+/// 内存区域集合
+///
+/// @author: tryte
+///
+/// @date: 2026/1/21
 pub struct MemorySet {
     page_table: PageTable,
     areas: Vec<MapArea>,
 }
 
 impl MemorySet {
+    ///
+    /// 创建内核区域集合
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/21
     pub fn new_bare() -> Self {
         Self {
             page_table: PageTable::new(),
@@ -184,6 +214,12 @@ impl MemorySet {
         );
     }
 
+    ///
+    /// 给跳板映射虚拟地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/21
     fn map_trampoline(&mut self) {
         // 将 trap.asm 的汇编代码映射到最高虚拟地址，
         self.page_table.map(
@@ -196,23 +232,11 @@ impl MemorySet {
     pub fn new_kernel() -> Self {
         let mut memory_set = Self::new_bare();
         memory_set.map_trampoline();
+
         println!(
             ".text [{:#x}, {:#x})",
             stext as *const () as usize, etext as *const () as usize,
         );
-        println!(
-            ".rodata [{:#x}, {:#x})",
-            srodata as *const () as usize, erodata as *const () as usize,
-        );
-        println!(
-            ".data [{:#x}, {:#x})",
-            sdata as *const () as usize, edata as *const () as usize,
-        );
-        println!(
-            ".bss [{:#x}, {:#x})",
-            sbss_with_stack as *const () as usize, ebss as *const () as usize,
-        );
-
         println!("mapping .text section");
         memory_set.push(
             MapArea::new(
@@ -224,33 +248,45 @@ impl MemorySet {
             None,
         );
 
+        println!(
+            ".rodata [{:#x}, {:#x})",
+            srodata as *const () as usize, erodata as *const () as usize,
+        );
         println!("mapping .rodata section");
         memory_set.push(
             MapArea::new(
-                (srodata as usize).into(),
-                (erodata as usize).into(),
+                (srodata as *const () as usize).into(),
+                (erodata as *const () as usize).into(),
                 MapType::Identical,
                 MapPermission::R,
             ),
             None,
         );
 
+        println!(
+            ".data [{:#x}, {:#x})",
+            sdata as *const () as usize, edata as *const () as usize,
+        );
         println!("mapping .data section");
         memory_set.push(
             MapArea::new(
-                (sdata as usize).into(),
-                (edata as usize).into(),
+                (sdata as *const () as usize).into(),
+                (edata as *const () as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
             None,
         );
 
+        println!(
+            ".bss [{:#x}, {:#x})",
+            sbss_with_stack as *const () as usize, ebss as *const () as usize,
+        );
         println!("mapping .bss section");
         memory_set.push(
             MapArea::new(
-                (sbss_with_stack as usize).into(),
-                (ebss as usize).into(),
+                (sbss_with_stack as *const () as usize).into(),
+                (ebss as *const () as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
@@ -260,7 +296,7 @@ impl MemorySet {
         println!("mapping physical memory");
         memory_set.push(
             MapArea::new(
-                (ekernel as usize).into(),
+                (ekernel as *const () as usize).into(),
                 MEMORY_END.into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,

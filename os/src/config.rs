@@ -13,6 +13,7 @@ pub const PAGE_SIZE: usize = 0x1_000;
 /// 页容量长度（偏移位数量）12
 pub const PAGE_SIZE_BITS: usize = 0x0C;
 
+/// 虚拟地址最高位
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;

@@ -14,7 +14,6 @@ mod task;
 mod timer;
 mod trap;
 
-use crate::config::KERNEL_STACK_SIZE;
 use core::arch::global_asm;
 
 extern crate alloc;

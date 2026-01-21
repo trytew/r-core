@@ -369,4 +369,10 @@ where
     }
 }
 
+///
+/// 虚拟地址区间
+///
+/// @author: tryte
+///
+/// @date: 2026/1/21
 pub type VPNRange = SimpleRange<VirtPageNum>;

@@ -4,8 +4,10 @@ use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
 
 ///
-/// 堆分配器
-/// LockedHeap 是一个所有数据都在栈上的结构体，因此不会涉及到堆内存的分配
+/// 设置堆分配器
+///
+///     LockedHeap 是一个所有数据都在栈上的结构体，因此不会涉及到堆内存的分配
+///     #[global_allocator] 这个属性是用于设置 rust 的内存分配器
 ///
 /// @author: tryte
 ///
