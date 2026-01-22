@@ -223,7 +223,7 @@ impl MemorySet {
     ///
     /// @date: 2026/1/21
     fn map_trampoline(&mut self) {
-        // 将 trap.asm 的汇编代码映射到最高虚拟地址，
+        // 将 trap.asm 的汇编代码映射到最高虚拟内存页，因为在 linker.ld 中使用了对齐语句，因此 strampoline 所在地址一定在物理页的起始位置
         self.page_table.map(
             VirtAddr::from(TRAMPOLINE).into(),
             PhysAddr::from(strampoline as *const () as usize).into(),
@@ -231,11 +231,48 @@ impl MemorySet {
         );
     }
 
+    ///
+    /// 将内核代码和内核堆内存映射以恒等映射方式到虚拟内存地址
+    ///
+    /// 此时物理内存如下：
+    ///
+    /// 高地址
+    ///
+    /// ```
+    /// │  空闲物理页
+    /// │
+    /// │  ┌──────────────────────────────┐
+    /// │  │ 内核堆 HEAP_SPACE             │
+    /// │  │                              │
+    /// │  │   MemorySet                  │
+    /// │  │   └── PageTable              │
+    /// │  │   │   └── Vec<FrameTracker>  │
+    /// │  │   └── Vec<MapArea>           │
+    /// │  │       └── MapArea            │
+    /// │  │                              │
+    /// │  │   FrameAllocator 元数据       │
+    /// │  │                              │
+    /// │  └──────────────────────────────┘
+    /// │────────────────────────────────────────
+    /// │  ekernel
+    /// │
+    /// │  .bss
+    /// │  .data
+    /// │  .rodata
+    /// │  .text
+    /// │
+    /// 0x8000_0000  ← 物理内存起点
+    /// 低地址
+    /// ```
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/22
     pub fn new_kernel() -> Self {
         // 内存区域集合
         let mut memory_set = Self::new_bare();
 
-        // 映射跳板内存
+        // 映射跳板所在的内存页
         memory_set.map_trampoline();
 
         // 以恒等映射方式将内核各段代码映射到内存区域描述
@@ -412,9 +449,12 @@ impl MemorySet {
     ///
     /// @date: 2026/1/21
     pub fn activate(&self) {
+        // 当前页表根目录是 self.page_table
         let satp = self.page_table.token();
         unsafe {
+            // 从现在起 所有虚拟地址访问都走新的页表映射
             satp::write(satp);
+            // 清理缓存，确保访问正确
             asm!("sfence.vma");
         }
     }

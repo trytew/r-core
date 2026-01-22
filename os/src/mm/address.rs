@@ -215,6 +215,12 @@ impl From<VirtPageNum> for VirtAddr {
 }
 
 impl From<usize> for VirtAddr {
+    ///
+    /// 根据虚拟地址获取虚拟页号
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/22
     fn from(value: usize) -> Self {
         Self(value & ((1 << VA_WIDTH_SV39) - 1))
     }

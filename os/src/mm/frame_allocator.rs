@@ -27,7 +27,7 @@ pub struct FrameTracker {
 
 impl FrameTracker {
     ///
-    /// 初始化页表
+    /// 初始化页帧空间
     ///
     /// @author: tryte
     ///
@@ -121,6 +121,12 @@ impl StackFrameAllocator {
 }
 
 impl FrameAllocator for StackFrameAllocator {
+    ///
+    /// 实例化页帧分配器
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/22
     fn new() -> Self {
         Self {
             current: 0,
@@ -129,6 +135,12 @@ impl FrameAllocator for StackFrameAllocator {
         }
     }
 
+    ///
+    /// 分配物理页帧
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/22
     fn alloc(&mut self) -> Option<PhysPageNum> {
         if let Some(ppn) = self.recycled.pop() {
             // 优先从已回收的页帧中重新分配

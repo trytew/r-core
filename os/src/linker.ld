@@ -10,12 +10,16 @@ SECTIONS
     stext = .;
     .text : {
         *(.text.entry)
+
+        /* 对齐到 4K，给 trampoline 使用 */
         . = ALIGN(4K);
         strampoline = .;
         *(.text.trampoline);
+
         . = ALIGN(4K);
         *(.text .text.*)
     }
+    /* 对齐到 4K，给 etext  使用，etext 和 srodata 地址是同一个 */
     . = ALIGN(4K);
     etext = .;
 
