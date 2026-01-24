@@ -15,6 +15,9 @@ use core::ptr::addr_of_mut;
 #[global_allocator]
 static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
+///
+/// 内核堆空间，它作为全局静态初始化为全0的变量，它在 .bss 数据段中
+///
 static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];
 
 ///

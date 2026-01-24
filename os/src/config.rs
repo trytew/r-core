@@ -4,7 +4,7 @@ pub const USER_STACK_SIZE: usize = 4096 * 2;
 /// 内核栈大小
 pub const KERNEL_STACK_SIZE: usize = 4096 * 2;
 
-/// 内核堆内存大小
+/// 内核堆内存大小 3MB
 pub const KERNEL_HEAP_SIZE: usize = 0x30_0000;
 
 /// 页容量（4kb）

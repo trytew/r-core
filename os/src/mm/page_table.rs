@@ -246,7 +246,7 @@ impl PageTable {
             // 切换到下一级页表的起始物理地址
             ppn = pte.ppn();
         }
-        // 返回二级页表的页表项
+        // 返回三级页表的页表项
         result
     }
 
@@ -281,8 +281,10 @@ impl PageTable {
     ///
     /// @date: 2026/1/15
     pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
+        // 创建页表项
         let pte = self.find_pte_create(vpn).unwrap();
         assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
+        // 设置三级页表项内容
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V)
     }
 

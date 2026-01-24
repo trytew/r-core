@@ -81,19 +81,30 @@ impl MapArea {
         }
     }
 
+    ///
+    /// 根据虚拟内存页新建物理内存页并加入到内存区域描述
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/24
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         let ppn: PhysPageNum;
+        // 判断虚拟内存地址类型分配堆空间并获取物理内存地址
         match self.map_type {
             MapType::Identical => {
+                // 恒等映射，虚拟内存地址 = 物理内存地址
                 ppn = PhysPageNum(vpn.0);
             }
             MapType::Framed => {
+                // 分级页表
                 let frame = frame_alloc().unwrap();
                 ppn = frame.ppn;
                 self.data_frames.insert(vpn, frame);
             }
         }
+        // 添加页表项标志位
         let pte_flags = PTEFlags::from_bits(self.map_perm.bits).unwrap();
+        // 将物理页映射到虚拟内存页
         page_table.map(vpn, ppn, pte_flags);
     }
 
@@ -104,6 +115,12 @@ impl MapArea {
         page_table.unmap(vpn);
     }
 
+    ///
+    /// 批量映射多个物理页到虚拟地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/24
     pub fn map(&mut self, page_table: &mut PageTable) {
         for vpn in self.vpn_range {
             self.map_one(page_table, vpn);
@@ -168,7 +185,7 @@ unsafe extern "C" {
 }
 
 ///
-/// 内存区域集合
+/// 内存区域描述集合
 ///
 /// @author: tryte
 ///
@@ -180,7 +197,7 @@ pub struct MemorySet {
 
 impl MemorySet {
     ///
-    /// 创建内存区域集合
+    /// 创建内存区域描述集合
     ///
     /// @author: tryte
     ///
@@ -196,6 +213,12 @@ impl MemorySet {
         self.page_table.token()
     }
 
+    ///
+    /// 将内存区域描述加入内存区域描述集合
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/24
     pub fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
         map_area.map(&mut self.page_table);
         if let Some(data) = data {
@@ -236,32 +259,34 @@ impl MemorySet {
     ///
     /// 此时物理内存如下：
     ///
-    /// 高地址
+    ///
     ///
     /// ```
-    /// │  空闲物理页
-    /// │
-    /// │  ┌──────────────────────────────┐
-    /// │  │ 内核堆 HEAP_SPACE             │
-    /// │  │                              │
-    /// │  │   MemorySet                  │
-    /// │  │   └── PageTable              │
-    /// │  │   │   └── Vec<FrameTracker>  │
-    /// │  │   └── Vec<MapArea>           │
-    /// │  │       └── MapArea            │
-    /// │  │                              │
-    /// │  │   FrameAllocator 元数据       │
-    /// │  │                              │
-    /// │  └──────────────────────────────┘
-    /// │────────────────────────────────────────
-    /// │  ekernel
-    /// │
-    /// │  .bss
-    /// │  .data
-    /// │  .rodata
-    /// │  .text
-    /// │
-    /// 0x8000_0000  ← 物理内存起点
+    /// 高地址
+    /// |                               |
+    /// |                               |
+    /// | 空闲物理页                      |
+    /// |-------------------------------|-----------
+    /// |                               |
+    /// |         |-- MapArea           |
+    /// |   |-- Vec<MapArea>            |
+    /// |   |                           |
+    /// |   |     |-- Vec<FrameTracker> |
+    /// |   |-- PageTable               |   内核堆
+    /// |   |                           |
+    /// |   MemorySet                   |
+    /// |-------------------------------|
+    /// |   FrameAllocator 元数据        |
+    /// |-------------------------------|-----------
+    /// |  ekernel                      |
+    /// |                               |
+    /// |  .bss                         |
+    /// |  .data                        |   内核代码
+    /// |  .rodata                      |
+    /// |  .text                        |
+    /// |                               |
+    /// | 0x8000_0000 <- 物理内存起点     |
+    /// |                               |
     /// 低地址
     /// ```
     ///
