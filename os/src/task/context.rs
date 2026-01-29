@@ -7,8 +7,8 @@
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct TaskContext {
-    ra: usize, // 记录任务恢复后需要执行的下一条指令地址
-    sp: usize, // 内核栈指针
+    ra: usize,      // 记录任务恢复后需要执行的下一条指令地址
+    sp: usize,      // 应用栈指针
     s: [usize; 12], // s0~s11 寄存器的值
 }
 
