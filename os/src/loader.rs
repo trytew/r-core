@@ -187,7 +187,7 @@ pub fn load_apps() {
 }
 
 ///
-/// 初始化 app
+/// 初始化应用上下文
 ///
 /// @author: tryte
 ///
