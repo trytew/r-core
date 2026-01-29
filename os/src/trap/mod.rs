@@ -47,6 +47,13 @@ pub fn enable_timer_interrupt() {
     }
 }
 
+///
+/// “陷入”处理函数
+///
+///
+/// @author: tryte
+///
+/// @date: 2026/1/29
 #[unsafe(no_mangle)]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let scause = scause::read();
