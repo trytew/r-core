@@ -11,12 +11,12 @@ use riscv::register::sstatus::{SPP, Sstatus};
 /// @date: 2025/12/11
 #[repr(C)]
 pub struct TrapContext {
-    // 寄存器，32个
-    pub x: [usize; 32],
-    // CSR 状态
-    pub sstatus: Sstatus,
-    // CSR spec，这里记录的是应用程序的执行地址，非常重要
-    pub sepc: usize,
+    pub x: [usize; 32],      // 寄存器，32个
+    pub sstatus: Sstatus,    // CSR 状态
+    pub sepc: usize,         // CSR spec，这里记录的是应用程序的执行地址，非常重要
+    pub kernel_satp: usize,  // 内核页表地址
+    pub kernel_sp: usize,    // 内核栈顶
+    pub trap_handler: usize, // trap_handler 处理函数地址
 }
 
 impl TrapContext {
@@ -36,7 +36,14 @@ impl TrapContext {
     /// @author: tryte
     ///
     /// @date: 2025/12/9
-    pub fn app_init_context(entry: usize, sp: usize) -> Self {
+    pub fn app_init_context(
+        entry: usize,
+        sp: usize,
+        kernel_satp: usize,
+        kernel_sp: usize,
+        trap_handler: usize,
+    ) -> Self {
+        // 读取 CSR 状态
         let mut sstatus = sstatus::read();
         // 设置特权级为用户级，该设置不是立马生效，而是等 sret 指令执行返回后生效
         sstatus.set_spp(SPP::User);
@@ -45,6 +52,9 @@ impl TrapContext {
             x: [0; 32],
             sstatus,
             sepc: entry, // 记录应用的起始执行地址，每次都会通过 trap.asm 重置指令执行寄存器的值
+            kernel_satp,
+            kernel_sp,
+            trap_handler,
         };
         // 记录用户栈栈顶
         //    high addr
