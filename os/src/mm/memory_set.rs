@@ -518,10 +518,10 @@ impl MemorySet {
     ///
     /// @date: 2026/1/21
     pub fn activate(&self) {
-        // 当前页表根目录是 self.page_table
+        // 页表根地址是 self.page_table.root_ppn
         let satp = self.page_table.token();
         unsafe {
-            // 从现在起 所有虚拟地址访问都走新的页表映射
+            // 从现在起 所有内存地址都按虚拟地址多级页表映射方式访问
             satp::write(satp);
             // 清理缓存，确保访问正确
             asm!("sfence.vma");
