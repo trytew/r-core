@@ -123,6 +123,7 @@ impl PhysPageNum {
     /// @date: 2026/1/9
     pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
         let pa: PhysAddr = (*self).into();
+        // 因为一个页表项是8字节=64位，因此一个 usize 刚好就是一个页表项，作为数组取512个元素就是一个页表项
         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
     }
 

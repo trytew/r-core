@@ -1,8 +1,6 @@
 use super::{PTEFlags, PhysPageNum, VPNRange, VirtPageNum};
 use crate::boards::MEMORY_END;
-use crate::config::{
-    KERNEL_STACK_SIZE, MMIO, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE,
-};
+use crate::config::{MMIO, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
 use crate::mm::PageTable;
 use crate::mm::address::{PhysAddr, StepByOne, VirtAddr};
 use crate::mm::frame_allocator::{FrameTracker, frame_alloc};
@@ -149,23 +147,34 @@ impl MapArea {
         self.vpn_range = VPNRange::new(self.vpn_range.get_start(), new_end);
     }
 
+    ///
+    /// 复制数据到内存地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/29
     pub fn copy_data(&mut self, page_table: &PageTable, data: &[u8]) {
         assert_eq!(self.map_type, MapType::Framed);
         let mut start: usize = 0;
+        // 获取内存区域的起始页
         let mut current_vpn = self.vpn_range.get_start();
         let len = data.len();
         loop {
+            // 将数据整页切割
             let src = &data[start..len.min(start + PAGE_SIZE)];
+            // 查找虚拟内存页对应的物理内存页
             let dst = &mut page_table
                 .translate(current_vpn)
                 .unwrap()
                 .ppn()
                 .get_bytes_array()[..src.len()];
+            // 将数据拷贝到指定位置
             dst.copy_from_slice(src);
             start += PAGE_SIZE;
             if start >= len {
                 break;
             }
+            // 获取下一页
             current_vpn.step();
         }
     }
@@ -214,7 +223,7 @@ impl MemorySet {
     }
 
     ///
-    /// 将内存区域描述加入内存区域描述集合
+    /// 将内容复制到指定内存区域，并添加到内存区域描述集合
     ///
     /// @author: tryte
     ///
@@ -262,32 +271,67 @@ impl MemorySet {
     ///
     ///
     /// ```
-    /// 高地址
-    /// |                               |
-    /// |                               |
-    /// | 空闲物理页                      |
-    /// |-------------------------------|-----------
-    /// |                               |
-    /// |         |-- MapArea           |
-    /// |   |-- Vec<MapArea>            |
-    /// |   |                           |
-    /// |   |     |-- Vec<FrameTracker> |
-    /// |   |-- PageTable               |   内核堆
-    /// |   |                           |
-    /// |   MemorySet                   |
-    /// |-------------------------------|
-    /// |   FrameAllocator 元数据        |
-    /// |-------------------------------|-----------
-    /// |  ekernel                      |
-    /// |                               |
-    /// |  .bss                         |
-    /// |  .data                        |   内核代码
-    /// |  .rodata                      |
-    /// |  .text                        |
-    /// |                               |
-    /// | 0x8000_0000 <- 物理内存起点     |
-    /// |                               |
     /// 低地址
+    /// |                                           |
+    /// |                                           |
+    /// |-------------------------------------------|--> 内核空间起始
+    /// | .text   内核代码                            |
+    /// |   |                                       |
+    /// |   |--trampoline                           |
+    /// |                                           |
+    /// | .rodata 常量                               |
+    /// | .data   已初始化全局变量                     |
+    /// | .bss    零初始化全局变量                     |
+    /// |   |                                       |
+    /// |   |-- HEAP_SPACE [3MB]（内核内存分配区）      |
+    /// |   |    |                                  |
+    /// |   |    |  (KERNEL_SPACE.areas)            |
+    /// |   |    |--Vec<MapArea> 的元素              |
+    /// |   |    |   |                              |
+    /// |   |    |   |--MapArea                     |
+    /// |   |    |       |                          |
+    /// |   |    |       |--vpn_range               |
+    /// |   |    |       |                          |
+    /// |   |    |       |--data_frames (BTreeMap)  |
+    /// |   |    |       |   |                      |
+    /// |   |    |       |   |-- BTreeMap Item      |
+    /// |   |    |       |                          |
+    /// |   |    |       |--map_type                |
+    /// |   |    |       |                          |
+    /// |   |    |       |--map_perm                |
+    /// |   |    |                                  |
+    /// |   |    |  (KERNEL_SPACE.PageTable.frames) |
+    /// |   |    |--Vec<FrameTracker> 的元素         |
+    /// |   |    |   |                              |
+    /// |   |    |   |--FrameTracker                |
+    /// |   |                                       |
+    /// |   |-- FRAME_ALLOCATOR                     |
+    /// |   |                                       |
+    /// |   |-- KERNEL_SPACE                        |
+    /// |        |                                  |
+    /// |        |-- PageTable                      |
+    /// |        |    |                             |
+    /// |        |    |-- root_ppn                  |
+    /// |        |    |                             |
+    /// |        |    |-- frames (Vec)              |
+    /// |        |                                  |
+    /// |        |-- areas (Vec<MapArea>)           |
+    /// |                                           |
+    /// | ekernel                                   |
+    /// |-------------------------------------------|--> 内核堆起始
+    /// | | 一级页表页（4KB）                          |
+    /// | ----------------------------------------  |
+    /// | | 内存页（4KB）                             |
+    /// | ----------------------------------------  |
+    /// | | 内存页（4KB）                             |
+    /// | ----------------------------------------  |
+    /// | | ...                                     |
+    /// |                                           |
+    /// |（内核空间和内核堆一共占用 128MB 物理内存）       |
+    /// | MEMORY_END                                |    内核堆结束/
+    /// |-------------------------------------------|--> 内核空间结束
+    /// |                                           |
+    /// 高地址
     /// ```
     ///
     /// @author: tryte
