@@ -16,16 +16,17 @@ use lazy_static::lazy_static;
 use riscv::register::satp;
 
 lazy_static! {
+    // 实例化内核空间
     pub static ref KERNEL_SPACE: Arc<UpSafeCell<MemorySet>> =
         Arc::new(unsafe { UpSafeCell::new(MemorySet::new_kernel()) });
 }
 
 bitflags! {
     pub struct MapPermission: u8 {
-        const R = 1 << 1;
-        const W = 1 << 2;
-        const X = 1 << 3;
-        const U = 1 << 4;
+        const R = 1 << 1; // 可读
+        const W = 1 << 2; // 可写
+        const X = 1 << 3; // 可执行
+        const U = 1 << 4; // 代表 CPU 可以在 U 特权级也就是执行应用代码的时候访问它们
     }
 }
 
@@ -218,6 +219,12 @@ impl MemorySet {
         }
     }
 
+    ///
+    /// 获取内存区域集合的 mmu 设置
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/30
     pub fn token(&self) -> usize {
         self.page_table.token()
     }
@@ -236,6 +243,12 @@ impl MemorySet {
         self.areas.push(map_area);
     }
 
+    ///
+    /// 根据虚拟地址创建内存区域
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/30
     pub fn insert_framed_area(
         &mut self,
         start_va: VirtAddr,
@@ -328,6 +341,7 @@ impl MemorySet {
     /// | | ...                                     |
     /// |                                           |
     /// |（内核空间和内核堆一共占用 128MB 物理内存）       |
+    /// |（内核堆是应用程序和内核都一起共用的内存空间）      |
     /// | MEMORY_END                                |    内核堆结束/
     /// |-------------------------------------------|--> 内核空间结束
     /// |                                           |
@@ -338,7 +352,7 @@ impl MemorySet {
     ///
     /// @date: 2026/1/22
     pub fn new_kernel() -> Self {
-        // 内存区域集合
+        // 创建内存区域集合
         let mut memory_set = Self::new_bare();
 
         // 映射跳板所在的内存页
@@ -434,21 +448,55 @@ impl MemorySet {
         memory_set
     }
 
+    ///
+    /// 将应用程序elf映射到虚拟内存
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/30
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
+        // 创建内存区域集合
         let mut memory_set = Self::new_bare();
+
+        // 映射跳板所在的内存页
         memory_set.map_trampoline();
 
+        // 读取应用程序
         let elf = xmas_elf::ElfFile::new(elf_data).unwrap();
+
+        // 判断数据是否为应用程序
         let elf_header = elf.header;
         let magic = elf_header.pt1.magic;
         assert_eq!(magic, [0x7f, 0x45, 0x4c, 0x46], "invalid elf");
+
+        // elf 头表项含义:
+        // 将代码编译成 elf 之后会生成一个程序头表，按程序中是否需要加载进内存、所在虚拟地址、是否能执行、读写、占用内存大小等信息
+        // 将单个或多个 段 合并记录成多个头表项，每个项代表的信息都不一致，如图:
+        //
+        // Segment (PT_LOAD #0)
+        // |--.text
+        // |--.rodata
+        // |--.eh_frame
+        // |
+        // Segment (PT_LOAD #1)
+        // |--.data
+        // |--.bss
+
+        // 获取 elf 文件的头表项
         let ph_count = elf_header.pt2.ph_count();
         let mut max_end_vpn = VirtPageNum(0);
         for i in 0..ph_count {
+            // 每个头表项都分为：
+            // Section Header：给链接器 / 调试器用
+            // Program Header：给加载器（内核）用
             let ph = elf.program_header(i).unwrap();
+            // 仅有需要 Load 类型的段才需要加载进内存
             if ph.get_type().unwrap() == xmas_elf::program::Type::Load {
+                // 获取每段虚拟地址的起始和结束
                 let start_va: VirtAddr = (ph.virtual_addr() as usize).into();
                 let end_va: VirtAddr = ((ph.virtual_addr() + ph.mem_size()) as usize).into();
+
+                // 每段都加上 U 标志，并加上其他权限
                 let mut map_perm = MapPermission::U;
                 let ph_flags = ph.flags();
                 if ph_flags.is_read() {
@@ -460,19 +508,26 @@ impl MemorySet {
                 if ph_flags.is_execute() {
                     map_perm |= MapPermission::X;
                 }
+
+                // 创建内存区域描述
                 let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
+                // 获取区域的结束地址
                 max_end_vpn = map_area.vpn_range.get_end();
+                // 将段内容按虚拟内存地址加载进对应的物理页
                 memory_set.push(
                     map_area,
                     Some(&elf.input[ph.offset() as usize..(ph.offset() + ph.file_size()) as usize]),
                 );
             }
         }
+        // 用已使用的虚拟地址结束地址作为程序栈底
         let max_end_va: VirtAddr = max_end_vpn.into();
         let mut user_stack_bottom: usize = max_end_va.into();
 
-        // 灰页
+        // 灰页，不进入分页内存寻址
         user_stack_bottom += PAGE_SIZE;
+
+        // 用户栈顶（8KB）
         let user_stack_top = user_stack_bottom + USER_STACK_SIZE;
         memory_set.push(
             MapArea::new(
@@ -484,6 +539,7 @@ impl MemorySet {
             None,
         );
 
+        // 栈顶占位，长度为 0，不映射物理页
         memory_set.push(
             MapArea::new(
                 user_stack_top.into(),
@@ -494,6 +550,7 @@ impl MemorySet {
             None,
         );
 
+        // 映射“陷入”函数处理地址
         memory_set.push(
             MapArea::new(
                 TRAP_CONTEXT.into(),
@@ -505,9 +562,9 @@ impl MemorySet {
         );
 
         (
-            memory_set,
-            user_stack_top,
-            elf_header.pt2.entry_point() as usize,
+            memory_set,                            // 应用内存区域集合
+            user_stack_top,                        // 用户栈顶
+            elf_header.pt2.entry_point() as usize, // 应用入口地址
         )
     }
 
@@ -531,6 +588,12 @@ impl MemorySet {
         }
     }
 
+    ///
+    /// 根据虚拟地址获取页表项
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/30
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
     }

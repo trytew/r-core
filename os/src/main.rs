@@ -14,6 +14,7 @@ mod task;
 mod timer;
 mod trap;
 
+use crate::trap::trap_return;
 use core::arch::global_asm;
 
 extern crate alloc;
@@ -39,8 +40,14 @@ fn clear_bss() {
         fn ebss();
     }
 
-    (sbss as *const () as usize..ebss as *const () as usize)
-        .for_each(|a| unsafe { (a as *mut u8).write_volatile(0) })
+    // (sbss as *const () as usize..ebss as *const () as usize)
+    //     .for_each(|a| unsafe { (a as *mut u8).write_volatile(0) })
+
+    // 将 bss 段数据置空，与上面代码效果一致
+    unsafe {
+        core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
+            .fill(0);
+    }
 
     // 上面和以下的两种方式只能全局使用一种，如果 fn sbss() 和 static mut sbss 混用则会报符号命名重复
     // unsafe extern "C" {
@@ -65,6 +72,13 @@ fn rust_main() -> ! {
 
     mm::init();
     mm::remap_test();
+
+    trap::init();
+    trap::enable_timer_interrupt();
+
+    timer::set_next_tigger();
+
+    task::run_first_task();
 
     println!("Hello world!");
     panic!("Shutdown machine!");

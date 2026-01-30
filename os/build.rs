@@ -1,5 +1,5 @@
-use std::fs::read_dir;
 use std::fs::File;
+use std::fs::read_dir;
 use std::io::Result;
 use std::io::Write;
 
@@ -32,7 +32,8 @@ fn insert_app_data() -> Result<()> {
 
     writeln!(
         f,
-        r#"    .align 3
+        r#"
+    .align 3
     .section .data
     .globl _num_app
 _num_app:
@@ -53,8 +54,9 @@ _num_app:
     .section .data
     .globl app_{0}_start
     .globl app_{0}_end
+    .align 3
 app_{0}_start:
-    .incbin "{2}{1}.bin"
+    .incbin "{2}{1}"
 app_{0}_end:"#,
             idx, app, TARGET_PATH,
         )?;

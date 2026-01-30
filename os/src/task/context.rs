@@ -1,3 +1,5 @@
+use crate::trap::trap_return;
+
 ///
 /// 任务上下文
 ///
@@ -27,18 +29,9 @@ impl TaskContext {
         }
     }
 
-    ///
-    /// 设置 __restore 函数位置
-    ///
-    /// @author: tryte
-    ///
-    /// @date: 2025/12/17
-    pub fn goto_restore(k_stack_ptr: usize) -> Self {
-        unsafe extern "C" {
-            unsafe fn __restore();
-        }
+    pub fn goto_trap_return(k_stack_ptr: usize) -> Self {
         Self {
-            ra: __restore as *const () as usize,
+            ra: trap_return as usize,
             sp: k_stack_ptr,
             s: [0; 12],
         }

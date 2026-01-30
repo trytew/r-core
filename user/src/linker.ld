@@ -11,15 +11,20 @@ SECTIONS
         *(.text .text.*)
     }
     . = ALIGN(4k);
+
     .rodata : {
         *(.rodata .rodata.*)
+        *(.srodata .srodata.*)
     }
     . = ALIGN(4k);
+
     .data : {
         *(.data .data.*)
+        *(.sdata .sdata.*)
     }
     .bss : {
         *(.bss .bss.*)
+        *(.sbss .sbss.*)
     }
     /DISCARD/ : {
         *(.en_frame)

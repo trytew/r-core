@@ -1,12 +1,14 @@
 mod context;
 
+use crate::config::{TRAMPOLINE, TRAP_CONTEXT};
 use crate::println;
 use crate::syscall::sys_call;
-use crate::task::exit_current_and_run_next;
 use crate::task::suspend_current_and_run_next;
+use crate::task::{current_user_token, exit_current_and_run_next};
 use crate::timer::set_next_tigger;
 pub use context::TrapContext;
-use core::arch::global_asm;
+use core::arch::{asm, global_asm};
+use riscv::register::medeleg::set_user_env_call;
 use riscv::register::mtvec::TrapMode;
 use riscv::register::scause;
 use riscv::register::scause::Exception;
@@ -19,20 +21,42 @@ use riscv::register::stvec;
 global_asm!(include_str!("./trap.asm"));
 
 ///
-/// 加载用户态寄存器状态保存函数
+/// 初始化“陷入”处理
 ///
 /// @author: tryte
 ///
-/// @date: 2025/12/10
+/// @date: 2026/1/30
 pub fn init() {
-    unsafe extern "C" {
-        safe fn __alltraps();
-    }
+    set_kernel_trap_entry();
+}
 
+///
+/// 设置内核态触发“陷入”的处理函数
+///
+/// @author: tryte
+///
+/// @date: 2026/1/30
+fn set_kernel_trap_entry() {
     unsafe {
-        // 设置 Trap 处理入口地址
-        stvec::write(__alltraps as *const () as usize, TrapMode::Direct);
+        stvec::write(trap_from_kernel as usize, TrapMode::Direct);
     }
+}
+
+///
+/// 设置用户态触发“陷入”的处理函数
+///
+/// @author: tryte
+///
+/// @date: 2026/1/30
+fn set_user_trap_entry() {
+    unsafe {
+        stvec::write(TRAMPOLINE, TrapMode::Direct);
+    }
+}
+
+#[unsafe(no_mangle)]
+fn trap_from_kernel() -> ! {
+    panic!("a trap from kernel!");
 }
 
 ///
@@ -85,4 +109,26 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         }
     }
     cx
+}
+
+#[unsafe(no_mangle)]
+pub fn trap_return() -> ! {
+    set_user_trap_entry();
+    let trap_cx_ptr = TRAP_CONTEXT;
+    let user_satp = current_user_token();
+    unsafe extern "C" {
+        fn __alltraps();
+        fn __restore();
+    }
+    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    unsafe {
+        asm!(
+            "fence.i",
+            "jr {restore_va}",
+            restore_va = in(reg) restore_va,
+            in("a0") trap_cx_ptr,
+            in("a1") user_satp,
+            options(noreturn),
+        )
+    }
 }

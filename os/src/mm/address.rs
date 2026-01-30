@@ -174,6 +174,7 @@ impl VirtAddr {
         if self.0 == 0 {
             VirtPageNum(0)
         } else {
+            // 页号从0开始编号，-1是为了防止等于临界值时多分了一页空页，如：self.0=4096
             VirtPageNum((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
         }
     }

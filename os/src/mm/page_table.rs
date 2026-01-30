@@ -3,6 +3,7 @@ use crate::mm::address::VirtPageNum;
 use crate::mm::frame_allocator::FrameTracker;
 use crate::mm::frame_allocator::frame_alloc;
 use crate::mm::memory_set::MapType::Framed;
+use crate::mm::{StepByOne, VirtAddr};
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
@@ -338,4 +339,26 @@ impl PageTable {
         // 开启 MMU，使用分页机制并设置根页表所在的物理页号
         8usize << 60 | self.root_ppn.0
     }
+}
+
+pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+    let page_table = PageTable::from_token(token);
+    let mut start = ptr as usize;
+    let end = start + len;
+    let mut v = Vec::new();
+    while start < end {
+        let start_va = VirtAddr::from(start);
+        let mut vpn = start_va.floor();
+        let ppn = page_table.translate(vpn).unwrap().ppn();
+        vpn.step();
+        let mut end_va: VirtAddr = vpn.into();
+        end_va = end_va.min(VirtAddr::from(end));
+        if end_va.page_offset() == 0 {
+            v.push(&mut ppn.get_bytes_array()[start_va.page_offset()..]);
+        } else {
+            v.push(&mut ppn.get_bytes_array()[start_va.page_offset()..end_va.page_offset()]);
+        }
+        start = end_va.into();
+    }
+    v
 }

@@ -1,6 +1,4 @@
-use crate::config::MAX_APP_NUM;
-use crate::loader::get_num_app;
-use crate::loader::init_app_cx;
+use crate::loader::{get_app_data, get_num_app};
 use crate::println;
 use crate::sbi::shutdown;
 use crate::sync::UpSafeCell;
@@ -8,6 +6,8 @@ use crate::task::context::TaskContext;
 use crate::task::switch::__switch;
 use crate::task::task::TaskControlBlock;
 use crate::task::task::TaskStatus;
+use crate::trap::TrapContext;
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
 mod context;
@@ -17,19 +17,15 @@ mod task;
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
 
+        println!("init TASK_MANAGER");
+
         // 获取 app 数量
         let num_app = get_num_app();
 
-        // 实例化任务上下文
-        let mut tasks = [TaskControlBlock{
-            task_cx: TaskContext::zero_init(),
-            task_status: TaskStatus::UnInit,
-        }; MAX_APP_NUM];
-
-        // 初始化任务
-        for (i, task) in tasks.iter_mut().enumerate() {
-            task.task_cx = TaskContext::goto_restore(init_app_cx(i));
-            task.task_status = TaskStatus::Ready;
+        // 初始化应用
+        let mut tasks: Vec<TaskControlBlock> = Vec::new();
+        for i in 0..num_app {
+            tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
 
         TaskManager{
@@ -51,18 +47,18 @@ lazy_static! {
 ///
 /// @date: 2025/12/18
 pub struct TaskManagerInner {
-    tasks: [TaskControlBlock; MAX_APP_NUM], // 任务列表（进程列表）
-    current_task: usize, // 当前任务编号
+    tasks: Vec<TaskControlBlock>, // 任务列表（应用列表）
+    current_task: usize,          // 当前任务编号
 }
 
 ///
-/// 任务管理器
+/// 应用管理器
 ///
 /// @author: tryte
 ///
 /// @date: 2025/12/18
 pub struct TaskManager {
-    num_app: usize, // 任务总数量
+    num_app: usize,                      // 任务总数量
     inner: UpSafeCell<TaskManagerInner>, // 获取可变值
 }
 
@@ -122,12 +118,24 @@ impl TaskManager {
         let inner = self.inner.exclusive_access();
         let current = inner.current_task;
         ((current + 1)..(current + self.num_app + 1))
-            .map(|id| {
-                id % self.num_app
-            })
-            .find(|id| {
-                inner.tasks[*id].task_status == TaskStatus::Ready
-            })
+            .map(|id| id % self.num_app)
+            .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
+    }
+
+    fn get_current_token(&self) -> usize {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].get_user_token()
+    }
+
+    fn get_current_trap_cx(&self) -> &'static mut TrapContext {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].get_trap_cx()
+    }
+
+    pub fn change_current_program_brk(&self, size: i32) -> Option<usize> {
+        let mut inner = self.inner.exclusive_access();
+        let cur = inner.current_task;
+        inner.tasks[cur].change_program_brk(size)
     }
 
     ///
@@ -216,4 +224,16 @@ pub fn suspend_current_and_run_next() {
 pub fn exit_current_and_run_next() {
     mark_current_exited();
     run_next_task();
+}
+
+pub fn current_user_token() -> usize {
+    TASK_MANAGER.get_current_token()
+}
+
+pub fn current_trap_cx() -> &'static mut TrapContext {
+    TASK_MANAGER.get_current_trap_cx()
+}
+
+pub fn change_program_brk(size: i32) -> Option<usize> {
+    TASK_MANAGER.change_current_program_brk(size)
 }

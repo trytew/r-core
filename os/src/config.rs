@@ -16,8 +16,15 @@ pub const PAGE_SIZE_BITS: usize = 0x0C;
 /// 虚拟地址最高位
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 
+/// “陷入”处理函数地址
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
 
+///
+/// 获取应用内核栈底和栈顶
+///
+/// @author: tryte
+///
+/// @date: 2026/1/30
 pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
     let top = TRAMPOLINE - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE);
     let bottom = top - KERNEL_STACK_SIZE;
