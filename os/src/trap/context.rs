@@ -4,6 +4,9 @@ use riscv::register::sstatus::{SPP, Sstatus};
 ///
 /// Trap 上下文
 ///
+/// “用户态 → 内核态”这一瞬间，CPU 的现场
+/// 把用户程序的全部寄存器状态保存下来，以后还能原样回去
+///
 /// 因为内存布局使用 C
 ///
 /// @author: tryte
@@ -13,7 +16,7 @@ use riscv::register::sstatus::{SPP, Sstatus};
 pub struct TrapContext {
     pub x: [usize; 32],      // 寄存器，32个
     pub sstatus: Sstatus,    // CSR 状态
-    pub sepc: usize,         // CSR spec，这里记录的是应用程序的执行地址，非常重要
+    pub sepc: usize,         // CSR spec，这里记录的是 sret 之后需要执行的指令地址，非常重要
     pub kernel_satp: usize,  // 内核页表地址
     pub kernel_sp: usize,    // 内核栈顶
     pub trap_handler: usize, // trap_handler 处理函数地址
@@ -51,21 +54,12 @@ impl TrapContext {
         let mut cx = Self {
             x: [0; 32],
             sstatus,
-            sepc: entry, // 记录应用的起始执行地址，每次都会通过 trap.asm 重置指令执行寄存器的值
+            sepc: entry, // 记录应用的起始执行地址，在 __restore 执行后生效
             kernel_satp,
             kernel_sp,
             trap_handler,
         };
         // 记录用户栈栈顶
-        //    high addr
-        // |             | 栈底
-        // |     8kb     |
-        // |-------------| --> sp 栈顶
-        // |             |
-        // |             |
-        // |             |
-        // |             | boot_stack_lower_bound 栈的下限位置
-        //    lower addr
         cx.set_sp(sp);
         cx
     }

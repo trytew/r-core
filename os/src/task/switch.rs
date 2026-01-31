@@ -11,5 +11,8 @@ unsafe extern "C" {
     /// @author: tryte
     ///
     /// @date: 2025/12/18
-    pub unsafe fn __switch(current_task_cx_ptr: *mut TaskContext, next_task_cx_ptr: *const TaskContext);
+    pub unsafe fn __switch(
+        current_task_cx_ptr: *mut TaskContext,
+        next_task_cx_ptr: *const TaskContext,
+    );
 }

@@ -1,7 +1,7 @@
 use crate::trap::trap_return;
 
 ///
-/// 任务上下文
+/// 应用上下文
 ///
 /// @author: tryte
 ///
@@ -10,7 +10,7 @@ use crate::trap::trap_return;
 #[repr(C)]
 pub struct TaskContext {
     ra: usize,      // 记录任务恢复后需要执行的下一条指令地址
-    sp: usize,      // 应用栈指针
+    sp: usize,      // 应用栈栈顶指针
     s: [usize; 12], // s0~s11 寄存器的值
 }
 
@@ -29,6 +29,12 @@ impl TaskContext {
         }
     }
 
+    ///
+    /// 初始化应用上下文
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/31
     pub fn goto_trap_return(k_stack_ptr: usize) -> Self {
         Self {
             ra: trap_return as usize,

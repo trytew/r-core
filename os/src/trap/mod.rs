@@ -3,7 +3,7 @@ mod context;
 use crate::config::{TRAMPOLINE, TRAP_CONTEXT};
 use crate::println;
 use crate::syscall::sys_call;
-use crate::task::suspend_current_and_run_next;
+use crate::task::{current_trap_cx, suspend_current_and_run_next};
 use crate::task::{current_user_token, exit_current_and_run_next};
 use crate::timer::set_next_tigger;
 pub use context::TrapContext;
@@ -79,7 +79,9 @@ pub fn enable_timer_interrupt() {
 ///
 /// @date: 2026/1/29
 #[unsafe(no_mangle)]
-pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+pub fn trap_handler() -> ! {
+    set_kernel_trap_entry();
+    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
 
@@ -88,7 +90,10 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             cx.sepc += 4;
             cx.x[10] = sys_call(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
         }
-        Trap::Exception(Exception::StoreFault) | Trap::Exception(Exception::StorePageFault) => {
+        Trap::Exception(Exception::StoreFault)
+        | Trap::Exception(Exception::StorePageFault)
+        | Trap::Exception(Exception::LoadFault)
+        | Trap::Exception(Exception::LoadPageFault) => {
             println!("[kernel] PageFault in application, kernel killed it.\n");
             exit_current_and_run_next();
         }
@@ -108,13 +113,22 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             )
         }
     }
-    cx
+    trap_return()
 }
 
+///
+/// 处理用户态触发“陷入”后的返回
+///
+/// @author: tryte
+///
+/// @date: 2026/1/31
 #[unsafe(no_mangle)]
 pub fn trap_return() -> ! {
+    // 设置应用用户态触发“陷入”时的处理函数地址
     set_user_trap_entry();
+    // 获取当前应用的寄存器状态
     let trap_cx_ptr = TRAP_CONTEXT;
+    // 获取用户空间的 MMU 设置
     let user_satp = current_user_token();
     unsafe extern "C" {
         fn __alltraps();
@@ -123,11 +137,15 @@ pub fn trap_return() -> ! {
     let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
     unsafe {
         asm!(
+            // 刷新指令缓存
             "fence.i",
-            "jr {restore_va}",
-            restore_va = in(reg) restore_va,
+            // 跳转到 __restore 函数入口，{restore_va} 是模板参数，紧接着后面的参数是用来替换这个模板的
+            "jr {restore_va}", restore_va = in(reg) restore_va,
+            // 将“陷入”上下文作为参数传入
             in("a0") trap_cx_ptr,
+            // 将用户空间的 MMU 设置作为参数传入
             in("a1") user_satp,
+            // 告知 rust 该函数没有返回
             options(noreturn),
         )
     }

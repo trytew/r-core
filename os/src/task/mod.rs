@@ -74,7 +74,7 @@ impl TaskManager {
         let task_0 = &mut inner.tasks[0];
         // 设置第一个应用状态为运行中
         task_0.task_status = TaskStatus::Running;
-        // 获取第一个任务的上下文
+        // 获取第一个应用的上下文
         let next_task_cx_ptr = &task_0.task_cx as *const TaskContext;
         drop(inner);
         let mut unused = TaskContext::zero_init();
@@ -122,6 +122,12 @@ impl TaskManager {
             .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
     }
 
+    ///
+    /// 获取当前应用的 MMU 设置
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/31
     fn get_current_token(&self) -> usize {
         let inner = self.inner.exclusive_access();
         inner.tasks[inner.current_task].get_user_token()

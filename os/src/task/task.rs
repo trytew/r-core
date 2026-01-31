@@ -5,14 +5,16 @@ use crate::task::context::TaskContext;
 use crate::trap::{TrapContext, trap_handler};
 
 ///
-/// 任务状态（进程状态）
+/// 应用状态
+///
+/// “内核里任务切换时”，内核线程自己的现场
+/// 保存当前内核执行流的状态，方便以后从这里继续跑
 ///
 /// @author: tryte
 ///
 /// @date: 2025/12/18
 #[derive(Copy, Clone, PartialEq)]
 pub enum TaskStatus {
-    UnInit,  // 未初始化
     Ready,   // 待运行
     Running, // 运行中
     Exited,  // 已退出
@@ -46,6 +48,12 @@ impl TaskControlBlock {
         self.trap_cx_ppn.get_mut()
     }
 
+    ///
+    /// 获取用户空间的 MMU 设置
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/31
     pub fn get_user_token(&self) -> usize {
         self.memory_set.token()
     }
@@ -60,7 +68,7 @@ impl TaskControlBlock {
         // 获取应用内存区域集合
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
 
-        // 获取“陷入”处理函数的物理地址
+        // 获取“陷入”上下文的物理地址
         let trap_cx_ppn = memory_set
             .translate(VirtAddr::from(TRAP_CONTEXT).into())
             .unwrap()
@@ -88,7 +96,7 @@ impl TaskControlBlock {
             program_brk: user_sp,
         };
 
-        // 实例化应用上下文
+        // 创建“陷入”上下文
         let trap_cx = task_control_block.get_trap_cx();
         *trap_cx = TrapContext::app_init_context(
             entry_point,

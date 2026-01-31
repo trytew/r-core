@@ -564,7 +564,7 @@ impl MemorySet {
         (
             memory_set,                            // 应用内存区域集合
             user_stack_top,                        // 用户栈顶
-            elf_header.pt2.entry_point() as usize, // 应用入口地址
+            elf_header.pt2.entry_point() as usize, // 应用的入口虚拟内存地址
         )
     }
 
