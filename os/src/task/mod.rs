@@ -133,6 +133,12 @@ impl TaskManager {
         inner.tasks[inner.current_task].get_user_token()
     }
 
+    ///
+    /// 获取当前应用“陷入”处理函数的物理地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/2
     fn get_current_trap_cx(&self) -> &'static mut TrapContext {
         let inner = self.inner.exclusive_access();
         inner.tasks[inner.current_task].get_trap_cx()
@@ -159,6 +165,7 @@ impl TaskManager {
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
 
+            // 由于 __switch 走完之后就会直接跳转到别的应用执行，因此该函数不会返回，要提前 drop 对象，否则会有生命周期错误的影响
             drop(inner);
             unsafe {
                 __switch(current_task_cx_ptr, next_task_cx_ptr);
@@ -232,10 +239,22 @@ pub fn exit_current_and_run_next() {
     run_next_task();
 }
 
+///
+/// 获取当前应用的 MMU 设置
+///
+/// @author: tryte
+///
+/// @date: 2026/2/2
 pub fn current_user_token() -> usize {
     TASK_MANAGER.get_current_token()
 }
 
+///
+/// 获取当前应用“陷入”处理函数的物理地址
+///
+/// @author: tryte
+///
+/// @date: 2026/2/2
 pub fn current_trap_cx() -> &'static mut TrapContext {
     TASK_MANAGER.get_current_trap_cx()
 }

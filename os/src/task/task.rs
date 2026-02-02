@@ -30,7 +30,7 @@ pub struct TaskControlBlock {
     pub task_status: TaskStatus,  // 应用状态
     pub task_cx: TaskContext,     // 应用上下文
     pub memory_set: MemorySet,    // 应用内存区域
-    pub trap_cx_ppn: PhysPageNum, // 应用“陷入”处理函数的物理地址
+    pub trap_cx_ppn: PhysPageNum, // 应用“陷入”上下文的物理地址
     #[allow(unused)]
     pub base_size: usize,
     pub heap_bottom: usize,
@@ -39,7 +39,7 @@ pub struct TaskControlBlock {
 
 impl TaskControlBlock {
     ///
-    /// 返回应用“陷入”处理函数的物理地址
+    /// 返回应用“陷入”上下文的物理地址
     ///
     /// @author: tryte
     ///
@@ -68,7 +68,7 @@ impl TaskControlBlock {
         // 获取应用内存区域集合
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
 
-        // 获取“陷入”上下文的物理地址
+        // 获取应用“陷入”上下文的物理地址
         let trap_cx_ppn = memory_set
             .translate(VirtAddr::from(TRAP_CONTEXT).into())
             .unwrap()
@@ -96,7 +96,9 @@ impl TaskControlBlock {
             program_brk: user_sp,
         };
 
-        // 创建“陷入”上下文
+        // 创建“陷入”上下文，这里看起来是在直接操作物理地址，但是因为在内核态的情况下（已经使用了内核页表的 MMU 设置），所以这里还是使用
+        // 虚拟内存地址访问，因为内核态下页表的虚拟内存地址使用的恒等映射。
+        // 这里记录“陷入”上下文的物理地址也是因为这个上下文只在内核态下会用到
         let trap_cx = task_control_block.get_trap_cx();
         *trap_cx = TrapContext::app_init_context(
             entry_point,
@@ -109,6 +111,12 @@ impl TaskControlBlock {
         task_control_block
     }
 
+    ///
+    /// 堆虚拟地址空间管理
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/2
     pub fn change_program_brk(&mut self, size: i32) -> Option<usize> {
         let old_break = self.program_brk;
         let new_break = self.program_brk as isize + size as isize;
@@ -116,9 +124,11 @@ impl TaskControlBlock {
             return None;
         }
         let result = if size < 0 {
+            // 回收堆空间
             self.memory_set
                 .shrink_to(VirtAddr(self.heap_bottom), VirtAddr(new_break as usize))
         } else {
+            // 分配堆空间
             self.memory_set
                 .append_to(VirtAddr(self.heap_bottom), VirtAddr(new_break as usize))
         };

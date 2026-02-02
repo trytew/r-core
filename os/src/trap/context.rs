@@ -34,7 +34,7 @@ impl TrapContext {
     }
 
     ///
-    /// 初始化应用上下文
+    /// 初始化应用“陷入”上下文
     ///
     /// @author: tryte
     ///

@@ -80,13 +80,16 @@ pub fn enable_timer_interrupt() {
 /// @date: 2026/1/29
 #[unsafe(no_mangle)]
 pub fn trap_handler() -> ! {
+    // 设置内核态触发“陷入”时的处理函数
     set_kernel_trap_entry();
+    // 获取应用“陷入”上下文地址
     let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
 
     match scause.cause() {
         Trap::Exception(Exception::UserEnvCall) => {
+            // 移动到 ecall 之后的指令，在 RISC-V 中 ecall 指令定长 4 字节
             cx.sepc += 4;
             cx.x[10] = sys_call(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
         }
@@ -126,7 +129,8 @@ pub fn trap_handler() -> ! {
 pub fn trap_return() -> ! {
     // 设置应用用户态触发“陷入”时的处理函数地址
     set_user_trap_entry();
-    // 获取当前应用的寄存器状态
+    // 获取当前应用的寄存器状态，不能用 current_trap_cx 的原因是在 trap_handler 函数里有可能已经切换了应用，但是并没有刷新 MMU 的设置
+    // 因此 current_trap_cx 有可能获取了上一个应用的“陷入”上下文
     let trap_cx_ptr = TRAP_CONTEXT;
     // 获取用户空间的 MMU 设置
     let user_satp = current_user_token();
@@ -141,6 +145,7 @@ pub fn trap_return() -> ! {
             "fence.i",
             // 跳转到 __restore 函数入口，{restore_va} 是模板参数，紧接着后面的参数是用来替换这个模板的
             "jr {restore_va}", restore_va = in(reg) restore_va,
+            // in(...) / out(...) 是进入 asm 前的寄存器状态要求，换而言之下面两句一定会比前面两句代码更早执行
             // 将“陷入”上下文作为参数传入
             in("a0") trap_cx_ptr,
             // 将用户空间的 MMU 设置作为参数传入

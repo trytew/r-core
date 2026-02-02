@@ -133,13 +133,26 @@ impl MapArea {
         }
     }
 
+    ///
+    /// 回收堆空间
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/2
     #[allow(unused)]
     pub fn shrink_to(&mut self, page_table: &mut PageTable, new_end: VirtPageNum) {
         for vpn in VPNRange::new(new_end, self.vpn_range.get_end()) {
-            self.map_one(page_table, vpn);
+            self.unmap_one(page_table, vpn);
         }
+        self.vpn_range = VPNRange::new(self.vpn_range.get_end(), new_end);
     }
 
+    ///
+    /// 分配堆空间
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/2
     #[allow(unused)]
     pub fn append_to(&mut self, page_table: &mut PageTable, new_end: VirtPageNum) {
         for vpn in VPNRange::new(self.vpn_range.get_end(), new_end) {
@@ -598,6 +611,12 @@ impl MemorySet {
         self.page_table.translate(vpn)
     }
 
+    ///
+    /// 回收堆空间
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/2
     #[allow(unused)]
     pub fn shrink_to(&mut self, start: VirtAddr, new_end: VirtAddr) -> bool {
         if let Some(area) = self
@@ -612,6 +631,12 @@ impl MemorySet {
         }
     }
 
+    ///
+    /// 分配堆空间
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/2
     #[allow(unused)]
     pub fn append_to(&mut self, start: VirtAddr, new_end: VirtAddr) -> bool {
         if let Some(area) = self
