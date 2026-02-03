@@ -157,6 +157,12 @@ impl FrameAllocator for StackFrameAllocator {
         }
     }
 
+    ///
+    /// 回收物理帧
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/3
     fn dealloc(&mut self, ppn: PhysPageNum) {
         let ppn = ppn.0;
         // 检查页帧是否已被回收

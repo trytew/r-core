@@ -2,7 +2,7 @@ use crate::boards::CLOCK_FREQ;
 use crate::sbi::set_timer;
 use riscv::register::time;
 
-const TICKS_PER_SEC: usize = 1000;
+const TICKS_PER_SEC: usize = 10;
 const MSEC_PER_SEC: usize = 1000;
 
 ///

@@ -79,7 +79,7 @@ use bitflags::*;
 /// PA = 0x4003_0000 + 0x678 = 0x4003_0678
 /// ```
 ///
-#[warn(unused_doc_comments)]
+
 bitflags! {
     ///
     /// 页表项标志位
@@ -340,11 +340,19 @@ impl PageTable {
     }
 }
 
+///
+/// 读取指定应用的内存数据
+///
+/// @author: tryte
+///
+/// @date: 2026/2/3
 pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+    // 构建应用页表数据
     let page_table = PageTable::from_token(token);
     let mut start = ptr as usize;
     let end = start + len;
     let mut v = Vec::new();
+    // 根据起始和结束位读取应用内存的数据
     while start < end {
         let start_va = VirtAddr::from(start);
         let mut vpn = start_va.floor();

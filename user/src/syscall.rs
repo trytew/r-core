@@ -82,5 +82,5 @@ pub fn sys_get_time() -> isize {
 ///
 /// @date: 2026/2/3
 pub fn sys_sbrk(size: i32) -> isize {
-    syscall(SYSCALL_GET_TIME, [size as usize, 0, 0])
+    syscall(SYSCALL_SBRK, [size as usize, 0, 0])
 }

@@ -153,6 +153,8 @@ impl TaskManager {
     pub fn change_current_program_brk(&self, size: i32) -> Option<usize> {
         let mut inner = self.inner.exclusive_access();
         let cur = inner.current_task;
+        // 在增减应用堆空间的过程中全程使用的都是直接堆应用虚拟内存地址的增减，没有涉及任何内核虚拟地址，
+        // 并且所有应用内存都设置的内核态（特权级S-mode）下可操作，因此可以在内核空间的状态下对应用的内存进行操作
         inner.tasks[cur].change_program_brk(size)
     }
 

@@ -1,10 +1,10 @@
 use super::{PTEFlags, PhysPageNum, VPNRange, VirtPageNum};
 use crate::boards::MEMORY_END;
 use crate::config::{MMIO, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
-use crate::mm::PageTable;
 use crate::mm::address::{PhysAddr, StepByOne, VirtAddr};
-use crate::mm::frame_allocator::{FrameTracker, frame_alloc};
+use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::PageTableEntry;
+use crate::mm::PageTable;
 use crate::println;
 use crate::sync::UpSafeCell;
 use alloc::collections::BTreeMap;
@@ -156,7 +156,7 @@ impl MapArea {
         for vpn in VPNRange::new(new_end, self.vpn_range.get_end()) {
             self.unmap_one(page_table, vpn);
         }
-        self.vpn_range = VPNRange::new(self.vpn_range.get_end(), new_end);
+        self.vpn_range = VPNRange::new(self.vpn_range.get_start(), new_end);
     }
 
     ///
@@ -564,7 +564,7 @@ impl MemorySet {
             None,
         );
 
-        // 栈顶占位，长度为 0，不映射物理页
+        // 应用堆的起始位置，后续分配堆空间时才会增减
         memory_set.push(
             MapArea::new(
                 user_stack_top.into(),
