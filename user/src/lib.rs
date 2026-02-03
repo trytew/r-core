@@ -2,8 +2,8 @@
 #![feature(linkage)]
 
 pub mod console;
-mod syscall;
 mod lang_items;
+mod syscall;
 
 use syscall::*;
 
@@ -65,4 +65,14 @@ pub fn yield_() -> isize {
 /// @date: 2026/1/4
 pub fn get_time() -> isize {
     sys_get_time()
+}
+
+///
+/// 调整堆空间
+///
+/// @author: tryte
+///
+/// @date: 2026/2/3
+pub fn sbrk(size: i32) -> isize {
+    sys_sbrk(size)
 }

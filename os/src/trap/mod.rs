@@ -8,7 +8,6 @@ use crate::task::{current_user_token, exit_current_and_run_next};
 use crate::timer::set_next_tigger;
 pub use context::TrapContext;
 use core::arch::{asm, global_asm};
-use riscv::register::medeleg::set_user_env_call;
 use riscv::register::mtvec::TrapMode;
 use riscv::register::scause;
 use riscv::register::scause::Exception;
@@ -38,7 +37,7 @@ pub fn init() {
 /// @date: 2026/1/30
 fn set_kernel_trap_entry() {
     unsafe {
-        stvec::write(trap_from_kernel as usize, TrapMode::Direct);
+        stvec::write(trap_from_kernel as *const () as usize, TrapMode::Direct);
     }
 }
 
@@ -138,7 +137,8 @@ pub fn trap_return() -> ! {
         fn __alltraps();
         fn __restore();
     }
-    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    let restore_va =
+        __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
     unsafe {
         asm!(
             // 刷新指令缓存

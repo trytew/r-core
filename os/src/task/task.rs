@@ -1,8 +1,7 @@
-use crate::config::{TRAP_CONTEXT, kernel_stack_position};
-use crate::mm::{KERNEL_SPACE, MapPermission, MemorySet, PhysPageNum, VirtAddr};
-use crate::println;
+use crate::config::{kernel_stack_position, TRAP_CONTEXT};
+use crate::mm::{MapPermission, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::task::context::TaskContext;
-use crate::trap::{TrapContext, trap_handler};
+use crate::trap::{trap_handler, TrapContext};
 
 ///
 /// 应用状态
@@ -105,7 +104,7 @@ impl TaskControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             kernel_stack_top,
-            trap_handler as usize,
+            trap_handler as *const () as usize,
         );
 
         task_control_block

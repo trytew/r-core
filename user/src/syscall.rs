@@ -1,16 +1,19 @@
 use core::arch::asm;
 
-// 写入中断号
+/// 写入中断号
 const SYSCALL_WRITE: usize = 64;
 
-// 退出中断号
+/// 退出中断号
 const SYSCALL_EXIT: usize = 93;
 
-// 时间中断号
+/// 时间中断号
 const SYSCALL_YIELD: usize = 124;
 
-// 获取时间中断号
+/// 获取时间中断号
 const SYSCALL_GET_TIME: usize = 169;
+
+/// 调整堆空间中断号
+const SYSCALL_SBRK: usize = 214;
 
 ///
 /// 系统调用
@@ -70,4 +73,14 @@ pub fn sys_yield() -> isize {
 /// @date: 2026/1/4
 pub fn sys_get_time() -> isize {
     syscall(SYSCALL_GET_TIME, [0, 0, 0])
+}
+
+///
+/// 调整堆空间
+///
+/// @author: tryte
+///
+/// @date: 2026/2/3
+pub fn sys_sbrk(size: i32) -> isize {
+    syscall(SYSCALL_GET_TIME, [size as usize, 0, 0])
 }

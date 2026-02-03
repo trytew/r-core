@@ -1,8 +1,7 @@
 use crate::mm::address::PhysPageNum;
 use crate::mm::address::VirtPageNum;
-use crate::mm::frame_allocator::FrameTracker;
 use crate::mm::frame_allocator::frame_alloc;
-use crate::mm::memory_set::MapType::Framed;
+use crate::mm::frame_allocator::FrameTracker;
 use crate::mm::{StepByOne, VirtAddr};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -80,7 +79,7 @@ use bitflags::*;
 /// PA = 0x4003_0000 + 0x678 = 0x4003_0678
 /// ```
 ///
-
+#[warn(unused_doc_comments)]
 bitflags! {
     ///
     /// 页表项标志位

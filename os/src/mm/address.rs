@@ -1,7 +1,6 @@
 use crate::config::PAGE_SIZE;
 use crate::config::PAGE_SIZE_BITS;
 use crate::mm::page_table::PageTableEntry;
-use alloc::vec::IntoIter;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 
@@ -37,6 +36,7 @@ const PPN_WIDTH_SV39: usize = PA_WIDTH_SV39 - PAGE_SIZE_BITS;
 const VA_WIDTH_SV39: usize = 39;
 
 /// 虚拟页号（Virtual Page Number）长度
+#[allow(unused)]
 const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SIZE_BITS;
 
 /// 物理内存地址

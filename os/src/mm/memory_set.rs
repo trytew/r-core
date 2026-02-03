@@ -107,6 +107,12 @@ impl MapArea {
         page_table.map(vpn, ppn, pte_flags);
     }
 
+    ///
+    /// 删除单个页表映射
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/3
     pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         if self.map_type == MapType::Framed {
             self.data_frames.remove(&vpn);
@@ -126,6 +132,12 @@ impl MapArea {
         }
     }
 
+    ///
+    /// 删除页表映射
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/3
     #[allow(unused)]
     pub fn unmap(&mut self, page_table: &mut PageTable) {
         for vpn in self.vpn_range {

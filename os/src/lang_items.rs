@@ -1,8 +1,6 @@
-#![feature(panic_info_message)]
-
+use crate::println;
 use crate::sbi::shutdown;
 use core::panic::PanicInfo;
-use crate::println;
 
 ///
 /// 处理 panic
@@ -12,7 +10,6 @@ use crate::println;
 /// @date: 2025/11/20
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-
     if let Some(location) = _info.location() {
         println!(
             "Panicked at: {}:{} {}",
@@ -21,7 +18,7 @@ fn panic(_info: &PanicInfo) -> ! {
             _info.message(),
         );
     } else {
-        println!("Panicked: {}",_info.message());
+        println!("Panicked: {}", _info.message());
     }
     shutdown(true)
 }

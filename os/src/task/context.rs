@@ -37,7 +37,7 @@ impl TaskContext {
     /// @date: 2026/1/31
     pub fn goto_trap_return(k_stack_ptr: usize) -> Self {
         Self {
-            ra: trap_return as usize,
+            ra: trap_return as *const () as usize,
             sp: k_stack_ptr,
             s: [0; 12],
         }

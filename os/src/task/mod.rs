@@ -144,6 +144,12 @@ impl TaskManager {
         inner.tasks[inner.current_task].get_trap_cx()
     }
 
+    ///
+    /// 修改程序堆空间大小
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/3
     pub fn change_current_program_brk(&self, size: i32) -> Option<usize> {
         let mut inner = self.inner.exclusive_access();
         let cur = inner.current_task;
@@ -259,6 +265,12 @@ pub fn current_trap_cx() -> &'static mut TrapContext {
     TASK_MANAGER.get_current_trap_cx()
 }
 
+///
+/// 修改程序堆空间大小
+///
+/// @author: tryte
+///
+/// @date: 2026/2/3
 pub fn change_program_brk(size: i32) -> Option<usize> {
     TASK_MANAGER.change_current_program_brk(size)
 }

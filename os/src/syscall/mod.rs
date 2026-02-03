@@ -16,6 +16,7 @@ const SYSCALL_YIELD: usize = 124;
 /// 获取时间中断号
 const SYSCALL_GET_TIME: usize = 169;
 
+/// 调整堆空间中断号
 const SYSCALL_SBRK: usize = 214;
 
 ///

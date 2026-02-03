@@ -1,5 +1,9 @@
 #![no_std]
 #![no_main]
+#![feature(alloc_error_handler)]
+#![allow(rustdoc::macro_invocations)]
+
+extern crate alloc;
 
 mod boards;
 mod config;
@@ -14,10 +18,7 @@ mod task;
 mod timer;
 mod trap;
 
-use crate::trap::trap_return;
 use core::arch::global_asm;
-
-extern crate alloc;
 
 // 加载入口汇编文件
 global_asm!(include_str!("./entry.asm"));
@@ -45,8 +46,11 @@ fn clear_bss() {
 
     // 将 bss 段数据置空，与上面代码效果一致
     unsafe {
-        core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
-            .fill(0);
+        core::slice::from_raw_parts_mut(
+            sbss as *mut u8,
+            ebss as *const () as usize - sbss as *const () as usize,
+        )
+        .fill(0);
     }
 
     // 上面和以下的两种方式只能全局使用一种，如果 fn sbss() 和 static mut sbss 混用则会报符号命名重复

@@ -35,6 +35,12 @@ pub fn sys_get_time() -> isize {
     get_time_ms() as isize
 }
 
+///
+/// 修改程序堆空间大小
+///
+/// @author: tryte
+///
+/// @date: 2026/2/3
 pub fn sys_sbrk(size: i32) -> isize {
     if let Some(old_brk) = change_program_brk(size) {
         old_brk as isize

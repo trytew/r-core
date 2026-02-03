@@ -36,11 +36,12 @@ pub fn init_heap() {
 }
 
 ///
-/// 处理堆空间分配错误
+/// 堆分配错误处理函数
 ///
 /// @author: tryte
 ///
 /// @date: 2026/1/8
+#[alloc_error_handler]
 pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
     panic!("Heap allocation error, layout = {:?}", layout);
 }
