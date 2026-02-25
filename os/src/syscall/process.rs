@@ -1,5 +1,7 @@
 use crate::println;
-use crate::task::{change_program_brk, exit_current_and_run_next, suspend_current_and_run_next};
+use crate::task::{
+    change_program_brk, current_task, exit_current_and_run_next, suspend_current_and_run_next,
+};
 use crate::timer::get_time_ms;
 
 ///
@@ -47,4 +49,10 @@ pub fn sys_sbrk(size: i32) -> isize {
     } else {
         -1
     }
+}
+
+pub fn sys_fork() -> isize {
+    let current_task = current_task().unwrap();
+    let new_task = current_task.fork();
+    todo!()
 }

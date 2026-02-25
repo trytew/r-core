@@ -1,10 +1,15 @@
 use crate::config::{kernel_stack_position, TRAP_CONTEXT};
 use crate::mm::{MapPermission, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
+use crate::sync::UpSafeCell;
 use crate::task::context::TaskContext;
+use crate::task::pid::{KernelStack, PidHandle};
 use crate::trap::{trap_handler, TrapContext};
+use alloc::rc::Weak;
+use alloc::sync::Arc;
+use core::cell::RefMut;
 
 ///
-/// 应用状态
+/// 进程状态
 ///
 /// “内核里任务切换时”，内核线程自己的现场
 /// 保存当前内核执行流的状态，方便以后从这里继续跑
@@ -16,64 +21,53 @@ use crate::trap::{trap_handler, TrapContext};
 pub enum TaskStatus {
     Ready,   // 待运行
     Running, // 运行中
-    Exited,  // 已退出
+    Zombie,  // 僵尸态
+}
+
+pub struct TaskControlBlockInner {
+    pub trap_cx_ppn: PhysPageNum, // 进程“陷入”上下文的物理地址
+    #[allow(unused)]
+    pub base_size: usize,
+    pub task_cx: TaskContext,                    // 进程上下文
+    pub task_status: TaskStatus,                 // 进程状态
+    pub memory_set: MemorySet,                   // 进程内存区域
+    pub parent: Option<Weak<TaskControlBlock>>,  // 父进程
+    pub children: Option<Arc<TaskControlBlock>>, // 子进程
+    pub exit_code: i32,                          // 退出状态值
 }
 
 ///
-/// 任务控制块
+/// 进程控制块
 ///
 /// @author: tryte
 ///
 /// @date: 2025/12/18
 pub struct TaskControlBlock {
-    pub task_status: TaskStatus,  // 应用状态
-    pub task_cx: TaskContext,     // 应用上下文
-    pub memory_set: MemorySet,    // 应用内存区域
-    pub trap_cx_ppn: PhysPageNum, // 应用“陷入”上下文的物理地址
-    #[allow(unused)]
-    pub base_size: usize,
-    pub heap_bottom: usize,
-    pub program_brk: usize,
+    pub pid: PidHandle,
+    pub kernel_stack: KernelStack,
+    inner: UpSafeCell<TaskControlBlockInner>,
 }
 
 impl TaskControlBlock {
     ///
-    /// 返回应用“陷入”上下文的物理地址
-    ///
-    /// @author: tryte
-    ///
-    /// @date: 2026/1/30
-    pub fn get_trap_cx(&self) -> &'static mut TrapContext {
-        self.trap_cx_ppn.get_mut()
-    }
-
-    ///
-    /// 获取用户空间的 MMU 设置
-    ///
-    /// @author: tryte
-    ///
-    /// @date: 2026/1/31
-    pub fn get_user_token(&self) -> usize {
-        self.memory_set.token()
-    }
-
-    ///
-    /// 创建应用控制器
+    /// 创建进程控制器
     ///
     /// @author: tryte
     ///
     /// @date: 2026/1/30
     pub fn new(elf_data: &[u8], app_id: usize) -> Self {
-        // 获取应用内存区域集合
+        // 获取进程内存区域集合
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
 
-        // 获取应用“陷入”上下文的物理地址
+        // 获取进程“陷入”上下文的物理地址
         let trap_cx_ppn = memory_set
             .translate(VirtAddr::from(TRAP_CONTEXT).into())
             .unwrap()
             .ppn();
 
-        // 设置应用状态为待运行
+        let pid_handle = pid_alloc();
+
+        // 设置进程状态为待运行
         let task_status = TaskStatus::Ready;
 
         // 创建内核栈
@@ -84,7 +78,7 @@ impl TaskControlBlock {
             MapPermission::R | MapPermission::W,
         );
 
-        // 创建应用控制器
+        // 创建进程控制器
         let task_control_block = Self {
             task_status,
             task_cx: TaskContext::goto_trap_return(kernel_stack_top),
@@ -108,6 +102,30 @@ impl TaskControlBlock {
         );
 
         task_control_block
+    }
+
+    pub fn inner_exclusive_access(&self) -> RefMut<'_, TaskControlBlock> {
+        self.inner.inner_exclusive_access()
+    }
+
+    ///
+    /// 返回进程“陷入”上下文的物理地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/30
+    pub fn get_trap_cx(&self) -> &'static mut TrapContext {
+        self.trap_cx_ppn.get_mut()
+    }
+
+    ///
+    /// 获取用户空间的 MMU 设置
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/1/31
+    pub fn get_user_token(&self) -> usize {
+        self.memory_set.token()
     }
 
     ///
@@ -137,5 +155,17 @@ impl TaskControlBlock {
         } else {
             None
         }
+    }
+
+    ///
+    /// fork 新进程
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/2/5
+    pub fn fork(self: &Arc<Self>) -> Arc<Self> {
+        // 获取父进程的 PCB 信息块
+        let mut parent_inner;
+        todo!()
     }
 }

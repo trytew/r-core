@@ -11,8 +11,12 @@ use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
 mod context;
+mod pid;
+mod processor;
 mod switch;
 mod task;
+
+pub use processor::*;
 
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
