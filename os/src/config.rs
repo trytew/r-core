@@ -26,6 +26,7 @@ pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
 ///
 /// @date: 2026/1/30
 pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
+    // 内核栈的空间是8kb + 4kb，其中有 4kb 是作为灰页（保护页）不映射进页表
     let top = TRAMPOLINE - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE);
     let bottom = top - KERNEL_STACK_SIZE;
     (bottom, top)

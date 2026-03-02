@@ -67,7 +67,7 @@ impl TaskControlBlock {
         // 获取应用内存区域集合
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
 
-        // 获取应用“陷入”上下文的物理地址
+        // 获取应用“陷入”上下文的物理地址，因为在“陷入”处理的时候处于内核态，因此需要记录真实的物理地址才能找到对应应用的“陷入”上下文
         let trap_cx_ppn = memory_set
             .translate(VirtAddr::from(TRAP_CONTEXT).into())
             .unwrap()

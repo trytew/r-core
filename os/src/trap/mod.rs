@@ -81,7 +81,7 @@ pub fn enable_timer_interrupt() {
 pub fn trap_handler() -> ! {
     // 设置内核态触发“陷入”时的处理函数
     set_kernel_trap_entry();
-    // 获取应用“陷入”上下文地址
+    // 获取应用“陷入”上下文物理地址
     let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
@@ -137,6 +137,7 @@ pub fn trap_return() -> ! {
         fn __alltraps();
         fn __restore();
     }
+    // 计算 __restore函数 在虚拟内存地址的位置
     let restore_va =
         __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
     unsafe {

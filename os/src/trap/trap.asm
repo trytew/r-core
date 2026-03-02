@@ -64,11 +64,11 @@ __alltraps:
     # 2.__restore 同时也是一个函数，可主动调用运行
 __restore:
     # a0: 当前应用的寄存器状态上下文 TrapContext; a1: 用户空间地址
-    # 切换到用户空间
+    # 切换用户空间
     csrw satp, a1
     # 刷新虚拟内存地址快表内容
     sfence.vma
-    # 存入当前应用的寄存器状态上下文 TrapContext
+    # 存入当前应用的寄存器状态上下文 TrapContext，将 a0 存入 sscratch
     csrw sscratch, a0
     # 将栈顶切换成当前应用的寄存器状态上下文 TrapContext
     mv sp, a0
@@ -91,5 +91,6 @@ __restore:
     .endr
     # 将 sp 设置回用户栈
     ld sp, 2 * 8(sp)
+    # 切换成用户态且转到到应用入口执行
     sret
 

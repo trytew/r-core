@@ -1,5 +1,5 @@
 use riscv::register::sstatus;
-use riscv::register::sstatus::{SPP, Sstatus};
+use riscv::register::sstatus::{Sstatus, SPP};
 
 ///
 /// Trap 上下文
@@ -42,8 +42,8 @@ impl TrapContext {
     pub fn app_init_context(
         entry: usize,
         sp: usize,
-        kernel_satp: usize,
-        kernel_sp: usize,
+        kernel_satp: usize, //内核页表地址
+        kernel_sp: usize,   // 内核栈顶
         trap_handler: usize,
     ) -> Self {
         // 读取 CSR 状态
