@@ -18,8 +18,8 @@ pub struct TrapContext {
     pub sstatus: Sstatus,    // CSR 状态
     pub sepc: usize,         // CSR spec，这里记录的是 sret 之后需要执行的指令地址，非常重要
     pub kernel_satp: usize,  // 内核页表地址
-    pub kernel_sp: usize,    // 内核栈顶
-    pub trap_handler: usize, // trap_handler 处理函数地址
+    pub kernel_sp: usize,    // 内核栈顶，注意：该虚拟地址为内核虚拟地址页表的地址
+    pub trap_handler: usize, // trap_handler 处理函数地址，注意：该虚拟地址为内核虚拟地址页表的地址
 }
 
 impl TrapContext {
@@ -42,15 +42,25 @@ impl TrapContext {
     pub fn app_init_context(
         entry: usize,
         sp: usize,
-        kernel_satp: usize, //内核页表地址
-        kernel_sp: usize,   // 内核栈顶
-        trap_handler: usize,
+        kernel_satp: usize,  //内核页表地址
+        kernel_sp: usize,    // 内核栈顶
+        trap_handler: usize, // “陷入”处理函数地址
     ) -> Self {
         // 读取 CSR 状态
         let mut sstatus = sstatus::read();
         // 设置特权级为用户级，该设置不是立马生效，而是等 sret 指令执行返回后生效
         sstatus.set_spp(SPP::User);
         // 记录用户态时寄存器的状态
+        // 栈内存分布
+        //    high addr
+        // |             | 栈底
+        // |     8kb     |
+        // |-------------| --> sp 栈顶
+        // |             |
+        // |             |
+        // |             |
+        // |             | boot_stack_lower_bound 栈的下限位置
+        //    lower addr
         let mut cx = Self {
             x: [0; 32],
             sstatus,

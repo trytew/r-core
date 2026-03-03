@@ -76,7 +76,7 @@ impl TaskManager {
         task_0.task_status = TaskStatus::Running;
         // 获取第一个应用的上下文
         let next_task_cx_ptr = &task_0.task_cx as *const TaskContext;
-        // 主动释放，因为 __switch 执行完后会跳转到别的函数，无法返回
+        // 主动释放，因为 __switch 执行完后会跳转到别的函数不会返回，无法自动回收
         drop(inner);
         let mut unused = TaskContext::zero_init();
         unsafe {
