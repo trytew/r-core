@@ -24,7 +24,7 @@ __alltraps:
     # 先将用户态下寄存器的内容记录到应用的 TrapContext，与前面的教程不一样的是应用的内核栈和应用的 TrapContext 是分开的
     #
     # 将 sscratch 当前的值读到 sp 寄存器中，然后将 sp 寄存器的旧值写入该 sscratch，这里起到的是交换 sscratch 和 sp 的效果，
-    # 就是将用户栈的栈顶记录到 sscratch，sp 刷新成应用的 TrapContext
+    # 就是将用户栈的栈顶记录到 sscratch，sp 刷新成应用“陷入”上下文起始位置
     # 注：
     #   sscratch 中间寄存器，保存切换特权级时数据使用
     #   sp 栈顶寄存器，记录栈顶地址
@@ -41,6 +41,7 @@ __alltraps:
     # 读取 sstatus，sepc 的值到 t0，t1 寄存器并保存到 TrapContext 中
     csrr t0, sstatus
     csrr t1, sepc
+    # 保存 t0 的内容到 32 * 8(sp)
     sd t0, 32 * 8(sp)
     sd t1, 33 * 8(sp)
     # 读取 sscratch 的值保存到 TrapContext，sscratch 的值是用户栈的地址
@@ -59,18 +60,15 @@ __alltraps:
     jr t1
 
     # 将用户态的寄存器状态恢复，从 TrapContext 的内容中读取
-    # __restore 有两种执行时机：
-    # 1.当 trap_handler 正常返回之后，会继续执行
-    # 2.__restore 同时也是一个函数，可主动调用运行
 __restore:
-    # a0: 当前应用的寄存器状态上下文 TrapContext; a1: 用户空间地址
-    # 切换到用户空间
+    # a0: 当前应用的“陷入”上下文 TrapContext; a1: 用户空间地址
+    # 切换用户空间，这样才能正确获取到当前应用的“陷入”上下文，因为 TrapContext 传入的是虚拟地址
     csrw satp, a1
     # 刷新虚拟内存地址快表内容
     sfence.vma
-    # 存入当前应用的寄存器状态上下文 TrapContext
+    # 存入当前应用的“陷入”上下文 TrapContext，将 a0 存入 sscratch，这对应用后续触发 __alltraps 时有关键作用
     csrw sscratch, a0
-    # 将栈顶切换成当前应用的寄存器状态上下文 TrapContext
+    # 将栈顶切换成当前应用的“陷入”上下文 TrapContext
     mv sp, a0
     # 现在 sp 栈顶指针指向用户态的上下文 TrapContext，开始恢复用户态数据
     # 将 32 * 8(sp)、33 * 8(sp) 的值设置到 t0、t1
@@ -91,5 +89,6 @@ __restore:
     .endr
     # 将 sp 设置回用户栈
     ld sp, 2 * 8(sp)
+    # 切换成用户态且转到到应用入口执行
     sret
 

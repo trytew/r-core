@@ -81,7 +81,7 @@ pub fn enable_timer_interrupt() {
 pub fn trap_handler() -> ! {
     // 设置内核态触发“陷入”时的处理函数
     set_kernel_trap_entry();
-    // 获取应用“陷入”上下文地址
+    // 获取应用“陷入”上下文物理地址
     let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
@@ -128,8 +128,7 @@ pub fn trap_handler() -> ! {
 pub fn trap_return() -> ! {
     // 设置应用用户态触发“陷入”时的处理函数地址
     set_user_trap_entry();
-    // 获取当前应用的寄存器状态，不能用 current_trap_cx 的原因是在 trap_handler 函数里有可能已经切换了应用，但是并没有刷新 MMU 的设置
-    // 因此 current_trap_cx 有可能获取了上一个应用的“陷入”上下文
+    // 获取当前应用的“陷入”上下文虚拟地址
     let trap_cx_ptr = TRAP_CONTEXT;
     // 获取用户空间的 MMU 设置
     let user_satp = current_user_token();
@@ -137,6 +136,7 @@ pub fn trap_return() -> ! {
         fn __alltraps();
         fn __restore();
     }
+    // 计算 __restore函数 在虚拟内存地址的位置
     let restore_va =
         __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
     unsafe {

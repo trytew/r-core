@@ -59,7 +59,7 @@ impl TaskControlBlock {
         // 获取进程内存区域集合
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
 
-        // 获取进程“陷入”上下文的物理地址
+        // 获取应用“陷入”上下文的物理地址，因为在“陷入”处理的时候处于内核态，因此需要记录真实的物理地址才能找到对应应用的“陷入”上下文
         let trap_cx_ppn = memory_set
             .translate(VirtAddr::from(TRAP_CONTEXT).into())
             .unwrap()
@@ -78,7 +78,7 @@ impl TaskControlBlock {
             MapPermission::R | MapPermission::W,
         );
 
-        // 创建进程控制器
+        // 创建应用控制器，这里记录“陷入”上下文的物理地址也是因为这个上下文只在内核态下会用到
         let task_control_block = Self {
             task_status,
             task_cx: TaskContext::goto_trap_return(kernel_stack_top),
@@ -91,8 +91,23 @@ impl TaskControlBlock {
 
         // 创建“陷入”上下文，这里看起来是在直接操作物理地址，但是因为在内核态的情况下（已经使用了内核页表的 MMU 设置），所以这里还是使用
         // 虚拟内存地址访问，因为内核态下页表的虚拟内存地址使用的恒等映射。
-        // 这里记录“陷入”上下文的物理地址也是因为这个上下文只在内核态下会用到
         let trap_cx = task_control_block.get_trap_cx();
+
+        // 将 TrapContext 的全部内容移动到栈中，*trap_cx = TrapContext 相当于 memcpy(sp, &cx)
+        // 这个时候的 memcpy 操作/指针内容写入 操作是遵循内存写入规则（从低到高），因此 sp 指向的是 cx 结构体的起始位置，如下：
+        //       high addr - boot_stack_lower_bound = 8kb
+        // |-------------------| 栈底
+        // |       sepc        | -- 第34个地址，偏移量 33 * 8（x0 的偏移量是0）
+        // |       ....        |
+        // |      sstatus      | --> cx 内容
+        // |       ....        |
+        // |        x1         |
+        // |        x0         |
+        // |-------------------| --> sp 栈顶
+        // |                   |
+        // |                   |
+        // |                   | boot_stack_lower_bound 栈的下限位置
+        //       lower addr
         *trap_cx = TrapContext::app_init_context(
             entry_point,
             user_sp,
