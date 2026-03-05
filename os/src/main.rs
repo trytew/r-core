@@ -77,6 +77,8 @@ fn rust_main() -> ! {
     mm::init();
     mm::remap_test();
 
+    task::add_initproc();
+
     trap::init();
     trap::enable_timer_interrupt();
 

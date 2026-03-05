@@ -1,22 +1,40 @@
-use crate::loader::{get_app_data, get_num_app};
+use crate::loader::{get_app_data, get_app_data_by_name, get_num_app};
 use crate::println;
 use crate::sbi::shutdown;
 use crate::sync::UpSafeCell;
 use crate::task::context::TaskContext;
+use crate::task::manager::add_task;
 use crate::task::switch::__switch;
 use crate::task::task::TaskControlBlock;
 use crate::task::task::TaskStatus;
 use crate::trap::TrapContext;
+use alloc::sync::Arc;
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
+pub use processor::*;
 
 mod context;
+mod manager;
 mod pid;
 mod processor;
 mod switch;
 mod task;
 
-pub use processor::*;
+lazy_static! {
+    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
+        get_app_data_by_name("initproc").unwarp()
+    ));
+}
+
+///
+/// 添加初始应用
+///
+/// @author: tryte
+///
+/// @date: 2026/3/5
+pub fn add_initproc() {
+    add_task(INITPROC.clone());
+}
 
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
@@ -53,17 +71,6 @@ lazy_static! {
 pub struct TaskManagerInner {
     tasks: Vec<TaskControlBlock>, // 任务列表（应用列表）
     current_task: usize,          // 当前任务编号
-}
-
-///
-/// 应用管理器
-///
-/// @author: tryte
-///
-/// @date: 2025/12/18
-pub struct TaskManager {
-    num_app: usize,                      // 任务总数量
-    inner: UpSafeCell<TaskManagerInner>, // 获取可变值
 }
 
 impl TaskManager {

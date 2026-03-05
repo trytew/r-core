@@ -1,3 +1,12 @@
+use alloc::vec::Vec;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref APP_NAMES: Vec<&'static str> = {
+        let num_app = get_num_app();
+    };
+}
+
 ///
 /// 获取应用数量
 ///
@@ -26,4 +35,17 @@ pub fn get_app_data(app_id: usize) -> &'static [u8] {
             app_start[app_id + 1] - app_start[app_id],
         )
     }
+}
+
+///
+/// 根据应用名称获取应用内容
+///
+/// @author: tryte
+///
+/// @date: 2026/3/5
+pub fn get_app_data_by_name(name: &str) -> Option<&'static [u8]> {
+    let num_app = get_num_app();
+    (0..num_app)
+        .find(|&i| APP_NAMES[i] == name)
+        .map(get_app_data)
 }

@@ -9,13 +9,8 @@ use crate::timer::set_next_tigger;
 pub use context::TrapContext;
 use core::arch::{asm, global_asm};
 use riscv::register::mtvec::TrapMode;
-use riscv::register::scause;
-use riscv::register::scause::Exception;
-use riscv::register::scause::Interrupt;
-use riscv::register::scause::Trap;
-use riscv::register::sie;
-use riscv::register::stval;
-use riscv::register::stvec;
+use riscv::register::scause::{Exception, Interrupt, Trap};
+use riscv::register::{scause, sie, stval, stvec};
 
 global_asm!(include_str!("./trap.asm"));
 

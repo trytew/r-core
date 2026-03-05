@@ -1,12 +1,12 @@
-use crate::config::{kernel_stack_position, TRAP_CONTEXT};
-use crate::mm::{MapPermission, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
+use crate::config::TRAP_CONTEXT;
+use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UpSafeCell;
 use crate::task::context::TaskContext;
-use crate::task::pid::{KernelStack, PidHandle};
+use crate::task::pid::{pid_alloc, KernelStack, PidHandle};
 use crate::trap::{trap_handler, TrapContext};
 use alloc::rc::Weak;
 use alloc::sync::Arc;
-use core::cell::RefMut;
+use alloc::vec::Vec;
 
 ///
 /// 进程状态
@@ -28,12 +28,12 @@ pub struct TaskControlBlockInner {
     pub trap_cx_ppn: PhysPageNum, // 进程“陷入”上下文的物理地址
     #[allow(unused)]
     pub base_size: usize,
-    pub task_cx: TaskContext,                    // 进程上下文
-    pub task_status: TaskStatus,                 // 进程状态
-    pub memory_set: MemorySet,                   // 进程内存区域
-    pub parent: Option<Weak<TaskControlBlock>>,  // 父进程
-    pub children: Option<Arc<TaskControlBlock>>, // 子进程
-    pub exit_code: i32,                          // 退出状态值
+    pub task_cx: TaskContext,                   // 进程上下文
+    pub task_status: TaskStatus,                // 进程状态
+    pub memory_set: MemorySet,                  // 进程内存区域
+    pub parent: Option<Weak<TaskControlBlock>>, // 父进程
+    pub children: Vec<Arc<TaskControlBlock>>,   // 子进程
+    pub exit_code: i32,                         // 退出状态值
 }
 
 ///
@@ -55,7 +55,7 @@ impl TaskControlBlock {
     /// @author: tryte
     ///
     /// @date: 2026/1/30
-    pub fn new(elf_data: &[u8], app_id: usize) -> Self {
+    pub fn new(elf_data: &[u8]) -> Self {
         // 获取进程内存区域集合
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
 
@@ -66,27 +66,25 @@ impl TaskControlBlock {
             .ppn();
 
         let pid_handle = pid_alloc();
-
-        // 设置进程状态为待运行
-        let task_status = TaskStatus::Ready;
-
-        // 创建内核栈
-        let (kernel_stack_bottom, kernel_stack_top) = kernel_stack_position(app_id);
-        KERNEL_SPACE.exclusive_access().insert_framed_area(
-            kernel_stack_bottom.into(),
-            kernel_stack_top.into(),
-            MapPermission::R | MapPermission::W,
-        );
+        let kernel_stack = KernelStack::new(&pid_handle);
+        let kernel_stack_top = kernel_stack.get_top();
 
         // 创建应用控制器，这里记录“陷入”上下文的物理地址也是因为这个上下文只在内核态下会用到
         let task_control_block = Self {
-            task_status,
-            task_cx: TaskContext::goto_trap_return(kernel_stack_top),
-            memory_set,
-            trap_cx_ppn,
-            base_size: user_sp,
-            heap_bottom: user_sp,
-            program_brk: user_sp,
+            pid: pid_handle,
+            kernel_stack,
+            inner: unsafe {
+                UpSafeCell::new(TaskControlBlockInner {
+                    trap_cx_ppn,
+                    base_size: user_sp,
+                    task_cx: TaskContext::goto_trap_return(kernel_stack_top),
+                    task_status: TaskStatus::Ready,
+                    memory_set,
+                    parent: None,
+                    children: Vec::new(),
+                    exit_code: 0,
+                })
+            },
         };
 
         // 创建“陷入”上下文，这里看起来是在直接操作物理地址，但是因为在内核态的情况下（已经使用了内核页表的 MMU 设置），所以这里还是使用
@@ -117,10 +115,6 @@ impl TaskControlBlock {
         );
 
         task_control_block
-    }
-
-    pub fn inner_exclusive_access(&self) -> RefMut<'_, TaskControlBlock> {
-        self.inner.inner_exclusive_access()
     }
 
     ///
