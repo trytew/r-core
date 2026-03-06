@@ -37,7 +37,7 @@ impl TaskContext {
     /// @date: 2026/1/31
     pub fn goto_trap_return(k_stack_ptr: usize) -> Self {
         Self {
-            ra: trap_return as *const () as usize, // 将 ra 的值设置为“陷入”处理函数的地址，当执行 __switch函数 时就会执行 sret 切换成用户态
+            ra: trap_return as *const () as usize, // 将 ra 的值设置为“陷入”返回处理函数的地址，当执行 __switch 函数返回后就会执行该函数
             sp: k_stack_ptr,
             s: [0; 12],
         }

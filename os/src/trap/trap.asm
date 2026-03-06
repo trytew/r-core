@@ -70,13 +70,13 @@ __restore:
     csrw sscratch, a0
     # 将栈顶切换成当前应用的“陷入”上下文 TrapContext
     mv sp, a0
-    # 现在 sp 栈顶指针指向用户态的上下文 TrapContext，开始恢复用户态数据
+    # 现在 sp 栈顶指针指向应用的“陷入”上下文 TrapContext，开始恢复用户态数据
     # 将 32 * 8(sp)、33 * 8(sp) 的值设置到 t0、t1
     ld t0, 32 * 8(sp)
     ld t1, 33 * 8(sp)
     # 将 t0，t1 寄存器的值回写到 sstatus，sepc 寄存器中
     csrw sstatus, t0
-    # 将用户栈中 sepc 记录的地址设置到指令执行寄存器 PC 中，在 sret 指令执行后会跳转到该地址执行，即切换成新应用的起始地址
+    # 将应用的“陷入”上下文中 sepc 记录的地址设置到指令执行寄存器 PC 中，在 sret 指令执行后会跳转到该地址执行，即切换成新应用的起始地址
     csrw sepc, t1
 
     # 回写通用寄存器的值
@@ -89,6 +89,6 @@ __restore:
     .endr
     # 将 sp 设置回用户栈
     ld sp, 2 * 8(sp)
-    # 切换成用户态且转到到应用入口执行
+    # 切换成用户态且转到到 sepc 指向的指令执行
     sret
 
