@@ -662,6 +662,17 @@ impl MemorySet {
             false
         }
     }
+
+    ///
+    /// 回收内存空间
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/6
+    pub fn recycle_data_pages(&mut self) {
+        // FrameTracker 实现了 Drop 特征，当 areas 对应的 Vec 被清空时会触发 FrameTracker 的 drop 函数回收内存页
+        self.areas.clear();
+    }
 }
 
 #[allow(unused)]

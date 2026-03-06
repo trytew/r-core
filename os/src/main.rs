@@ -84,7 +84,9 @@ fn rust_main() -> ! {
 
     timer::set_next_tigger();
 
-    task::run_first_task();
+    loader::list_apps();
+
+    task::run_tasks();
 
     println!("Hello world!");
     panic!("Shutdown machine!");

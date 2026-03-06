@@ -21,7 +21,7 @@ pub struct TaskManager {
 
 impl TaskManager {
     ///
-    /// 初始化任务管理器
+    /// 初始化进程管理器
     ///
     /// @author: tryte
     ///
@@ -33,7 +33,7 @@ impl TaskManager {
     }
 
     ///
-    /// 将任务添加到管理器的最后一位
+    /// 将进程添加到管理器的最后一位
     ///
     /// @author: tryte
     ///
@@ -41,14 +41,34 @@ impl TaskManager {
     pub fn add(&mut self, task: Arc<TaskControlBlock>) {
         self.ready_queue.push_back(task);
     }
+
+    ///
+    /// 弹出第一个进程
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/6
+    pub fn fetch(&mut self) -> Option<Arc<TaskControlBlock>> {
+        self.ready_queue.pop_front()
+    }
 }
 
 ///
-/// 添加任务
+/// 添加进程
 ///
 /// @author: tryte
 ///
 /// @date: 2026/3/5
 pub fn add_task(task: Arc<TaskControlBlock>) {
     TASK_MANAGER.exclusive_access().add(task);
+}
+
+///
+/// 轮询进程
+///
+/// @author: tryte
+///
+/// @date: 2026/3/6
+pub fn fetch_task() -> Option<Arc<TaskControlBlock>> {
+    TASK_MANAGER.exclusive_access().fetch()
 }

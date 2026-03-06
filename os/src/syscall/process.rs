@@ -1,7 +1,4 @@
-use crate::println;
-use crate::task::{
-    change_program_brk, current_task, exit_current_and_run_next, suspend_current_and_run_next,
-};
+use crate::task::{exit_current_and_run_next, suspend_current_and_run_next};
 use crate::timer::get_time_ms;
 
 ///
@@ -11,8 +8,7 @@ use crate::timer::get_time_ms;
 ///
 /// @date: 2025/12/10
 pub fn sys_exit(exit_code: i32) -> ! {
-    println!("[kernel] Application exited with code {}\n", exit_code);
-    exit_current_and_run_next();
+    exit_current_and_run_next(exit_code);
     panic!("Unreachable in sys_exit!");
 }
 
@@ -35,24 +31,4 @@ pub fn sys_yield() -> isize {
 /// @date: 2026/1/4
 pub fn sys_get_time() -> isize {
     get_time_ms() as isize
-}
-
-///
-/// 修改程序堆空间大小
-///
-/// @author: tryte
-///
-/// @date: 2026/2/3
-pub fn sys_sbrk(size: i32) -> isize {
-    if let Some(old_brk) = change_program_brk(size) {
-        old_brk as isize
-    } else {
-        -1
-    }
-}
-
-pub fn sys_fork() -> isize {
-    let current_task = current_task().unwrap();
-    let new_task = current_task.fork();
-    todo!()
 }

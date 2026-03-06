@@ -1,5 +1,5 @@
-use std::fs::File;
 use std::fs::read_dir;
+use std::fs::File;
 use std::io::Result;
 use std::io::Write;
 
@@ -45,6 +45,17 @@ _num_app:
         writeln!(f, r#"    .quad app_{}_start"#, i)?;
     }
     writeln!(f, r#"    .quad app_{}_end"#, apps.len() - 1)?;
+
+    writeln!(
+        f,
+        r#"
+    .global _app_names
+_app_names:
+        "#
+    )?;
+    for app in apps.iter() {
+        writeln!(f, r#"    .string "{}""#, app)?;
+    }
 
     for (idx, app) in apps.iter().enumerate() {
         println!("app_{}: {}", idx, app);

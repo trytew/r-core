@@ -20,7 +20,7 @@ pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
 
 ///
-/// 获取应用内核栈底和栈顶
+/// 获取进程内核栈底和栈顶
 ///
 /// @author: tryte
 ///

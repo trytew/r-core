@@ -76,27 +76,35 @@ pub fn enable_timer_interrupt() {
 pub fn trap_handler() -> ! {
     // 设置内核态触发“陷入”时的处理函数
     set_kernel_trap_entry();
-    // 获取应用“陷入”上下文物理地址
-    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
 
     match scause.cause() {
         Trap::Exception(Exception::UserEnvCall) => {
             // 移动到 ecall 之后的指令，在 RISC-V 中 ecall 指令定长 4 字节
+            // 获取应用“陷入”上下文物理地址
+            let mut cx = current_trap_cx();
             cx.sepc += 4;
-            cx.x[10] = sys_call(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
+            let result = sys_call(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
+            // 如果触发的系统调用是 sys_exec，那么“陷入”上下文会被修改，需要重新获取
+            cx = current_trap_cx();
+            cx.x[10] = result;
         }
         Trap::Exception(Exception::StoreFault)
         | Trap::Exception(Exception::StorePageFault)
         | Trap::Exception(Exception::LoadFault)
         | Trap::Exception(Exception::LoadPageFault) => {
-            println!("[kernel] PageFault in application, kernel killed it.\n");
-            exit_current_and_run_next();
+            println!(
+                "[kernel] {:?} in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.\n",
+                scause.cause(),
+                stval,
+                current_trap_cx().sepc,
+            );
+            exit_current_and_run_next(-2);
         }
         Trap::Exception(Exception::IllegalInstruction) => {
             println!("[kernel] IllegalInstruction in application, kernel killed it.\n");
-            exit_current_and_run_next();
+            exit_current_and_run_next(-3);
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             set_next_tigger();

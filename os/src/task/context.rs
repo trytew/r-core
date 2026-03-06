@@ -9,7 +9,7 @@ use crate::trap::trap_return;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct TaskContext {
-    ra: usize,      // 记录任务恢复后需要执行的下一条指令地址
+    ra: usize,      // 记录进程恢复后需要执行的下一条指令地址
     sp: usize,      // 内核栈栈顶指针
     s: [usize; 12], // s0~s11 寄存器的值
 }
@@ -37,7 +37,7 @@ impl TaskContext {
     /// @date: 2026/1/31
     pub fn goto_trap_return(k_stack_ptr: usize) -> Self {
         Self {
-            ra: trap_return as *const () as usize, // 将 ra 的值设置为“陷入”处理函数的地址，当执行 __switch函数 时就会执行 sret 切换成用户态
+            ra: trap_return as *const () as usize, // 将 ra 的值设置为“陷入”返回处理函数的地址，当执行 __switch函数 时就会跳转到该函数执行
             sp: k_stack_ptr,
             s: [0; 12],
         }

@@ -16,10 +16,8 @@ pub fn console_put_char(c: usize) {
 ///
 /// @date: 2025/11/18
 pub fn shutdown(failure: bool) -> ! {
-    use sbi_rt::NoReason;
-    use sbi_rt::Shutdown;
-    use sbi_rt::SystemFailure;
     use sbi_rt::system_reset;
+    use sbi_rt::{NoReason, Shutdown, SystemFailure};
 
     if !failure {
         system_reset(Shutdown, NoReason);

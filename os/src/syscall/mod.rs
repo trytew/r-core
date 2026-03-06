@@ -1,5 +1,5 @@
 use crate::syscall::fs::sys_write;
-use crate::syscall::process::{sys_exit, sys_get_time, sys_sbrk, sys_yield};
+use crate::syscall::process::{sys_exit, sys_get_time, sys_yield};
 
 mod fs;
 mod process;
@@ -16,9 +16,6 @@ const SYSCALL_YIELD: usize = 124;
 /// 获取时间中断号
 const SYSCALL_GET_TIME: usize = 169;
 
-/// 调整堆空间中断号
-const SYSCALL_SBRK: usize = 214;
-
 ///
 /// 系统调用
 ///
@@ -31,7 +28,6 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_EXIT => sys_exit(args[0] as i32),
         SYSCALL_YIELD => sys_yield(),
         SYSCALL_GET_TIME => sys_get_time(),
-        SYSCALL_SBRK => sys_sbrk(args[0] as i32),
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }
 }

@@ -70,7 +70,7 @@ __restore:
     csrw sscratch, a0
     # 将栈顶切换成当前应用的“陷入”上下文 TrapContext
     mv sp, a0
-    # 现在 sp 栈顶指针指向用户态的上下文 TrapContext，开始恢复用户态数据
+    # 现在 sp 栈顶指针指向“陷入”上下文 TrapContext，开始恢复用户态数据
     # 将 32 * 8(sp)、33 * 8(sp) 的值设置到 t0、t1
     ld t0, 32 * 8(sp)
     ld t1, 33 * 8(sp)
