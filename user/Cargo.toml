@@ -3,58 +3,13 @@ name = "user_lib"
 version = "0.1.0"
 edition = "2024"
 
-[[bin]]
-name = "00_hello_world"
-test = false
-bench = false
-
-[[bin]]
-name = "01_store_fault"
-test = false
-bench = false
-
-[[bin]]
-name = "02_power"
-test = false
-bench = false
-
-[[bin]]
-name = "03_priv_inst"
-test = false
-bench = false
-
-[[bin]]
-name = "04_priv_csr"
-test = false
-bench = false
-
-[[bin]]
-name = "05_power_3"
-test = false
-bench = false
-
-[[bin]]
-name = "06_power_5"
-test = false
-bench = false
-
-[[bin]]
-name = "07_power_7"
-test = false
-bench = false
-
-[[bin]]
-name = "08_sleep"
-test = false
-bench = false
-
-[[bin]]
-name = "09_sbrk_test"
-test = false
-bench = false
-
 [lib]
 name = "user_lib"
+test = false
+bench = false
+
+[[bin]]
+name = "initproc"
 test = false
 bench = false
 

@@ -68,11 +68,48 @@ pub fn get_time() -> isize {
 }
 
 ///
-/// 调整堆空间
+/// 获取进程ID
 ///
 /// @author: tryte
 ///
-/// @date: 2026/2/3
-pub fn sbrk(size: i32) -> isize {
-    sys_sbrk(size)
+/// @date: 2026/3/7
+pub fn getpid() -> isize {
+    sys_getpid()
+}
+
+///
+/// 创建子进程
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn fork() -> isize {
+    sys_fork()
+}
+
+///
+/// 执行新进程
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn exec(path: &str) -> isize {
+    sys_exec(path)
+}
+
+///
+/// 等待所有进程退出
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn wait(exit_code: &mut i32) -> isize {
+    loop {
+        match sys_waitpid(-1, exit_code as *mut _) {
+            -2 => {
+                yield_();
+            }
+            exit_pid => return exit_pid,
+        }
+    }
 }

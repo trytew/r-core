@@ -204,6 +204,21 @@ impl MapArea {
             current_vpn.step();
         }
     }
+
+    ///
+    /// 根据传入的内存区域描述创建新的
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/7
+    pub fn from_another(another: &Self) -> Self {
+        Self {
+            vpn_range: VPNRange::new(another.vpn_range.get_start(), another.vpn_range.get_end()),
+            data_frames: BTreeMap::new(),
+            map_type: another.map_type,
+            map_perm: another.map_perm,
+        }
+    }
 }
 
 unsafe extern "C" {
@@ -672,6 +687,29 @@ impl MemorySet {
     pub fn recycle_data_pages(&mut self) {
         // FrameTracker 实现了 Drop 特征，当 areas 对应的 Vec 被清空时会触发 FrameTracker 的 drop 函数回收内存页
         self.areas.clear();
+    }
+
+    ///
+    /// 根据已有的应用创建内存区域描述集合
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/7
+    pub fn from_existed_user(user_space: &Self) -> Self {
+        let mut memory_set = Self::new_bare();
+        memory_set.map_trampoline();
+        for area in user_space.areas.iter() {
+            let new_area = MapArea::from_another(area);
+            memory_set.push(new_area, None);
+            for vpn in area.vpn_range {
+                let src_pnn = user_space.translate(vpn).unwrap().ppn();
+                let dst_ppn = user_space.translate(vpn).unwrap().ppn();
+                dst_ppn
+                    .get_bytes_array()
+                    .copy_from_slice(src_pnn.get_bytes_array());
+            }
+        }
+        memory_set
     }
 }
 

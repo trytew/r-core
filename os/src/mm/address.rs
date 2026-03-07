@@ -100,6 +100,16 @@ impl PhysAddr {
     pub fn aligned(&self) -> bool {
         self.page_offset() == 0
     }
+
+    ///
+    /// 获取可变指针
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/7
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        unsafe { (self.0 as *mut T).as_mut().unwrap() }
+    }
 }
 
 impl From<usize> for PhysAddr {

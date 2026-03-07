@@ -2,7 +2,7 @@ use crate::loader::get_app_data_by_name;
 use crate::println;
 use crate::sbi::shutdown;
 use crate::task::context::TaskContext;
-use crate::task::manager::add_task;
+pub use crate::task::manager::add_task;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::sync::Arc;
 use lazy_static::lazy_static;

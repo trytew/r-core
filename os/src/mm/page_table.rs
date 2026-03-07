@@ -2,7 +2,8 @@ use crate::mm::address::PhysPageNum;
 use crate::mm::address::VirtPageNum;
 use crate::mm::frame_allocator::frame_alloc;
 use crate::mm::frame_allocator::FrameTracker;
-use crate::mm::{StepByOne, VirtAddr};
+use crate::mm::{PhysAddr, StepByOne, VirtAddr};
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
@@ -338,6 +339,21 @@ impl PageTable {
         // 开启 MMU，使用分页机制并设置根页表所在的物理页号
         8usize << 60 | self.root_ppn.0
     }
+
+    ///
+    /// 根据虚拟地址查找物理地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/7
+    pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
+        self.find_pte(va.clone().floor()).map(|pte| {
+            let aligned_pa: PhysAddr = pte.ppn().into();
+            let offset = va.page_offset();
+            let aligned_pa_usize = aligned_pa.into();
+            (aligned_pa_usize + offset).into()
+        })
+    }
 }
 
 ///
@@ -368,4 +384,44 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
         start = end_va.into();
     }
     v
+}
+
+///
+/// 通过页表将指向可变u8 Vec结尾为\0的指针转换为字符串
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn translated_str(token: usize, ptr: *const u8) -> String {
+    let page_table = PageTable::from_token(token);
+    let mut string = String::new();
+    let mut va = ptr as usize;
+    loop {
+        let ch: u8 = *(page_table
+            .translate_va(VirtAddr::from(va))
+            .unwrap()
+            .get_mut());
+        if ch == 0 {
+            break;
+        } else {
+            string.push(ch as char);
+            va += 1;
+        }
+    }
+    string
+}
+
+///
+/// 通过用户空间页表和指针获取可变指针
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
+    let page_table = PageTable::from_token(token);
+    let va = ptr as usize;
+    page_table
+        .translate_va(VirtAddr::from(va))
+        .unwrap()
+        .get_mut()
 }

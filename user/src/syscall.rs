@@ -12,8 +12,17 @@ const SYSCALL_YIELD: usize = 124;
 /// 获取时间中断号
 const SYSCALL_GET_TIME: usize = 169;
 
-/// 调整堆空间中断号
-const SYSCALL_SBRK: usize = 214;
+/// 获取进程ID中断号
+const SYSCALL_GETPID: usize = 172;
+
+/// 创建子进程中断号
+const SYSCALL_FORK: usize = 220;
+
+/// 执行新进程中断号
+const SYSCALL_EXEC: usize = 221;
+
+/// 等待进程结束中断号
+const SYSCALL_WAITPID: usize = 260;
 
 ///
 /// 系统调用
@@ -76,11 +85,41 @@ pub fn sys_get_time() -> isize {
 }
 
 ///
-/// 调整堆空间
+/// 获取进程ID
 ///
 /// @author: tryte
 ///
-/// @date: 2026/2/3
-pub fn sys_sbrk(size: i32) -> isize {
-    syscall(SYSCALL_SBRK, [size as usize, 0, 0])
+/// @date: 2026/3/7
+pub fn sys_getpid() -> isize {
+    syscall(SYSCALL_GETPID, [0, 0, 0])
+}
+
+///
+/// 创建子进程
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn sys_fork() -> isize {
+    syscall(SYSCALL_FORK, [0, 0, 0])
+}
+
+///
+/// 执行新进程
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn sys_exec(path: &str) -> isize {
+    syscall(SYSCALL_EXEC, [path.as_ptr() as usize, 0, 0])
+}
+
+///
+/// 等待进程结束
+///
+/// @author: tryte
+///
+/// @date: 2026/3/7
+pub fn sys_waitpid(pid: isize, exit_code: *mut i32) -> isize {
+    syscall(SYSCALL_WAITPID, [pid as usize, exit_code as usize, 0])
 }
