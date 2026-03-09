@@ -113,3 +113,35 @@ pub fn wait(exit_code: &mut i32) -> isize {
         }
     }
 }
+
+///
+/// 等待指定进程退出
+///
+/// @author: tryte
+///
+/// @date: 2026/3/9
+pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
+    loop {
+        match sys_waitpid(pid as isize, exit_code as *mut _) {
+            -2 => {
+                yield_();
+            }
+            exit_pid => {
+                return exit_pid;
+            }
+        }
+    }
+}
+
+///
+/// 休眠
+///
+/// @author: tryte
+///
+/// @date: 2026/3/9
+pub fn sleep(periods_ms: usize) {
+    let start = sys_get_time();
+    while sys_get_time() < start + periods_ms as isize {
+        sys_yield();
+    }
+}

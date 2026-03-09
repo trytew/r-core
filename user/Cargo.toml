@@ -13,5 +13,10 @@ name = "initproc"
 test = false
 bench = false
 
+[[bin]]
+name = "user_shell"
+test = false
+bench = false
+
 [dependencies]
 riscv = "0.15.0"
