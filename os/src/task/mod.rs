@@ -17,7 +17,7 @@ mod task;
 
 lazy_static! {
     pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
-        get_app_data_by_name("00_hello_world").unwrap()
+        get_app_data_by_name("initproc").unwrap()
     ));
 }
 

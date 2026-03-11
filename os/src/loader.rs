@@ -80,6 +80,7 @@ pub fn get_app_data_by_name(name: &str) -> Option<&'static [u8]> {
     (0..num_app)
         .find(|&i| {
             // 根据应用名称查找对应的应用序号
+            println!("{}", APP_NAMES[i]);
             APP_NAMES[i] == name
         })
         .map(get_app_data)

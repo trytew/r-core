@@ -1,6 +1,5 @@
-use crate::write;
+use crate::{read, write};
 use core::fmt::{self, Write};
-use core::ptr::read;
 
 const STDIN: usize = 0;
 const STDOUT: usize = 1;
@@ -38,6 +37,12 @@ macro_rules! println {
     };
 }
 
+///
+/// 从终端读取输入字符
+///
+/// @author: tryte
+///
+/// @date: 2026/3/10
 pub fn getchar() -> u8 {
     let mut c = [0u8; 1];
     read(STDIN, &mut c);

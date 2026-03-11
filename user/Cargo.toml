@@ -18,5 +18,16 @@ name = "user_shell"
 test = false
 bench = false
 
+[[bin]]
+name = "exit"
+test = false
+bench = false
+
+[[bin]]
+name = "hello_world"
+test = false
+bench = false
+
 [dependencies]
 riscv = "0.15.0"
+buddy_system_allocator = "0.6"

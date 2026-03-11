@@ -1,5 +1,6 @@
 use crate::loader::get_app_data_by_name;
 use crate::mm::{translated_refmut, translated_str};
+use crate::println;
 use crate::task::{
     add_task, current_task, current_user_token, exit_current_and_run_next,
     suspend_current_and_run_next,
@@ -52,15 +53,22 @@ pub fn sys_getpid() -> isize {
 ///
 /// 创建子进程
 ///
+/// ```
+/// fork 的调用在用户态的表现上是返回两次，但实际上只有父进程 fork 的时候会返回一次。子进程则是因为在 fork 的过程中复制了“陷入”上下文，因此子进程中的 spec 对应的是父进程中 fork 调用后的下一个指令地址，又因为现在使用的虚拟地址，而父子进程内容一样，所以当子进程被调度时是从 fork() 之后运行的。先将子进程作为待运行进程放入调度列表中等待，当子进程被调度时会通过 __switch -> __restore 从内核态切换到用户态直接从 spec 执行的指令地址执行，这个时候根据 RISC-V 的 ABI 调用约定，第一返回值寄存器是 x10，而在 fork 的过程中设置了子进程 x10 的值为 0，因此才造成了用户态返回两次的效果
+/// ```
+///
 /// @author: tryte
 ///
 /// @date: 2026/3/7
 pub fn sys_fork() -> isize {
+    // 获取当前进程控制块
     let current_task = current_task().unwrap();
     let new_task = current_task.fork();
-    // TODO
+    // 获取新进程的进程ID
     let new_pid = new_task.getpid();
+    // 获取新进程的“陷入”上下文
     let trap_cx = new_task.inner_exclusive_access().get_trap_cx();
+    // 子进程的 fork 返回 0
     trap_cx.x[10] = 0;
     add_task(new_task);
     new_pid as isize
@@ -75,6 +83,7 @@ pub fn sys_fork() -> isize {
 pub fn sys_exec(path: *const u8) -> isize {
     let token = current_user_token();
     let path = translated_str(token, path);
+    println!("path: {}", path);
     if let Some(data) = get_app_data_by_name(path.as_str()) {
         let task = current_task().unwrap();
         task.exec(data);

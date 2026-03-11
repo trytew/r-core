@@ -1,6 +1,9 @@
 use core::arch::asm;
 
-/// 写入中断号
+/// 读中断号
+const SYSCALL_READ: usize = 63;
+
+/// 写中断号
 const SYSCALL_WRITE: usize = 64;
 
 /// 退出中断号
@@ -42,6 +45,19 @@ fn syscall(id: usize, args: [usize; 3]) -> isize {
         )
     }
     ret
+}
+
+///
+/// 系统读
+///
+/// @author: tryte
+///
+/// @date: 2026/3/10
+pub fn sys_read(fd: usize, buffer: &mut [u8]) -> isize {
+    syscall(
+        SYSCALL_READ,
+        [fd, buffer.as_mut_ptr() as usize, buffer.len()],
+    )
 }
 
 ///

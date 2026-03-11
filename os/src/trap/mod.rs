@@ -86,7 +86,7 @@ pub fn trap_handler() -> ! {
             let mut cx = current_trap_cx();
             cx.sepc += 4;
             let result = sys_call(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
-            // 如果触发的系统调用是 sys_exec，那么“陷入”上下文会被修改，需要重新获取
+            // 如果触发的系统调用是 sys_yield，那么进程将会发生切换，因此需要重新获取“陷入”上下文并设置系统调用结果
             cx = current_trap_cx();
             cx.x[10] = result;
         }

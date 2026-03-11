@@ -696,14 +696,19 @@ impl MemorySet {
     ///
     /// @date: 2026/3/7
     pub fn from_existed_user(user_space: &Self) -> Self {
+        // 创建新的内存区域描述集合
         let mut memory_set = Self::new_bare();
+        // 设置跳板
         memory_set.map_trampoline();
+        // 遍历当前进程的内存区域描述集合复制内容到新的内存区域描述集合
         for area in user_space.areas.iter() {
             let new_area = MapArea::from_another(area);
             memory_set.push(new_area, None);
             for vpn in area.vpn_range {
+                // 当前处于内核空间（因为已经处于“陷入”状态），因此翻译出来的物理地址可以直接使用（内核空间的内存地址采用的是恒等映射）
                 let src_pnn = user_space.translate(vpn).unwrap().ppn();
-                let dst_ppn = user_space.translate(vpn).unwrap().ppn();
+                let dst_ppn = memory_set.translate(vpn).unwrap().ppn();
+                // 复制内容
                 dst_ppn
                     .get_bytes_array()
                     .copy_from_slice(src_pnn.get_bytes_array());

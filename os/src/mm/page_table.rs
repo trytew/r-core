@@ -350,7 +350,7 @@ impl PageTable {
         self.find_pte(va.clone().floor()).map(|pte| {
             let aligned_pa: PhysAddr = pte.ppn().into();
             let offset = va.page_offset();
-            let aligned_pa_usize = aligned_pa.into();
+            let aligned_pa_usize: usize = aligned_pa.into();
             (aligned_pa_usize + offset).into()
         })
     }
@@ -393,10 +393,12 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
 ///
 /// @date: 2026/3/7
 pub fn translated_str(token: usize, ptr: *const u8) -> String {
+    // 根据 mmu 设置创建页表对象
     let page_table = PageTable::from_token(token);
     let mut string = String::new();
     let mut va = ptr as usize;
     loop {
+        // 根据 mmu 设置查找虚拟地址对应的内容
         let ch: u8 = *(page_table
             .translate_va(VirtAddr::from(va))
             .unwrap()

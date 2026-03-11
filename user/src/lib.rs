@@ -1,11 +1,32 @@
 #![no_std]
 #![feature(linkage)]
+#![feature(alloc_error_handler)]
 
 pub mod console;
 mod lang_items;
 mod syscall;
 
+use buddy_system_allocator::LockedHeap;
+use core::ptr::addr_of_mut;
 use syscall::*;
+
+const USER_HEAP_SIZE: usize = 16384;
+
+///
+/// 堆空间大小
+///
+/// @author: tryte
+///
+/// @date: 2026/3/10
+static mut HEAP_SPACE: [u8; USER_HEAP_SIZE] = [0; USER_HEAP_SIZE];
+
+#[global_allocator]
+static HEAP: LockedHeap = LockedHeap::empty();
+
+#[alloc_error_handler]
+pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
+    panic!("Heap allocation error, layout = {:?}", layout)
+}
 
 // 使用 Rust 的宏将 _start 这段代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中，
 // 在 linker.ld 脚本中指定了 .text.entry 在最开始的位置
@@ -13,6 +34,10 @@ use syscall::*;
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
 pub extern "C" fn _start() -> ! {
+    unsafe {
+        HEAP.lock()
+            .init(addr_of_mut!(HEAP_SPACE) as usize, USER_HEAP_SIZE);
+    }
     exit(main());
     panic!("unreachable after sys_exit!")
 }
@@ -28,7 +53,17 @@ fn main() -> i32 {
 }
 
 ///
-/// 写入
+/// 读
+///
+/// @author: tryte
+///
+/// @date: 2026/3/10
+pub fn read(fd: usize, buf: &mut [u8]) -> isize {
+    sys_read(fd, buf)
+}
+
+///
+/// 写
 ///
 /// @author: tryte
 ///

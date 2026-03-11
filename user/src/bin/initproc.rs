@@ -6,10 +6,16 @@ extern crate user_lib;
 
 use user_lib::{exec, fork, wait, yield_};
 
+///
+/// init进程
+///
+/// @author: tryte
+///
+/// @date: 2026/3/10
 #[unsafe(no_mangle)]
 fn main() -> i32 {
     if fork() == 0 {
-        exec("user_shell\n");
+        exec("user_shell\0");
     } else {
         loop {
             let mut exit_code: i32 = 0;

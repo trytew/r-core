@@ -33,13 +33,13 @@ pub enum TaskStatus {
 pub struct TaskControlBlockInner {
     pub trap_cx_ppn: PhysPageNum, // 应用“陷入”上下文的物理地址
     #[allow(unused)]
-    pub base_size: usize,
-    pub task_cx: TaskContext,                   // 应用“陷入”上下文
-    pub task_status: TaskStatus,                // 应用状态
-    pub memory_set: MemorySet,                  // 应用内存区域
+    pub base_size: usize, // 初始进程所占大小
+    pub task_cx: TaskContext,     // 应用“陷入”上下文
+    pub task_status: TaskStatus,  // 应用状态
+    pub memory_set: MemorySet,    // 应用内存区域
     pub parent: Option<Weak<TaskControlBlock>>, // 父进程
-    pub children: Vec<Arc<TaskControlBlock>>,   // 子进程
-    pub exit_code: i32,                         // 退出状态值
+    pub children: Vec<Arc<TaskControlBlock>>, // 子进程
+    pub exit_code: i32,           // 退出状态值
 }
 
 impl TaskControlBlockInner {
@@ -189,15 +189,21 @@ impl TaskControlBlock {
     ///
     /// @date: 2026/3/7
     pub fn fork(self: &Arc<Self>) -> Arc<Self> {
+        // 取出当前进程控制块
         let mut parent_inner = self.inner_exclusive_access();
+        // 创建新进程的内存描述集合并复制当前进程的内容
         let memory_set = MemorySet::from_existed_user(&parent_inner.memory_set);
+        // 获取新进程的“陷入”上下文物理地址
         let trap_cx_ppn = memory_set
             .translate(VirtAddr::from(TRAP_CONTEXT).into())
             .unwrap()
             .ppn();
+        // 分配进程ID
         let pid_handle = pid_alloc();
+        // 创建内核栈
         let kernel_stack = KernelStack::new(&pid_handle);
         let kernel_stack_top = kernel_stack.get_top();
+        // 创建新的进程控制块
         let task_control_block = Arc::new(TaskControlBlock {
             pid: pid_handle,
             kernel_stack,
@@ -215,8 +221,10 @@ impl TaskControlBlock {
             },
         });
 
+        // 将子进程添加到父进程
         parent_inner.children.push(task_control_block.clone());
 
+        // 设置新进程的内核栈顶为“陷入”上下文地址
         let trap_cx = task_control_block.inner_exclusive_access().get_trap_cx();
         trap_cx.kernel_sp = kernel_stack_top;
 
@@ -230,12 +238,16 @@ impl TaskControlBlock {
     ///
     /// @date: 2026/3/7
     pub fn exec(&self, elf_data: &[u8]) {
+        // 创建新的内存区域描述集合
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
+
+        // 获取“陷入”上下文的物理地址
         let trap_cx_ppn = memory_set
             .translate(VirtAddr::from(TRAP_CONTEXT).into())
             .unwrap()
             .ppn();
 
+        // 将当前进程的内容替换成新进程内容
         let mut inner = self.inner_exclusive_access();
         inner.memory_set = memory_set;
         inner.trap_cx_ppn = trap_cx_ppn;
@@ -246,7 +258,7 @@ impl TaskControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             self.kernel_stack.get_top(),
-            trap_handler as usize,
+            trap_handler as *const () as usize,
         );
     }
 }
