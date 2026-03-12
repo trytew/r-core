@@ -1,5 +1,5 @@
 ///
-/// 打印字符
+/// 从终端打印字符
 ///
 /// @author: tryte
 ///
@@ -7,6 +7,17 @@
 pub fn console_put_char(c: usize) {
     #[allow(deprecated)]
     sbi_rt::legacy::console_putchar(c);
+}
+
+///
+/// 从终端读取字符
+///
+/// @author: tryte
+///
+/// @date: 2026/3/12
+pub fn console_get_char() -> usize {
+    #[allow(deprecated)]
+    sbi_rt::legacy::console_getchar()
 }
 
 ///

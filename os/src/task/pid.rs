@@ -1,5 +1,5 @@
 use crate::config::kernel_stack_position;
-use crate::mm::{MapPermission, KERNEL_SPACE};
+use crate::mm::{MapPermission, VirtAddr, KERNEL_SPACE};
 use crate::sync::UpSafeCell;
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
@@ -111,6 +111,16 @@ impl KernelStack {
     pub fn get_top(&self) -> usize {
         let (_, kernel_stack_top) = kernel_stack_position(self.pid);
         kernel_stack_top
+    }
+}
+
+impl Drop for KernelStack {
+    fn drop(&mut self) {
+        let (kernel_stack_bottom, _) = kernel_stack_position(self.pid);
+        let kernel_stack_bottom_va: VirtAddr = kernel_stack_bottom.into();
+        KERNEL_SPACE
+            .exclusive_access()
+            .remove_area_with_start_vpn(kernel_stack_bottom_va.into());
     }
 }
 

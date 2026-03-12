@@ -579,17 +579,6 @@ impl MemorySet {
             None,
         );
 
-        // 应用堆的起始位置，后续分配堆空间时才会增减
-        memory_set.push(
-            MapArea::new(
-                user_stack_top.into(),
-                user_stack_top.into(),
-                MapType::Framed,
-                MapPermission::R | MapPermission::W | MapPermission::U,
-            ),
-            None,
-        );
-
         // 映射“陷入”上下文地址
         memory_set.push(
             MapArea::new(
@@ -715,6 +704,24 @@ impl MemorySet {
             }
         }
         memory_set
+    }
+
+    ///
+    /// 根据虚拟地址释放内存
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/12
+    pub fn remove_area_with_start_vpn(&mut self, start_vpn: VirtPageNum) {
+        if let Some((idx, area)) = self
+            .areas
+            .iter_mut()
+            .enumerate()
+            .find(|(_, area)| area.vpn_range.get_start() == start_vpn)
+        {
+            area.unmap(&mut self.page_table);
+            self.areas.remove(idx);
+        }
     }
 }
 
