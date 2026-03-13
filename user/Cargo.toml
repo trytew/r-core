@@ -48,11 +48,6 @@ name = "08_sleep"
 test = false
 bench = false
 
-[[bin]]
-name = "09_sbrk_test"
-test = false
-bench = false
-
 [lib]
 name = "user_lib"
 test = false
