@@ -150,12 +150,12 @@ pub fn take_current_task() -> Option<Arc<TaskControlBlock>> {
 /// @date: 2026/3/6
 pub fn schedule(switched_task_cx_ptr: *mut TaskContext) {
     let mut processer = PROCESSOR.exclusive_access();
-    // 获取空闲进程
+    // 获取 idle 进程
     let idle_task_cx_ptr = processer.get_idle_task_cx_ptr();
     drop(processer);
 
     unsafe {
-        // 切换运行进程
+        // 切换运行进程，当切换回 idle 进程后会继续 task::run_tasks() 中 loop 的下一个循环，继续从待运行进程队列中获取进程运行
         __switch(switched_task_cx_ptr, idle_task_cx_ptr);
     }
 }

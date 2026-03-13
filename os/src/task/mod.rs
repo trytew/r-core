@@ -37,7 +37,7 @@ pub fn add_initproc() {
 /// @author: tryte
 ///
 /// @date: 2026/3/6
-pub const IDLE_PID: usize = 0;
+pub const IDLE_PID: usize = 1;
 
 ///
 /// 退出当前进程运行下一个进程
@@ -79,7 +79,7 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 
     // 清空子进程
     inner.children.clear();
-    // 回收进程内存
+    // 回收当前进程内存
     inner.memory_set.recycle_data_pages();
     // 释放借用，因为 schedule 不会返回，不释放借用会导致生命周期和所有权出问题
     drop(inner);

@@ -96,7 +96,9 @@ pub fn sys_exec(path: *const u8) -> isize {
 ///
 /// 获取进程状态
 ///
-/// 进程ID不等于-1或者当前进程查找不到该子进程返回 -1
+/// 若 pid = -1 则代表任意一个子进程
+///
+/// 当前进程查找不到该子进程返回 -1
 ///
 /// 如果当前子进程仍处于运行态则返回 -2
 ///
@@ -117,16 +119,19 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
     }
 
     let pair = inner.children.iter().enumerate().find(|(_, p)| {
-        // 当前子进程为僵尸态且查找的进程id为 -1 或和传入的进程id一致
+        // 当前子进程为僵尸态且查找任意子进程 或和传入的进程id一致
         p.inner_exclusive_access().is_zombie() && (pid == -1 || pid as usize == p.getpid())
     });
 
+    // 回收子进程资源
     if let Some((idx, _)) = pair {
         let child = inner.children.remove(idx);
         assert_eq!(Arc::strong_count(&child), 1);
         let found_pid = child.getpid();
+        // 返回子进程的退出码
         let exit_code = child.inner_exclusive_access().exit_code;
         *translated_refmut(inner.memory_set.token(), exit_code_ptr) = exit_code;
+        // 返回回收的子进程id
         found_pid as isize
     } else {
         -2

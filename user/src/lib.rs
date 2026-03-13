@@ -144,7 +144,9 @@ pub fn wait(exit_code: &mut i32) -> isize {
             -2 => {
                 yield_();
             }
-            exit_pid => return exit_pid,
+            exit_pid => {
+                return exit_pid;
+            }
         }
     }
 }

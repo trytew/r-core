@@ -47,6 +47,11 @@ pub fn main() -> i32 {
                         let exit_pid = waitpid(pid as usize, &mut exit_code);
                         assert_eq!(pid, exit_pid);
                         println!("Shell: Process {} exited with code {}", pid, exit_code);
+                        // 退出 shell
+                        if line.as_str() == "exit\0" {
+                            println!("Shell: exit");
+                            return 0;
+                        }
                     }
                     line.clear();
                 }
