@@ -1,4 +1,3 @@
-use crate::println;
 use crate::syscall::fs::{sys_read, sys_write};
 use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_waitpid, sys_yield,
@@ -51,7 +50,6 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_FORK => sys_fork(),
         SYSCALL_EXEC => {
             let res = sys_exec(args[0] as *const u8);
-            println!("{}", res);
             res
         }
         SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as *mut i32),

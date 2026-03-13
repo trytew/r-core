@@ -24,7 +24,22 @@ test = false
 bench = false
 
 [[bin]]
+name = "fantastic_text"
+test = false
+bench = false
+
+[[bin]]
+name = "fork_exec"
+test = false
+bench = false
+
+[[bin]]
 name = "hello_world"
+test = false
+bench = false
+
+[[bin]]
+name = "fork_test"
 test = false
 bench = false
 

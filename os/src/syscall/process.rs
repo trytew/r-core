@@ -1,6 +1,5 @@
 use crate::loader::get_app_data_by_name;
 use crate::mm::{translated_refmut, translated_str};
-use crate::println;
 use crate::task::{
     add_task, current_task, current_user_token, exit_current_and_run_next,
     suspend_current_and_run_next,
@@ -83,7 +82,6 @@ pub fn sys_fork() -> isize {
 pub fn sys_exec(path: *const u8) -> isize {
     let token = current_user_token();
     let path = translated_str(token, path);
-    println!("path: {}", path);
     if let Some(data) = get_app_data_by_name(path.as_str()) {
         let task = current_task().unwrap();
         task.exec(data);
@@ -125,6 +123,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 
     // 回收子进程资源
     if let Some((idx, _)) = pair {
+        // KernelStack 的 drop 函数触发点
         let child = inner.children.remove(idx);
         assert_eq!(Arc::strong_count(&child), 1);
         let found_pid = child.getpid();
