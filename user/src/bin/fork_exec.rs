@@ -6,6 +6,12 @@ extern crate user_lib;
 
 use user_lib::{exec, fork, getpid, wait};
 
+///
+/// 创建子进程并执行新程序
+///
+/// @author: tryte
+///
+/// @date: 2026/3/14
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
     println!("pid {}: parent start forking...", getpid());

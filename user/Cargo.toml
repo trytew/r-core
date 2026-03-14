@@ -43,6 +43,21 @@ name = "fork_test"
 test = false
 bench = false
 
+[[bin]]
+name = "fork_test_2"
+test = false
+bench = false
+
+[[bin]]
+name = "fork_test_smpl"
+test = false
+bench = false
+
+[[bin]]
+name = "fork_tree"
+test = false
+bench = false
+
 [dependencies]
 riscv = "0.15.0"
 buddy_system_allocator = "0.6"

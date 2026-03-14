@@ -8,7 +8,7 @@ extern crate user_lib;
 
 use alloc::string::String;
 use user_lib::console::getchar;
-use user_lib::{exec, fork, println, waitpid};
+use user_lib::{exec, fork, getpid, println, waitpid};
 
 const LF: u8 = 0x0a_u8;
 const CR: u8 = 0x0d_u8;
@@ -49,7 +49,7 @@ pub fn main() -> i32 {
                         println!("Shell: Process {} exited with code {}", pid, exit_code);
                         // 退出 shell
                         if line.as_str() == "exit\0" {
-                            println!("Shell: exit");
+                            println!("Shell pid: {}, exit", getpid());
                             return 0;
                         }
                     }

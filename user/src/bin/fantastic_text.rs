@@ -10,6 +10,12 @@ macro_rules! color_text {
     };
 }
 
+///
+/// 终端输出不同颜色的字符
+///
+/// @author: tryte
+///
+/// @date: 2026/3/14
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
     println!(

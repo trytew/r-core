@@ -9,11 +9,11 @@ use user_lib::{exit, fork, wait};
 const MAX_CHILD: usize = 30;
 
 ///
-/// 打印 hello world
+/// 测试-fork
 ///
 /// @author: tryte
 ///
-/// @date: 2026/3/10
+/// @date: 2026/3/14
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
     for i in 0..MAX_CHILD {
