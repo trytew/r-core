@@ -14,7 +14,7 @@ test = false
 bench = false
 
 [[bin]]
-name = "user_shell"
+name = "user-shell"
 test = false
 bench = false
 
@@ -24,37 +24,67 @@ test = false
 bench = false
 
 [[bin]]
-name = "fantastic_text"
+name = "fantastic-text"
 test = false
 bench = false
 
 [[bin]]
-name = "fork_exec"
+name = "fork-exec"
 test = false
 bench = false
 
 [[bin]]
-name = "hello_world"
+name = "hello-world"
 test = false
 bench = false
 
 [[bin]]
-name = "fork_test"
+name = "fork-test"
 test = false
 bench = false
 
 [[bin]]
-name = "fork_test_2"
+name = "fork-test-2"
 test = false
 bench = false
 
 [[bin]]
-name = "fork_test_smpl"
+name = "fork-test-simple"
 test = false
 bench = false
 
 [[bin]]
-name = "fork_tree"
+name = "fork-tree"
+test = false
+bench = false
+
+[[bin]]
+name = "matrix"
+test = false
+bench = false
+
+[[bin]]
+name = "sleep"
+test = false
+bench = false
+
+[[bin]]
+name = "sleep-simple"
+test = false
+bench = false
+
+[[bin]]
+name = "stack-overflow"
+test = false
+bench = false
+
+[[bin]]
+name = "yield"
+test = false
+bench = false
+
+[[bin]]
+name = "user-tests"
 test = false
 bench = false
 
