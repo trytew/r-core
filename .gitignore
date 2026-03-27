@@ -18,3 +18,9 @@ os/src/linker_app.asm
 script/target
 script/.idea
 
+easy-fs/target
+easy-fs/.idea
+
+easy-fs-use/target
+easy-fs-use/.idea
+
