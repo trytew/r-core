@@ -7,10 +7,20 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use spin::{Mutex, MutexGuard};
 
+///
+/// 文件节点
+///
+/// @author: tryte
+///
+/// @date: 2026/3/28
 pub struct Inode {
+    /// 节点ID
     block_id: usize,
+    /// 节点偏移
     block_offset: usize,
+    /// 所属文件管理器
     fs: Arc<Mutex<EasyFileSystem>>,
+    /// 块设备
     block_device: Arc<dyn BlockDevice>,
 }
 
@@ -35,6 +45,12 @@ impl Inode {
             .read(self.block_offset, f)
     }
 
+    ///
+    /// 修改硬盘节点数据
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/28
     fn modify_disk_inode<V>(&self, f: impl FnOnce(&mut DiskInode) -> V) -> V {
         get_block_cache(self.block_id, Arc::clone(&self.block_device))
             .lock()
@@ -72,6 +88,12 @@ impl Inode {
         })
     }
 
+    ///
+    /// 节点扩容
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/28
     fn increase_size(
         &self,
         new_size: u32,
@@ -89,6 +111,12 @@ impl Inode {
         disk_node.increase_size(new_size, v, &self.block_device);
     }
 
+    ///
+    /// 创建文件
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/3/28
     pub fn create(&self, name: &str) -> Option<Arc<Inode>> {
         let mut fs = self.fs.lock();
         let op = |root_inode: &DiskInode| {
@@ -98,13 +126,17 @@ impl Inode {
         if self.read_disk_node(op).is_some() {
             return None;
         }
+        // 分配空索引块ID
         let new_inode_id = fs.alloc_inode();
+        // 根据索引块ID获取索引块和块内偏移
         let (new_inode_block_id, new_inode_block_offset) = fs.get_disk_inode_pos(new_inode_id);
+        // 初始化索引块
         get_block_cache(new_inode_block_id as usize, Arc::clone(&self.block_device))
             .lock()
             .modify(new_inode_block_offset, |new_inode: &mut DiskInode| {
                 new_inode.initialize(DiskInodeType::File);
             });
+
         self.modify_disk_inode(|root_inode| {
             let file_count = (root_inode.size as usize) / DIRENT_SZ;
             let new_size = (file_count + 1) * DIRENT_SZ;

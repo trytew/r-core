@@ -21,6 +21,7 @@ fn efs_test() -> std::io::Result<()> {
         f.set_len(8192 * 512)?;
         f
     })));
+    // 创建文件系统
     EasyFileSystem::create(block_file.clone(), 4096, 1);
     let efs = EasyFileSystem::open(block_file.clone());
     let root_inode = EasyFileSystem::root_inode(&efs);

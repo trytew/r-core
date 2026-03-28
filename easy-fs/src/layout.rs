@@ -25,7 +25,7 @@ const INODE_INDIRECT2_COUNT: usize = INODE_INDIRECT1_COUNT * INODE_INDIRECT1_COU
 /// 名称长度
 const NAME_LENGTH_LIMIT: usize = 27;
 
-/// 目录项数量
+/// 目录项大小
 pub const DIRENT_SZ: usize = 32;
 
 #[repr(C)]
@@ -458,7 +458,7 @@ impl DiskInode {
         &mut self,
         offset: usize,
         buf: &[u8],
-        block_size: &Arc<dyn BlockDevice>,
+        block_device: &Arc<dyn BlockDevice>,
     ) -> usize {
         let mut start = offset;
         // 计算结束位置，超出当前节点大小的数据抛弃
@@ -473,8 +473,8 @@ impl DiskInode {
             // 计算当前数据块可写入长度
             let block_write_size = end_current_block - start;
             get_block_cache(
-                self.get_block_id(start_block as u32, block_size) as usize,
-                Arc::clone(block_size),
+                self.get_block_id(start_block as u32, block_device) as usize,
+                Arc::clone(block_device),
             )
             .lock()
             .modify(0, |data_block: &mut DataBlock| {

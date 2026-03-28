@@ -131,7 +131,7 @@ impl EasyFileSystem {
     }
 
     ///
-    ///
+    /// 获取根节点信息
     ///
     /// @author: tryte
     ///
