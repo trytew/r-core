@@ -58,10 +58,14 @@ impl AsMut<[u8]> for CacheData {
 ///
 /// @date: 2026/3/16
 pub struct BlockCache {
-    cache: CacheData,                   // 缓冲区数据
-    block_id: usize,                    // 数据块id
-    block_device: Arc<dyn BlockDevice>, // 块设备
-    modified: bool,                     // 是否修改
+    /// 缓冲区数据
+    cache: CacheData,
+    /// 数据块id
+    block_id: usize,
+    /// 块设备
+    block_device: Arc<dyn BlockDevice>,
+    /// 是否修改
+    modified: bool,
 }
 
 impl BlockCache {
@@ -98,7 +102,7 @@ impl BlockCache {
     /// @author: tryte
     ///
     /// @date: 2026/3/16
-    fn add_of_offset_mut(&mut self, offset: usize) -> *mut u8 {
+    fn addr_of_offset_mut(&mut self, offset: usize) -> *mut u8 {
         addr_of_mut!(self.cache.as_mut()[offset])
     }
 
@@ -131,7 +135,7 @@ impl BlockCache {
         let type_size = core::mem::size_of::<T>();
         assert!(offset + type_size <= BLOCK_SZ);
         self.modified = true;
-        let addr = self.add_of_offset_mut(offset) as *mut T;
+        let addr = self.addr_of_offset_mut(offset) as *mut T;
         unsafe { &mut *addr }
     }
 

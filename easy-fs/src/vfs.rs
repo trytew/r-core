@@ -106,7 +106,7 @@ impl Inode {
         let block_needed = disk_node.blocks_num_needed(new_size);
         let mut v: Vec<u32> = Vec::new();
         for _ in 0..block_needed {
-            v.push(fs.alloc_inode());
+            v.push(fs.alloc_data());
         }
         disk_node.increase_size(new_size, v, &self.block_device);
     }

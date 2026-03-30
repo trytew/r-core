@@ -185,7 +185,7 @@ impl DiskInode {
             // 数据块数量大于一级索引块最大范围值时需要多分配一个二级索引块
             total += 1;
             // 计算二级索引块项数，二级索引块一项代表一个一级索引块
-            total =
+            total +=
                 (data_blocks - INDIRECT1_BOUND + INODE_INDIRECT1_COUNT - 1) / INODE_INDIRECT1_COUNT;
         }
 
@@ -373,7 +373,7 @@ impl DiskInode {
             .lock()
             .modify(0, |indirect2: &mut IndirectBlock| {
                 // 先释放完整的二级索引块
-                for entry in indirect2.iter().take(a1) {
+                for entry in indirect2.iter_mut().take(a1) {
                     v.push(*entry);
                     get_block_cache(*entry as usize, Arc::clone(block_device))
                         .lock()

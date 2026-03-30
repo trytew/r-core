@@ -18,7 +18,7 @@ fn efs_test() -> std::io::Result<()> {
             .write(true)
             .create(true)
             .open("target/fs.img")?;
-        f.set_len(8192 * 512)?;
+        f.set_len(8192 * 512).unwrap();
         f
     })));
     // 创建文件系统
