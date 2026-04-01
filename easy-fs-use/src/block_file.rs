@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::sync::Mutex;
 
+/// 逻辑块大小，单位：字节
 const BLOCK_SZ: usize = 512;
 
 pub struct BlockFile(pub Mutex<File>);

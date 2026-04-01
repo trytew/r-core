@@ -103,6 +103,7 @@ impl Inode {
         if new_size < disk_node.size {
             return;
         }
+        // 计算扩容所需逻辑块数
         let block_needed = disk_node.blocks_num_needed(new_size);
         let mut v: Vec<u32> = Vec::new();
         for _ in 0..block_needed {

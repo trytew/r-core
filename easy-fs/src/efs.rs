@@ -154,6 +154,7 @@ impl EasyFileSystem {
         let block_id = self.inode_area_start_block + inode_id / inodes_per_block;
         (
             block_id,
+            // inode_id as usize * inode_size % inodes_per_block as usize,
             (inode_id % inodes_per_block) as usize * inode_size,
         )
     }
@@ -179,7 +180,7 @@ impl EasyFileSystem {
     }
 
     ///
-    ///
+    /// 分配数据块ID并返回ID值
     ///
     /// @author: tryte
     ///
