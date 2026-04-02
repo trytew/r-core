@@ -9,6 +9,21 @@ use spin::Mutex;
 type DataBlock = [u8; BLOCK_SZ];
 
 ///
+/// ##### 磁盘内容区域划分
+///
+/// ```
+/// |super block|inode bitmap|inode area block|data bitmap|data area block|
+/// ```
+///
+/// ##### 每个划分区释义
+///
+/// - super block: 记录这块磁盘的总信息，1 个 BLOCK_SZ
+/// - inode bitmap: 记录哪个节点ID已被使用，以 bit 记录，0未使用，1已使用
+/// - inode area block: 存放节点信息
+/// - data bitmap: 记录那个数据块已被使用，以 bit 记录，0未使用，1已使用
+/// - data area block: 数据块，一个数据块占一个 BLOCK_SZ，两个数据块之间没有间隔
+
+///
 /// 文件管理器
 ///
 /// @author: tryte
