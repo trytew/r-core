@@ -8,6 +8,12 @@ mod block_file;
 
 pub use block_file::*;
 
+///
+/// 将一个目录下的文件复制到文件系统
+///
+/// @author: tryte
+///
+/// @date: 2026/4/2
 pub fn easy_fs_pack() -> std::io::Result<()> {
     let matches = App::new("EasyFileSystem packer")
         .arg(
