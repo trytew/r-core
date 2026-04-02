@@ -341,7 +341,7 @@ impl DiskInode {
 
         if data_blocks > INODE_DIRECT_COUNT {
             v.push(self.indirect1);
-            data_blocks -= INODE_INDIRECT1_COUNT;
+            data_blocks -= INODE_DIRECT_COUNT;
             current_blocks = 0;
         } else {
             return v;
@@ -428,6 +428,7 @@ impl DiskInode {
             let dst = &mut buf[read_size..read_size + block_read_size];
             // 读取数据
             get_block_cache(
+                // 获取指向的数据块ID
                 self.get_block_id(start_block as u32, block_device) as usize,
                 Arc::clone(block_device),
             )
@@ -524,11 +525,23 @@ impl DirEntry {
         unsafe { core::slice::from_raw_parts_mut(self as *mut _ as usize as *mut u8, DIRENT_SZ) }
     }
 
+    ///
+    /// 获取目录名字
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn name(&self) -> &str {
         let len = (0_usize..).find(|i| self.name[*i] == 0).unwrap();
         core::str::from_utf8(&self.name[..len]).unwrap()
     }
 
+    ///
+    /// 返回索引块ID
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn inode_number(&self) -> u32 {
         self.inode_number
     }

@@ -77,6 +77,7 @@ impl Bitmap {
         get_block_cache(block_pos + self.start_block_id, Arc::clone(block_device))
             .lock()
             .modify(0, |bitmap_lock: &mut BitmapBlock| {
+                // 将数据块所在的 bit map 位置置 0
                 assert!(bitmap_lock[bits64_pos] & (1_u64 << inner_pos) > 0);
                 bitmap_lock[bits64_pos] -= 1_u64 << inner_pos;
             });

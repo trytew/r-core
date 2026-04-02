@@ -14,9 +14,9 @@ use spin::{Mutex, MutexGuard};
 ///
 /// @date: 2026/3/28
 pub struct Inode {
-    /// 节点ID
+    /// 所在硬盘扇区ID
     block_id: usize,
-    /// 节点偏移
+    /// 所在硬盘扇区偏移
     block_offset: usize,
     /// 所属文件管理器
     fs: Arc<Mutex<EasyFileSystem>>,
@@ -39,6 +39,12 @@ impl Inode {
         }
     }
 
+    ///
+    /// 读取硬盘扇区数据
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     fn read_disk_node<V>(&self, f: impl FnOnce(&DiskInode) -> V) -> V {
         get_block_cache(self.block_id, Arc::clone(&self.block_device))
             .lock()
@@ -46,7 +52,7 @@ impl Inode {
     }
 
     ///
-    /// 修改硬盘节点数据
+    /// 修改硬盘扇区数据
     ///
     /// @author: tryte
     ///
@@ -57,12 +63,21 @@ impl Inode {
             .modify(self.block_offset, f)
     }
 
+    ///
+    /// 查找文件/文件夹所在扇区ID
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     fn find_inode_id(&self, name: &str, disk_node: &DiskInode) -> Option<u32> {
         assert!(disk_node.is_dir());
+        // 根据当前索引节点对应的数据大小计算有多少个目录项
         let file_count = (disk_node.size as usize) / DIRENT_SZ;
+        // 记录目录名
         let mut dirent = DirEntry::empty();
         for i in 0..file_count {
             assert_eq!(
+                // 读取数据中记录的目录名
                 disk_node.read_at(DIRENT_SZ * i, dirent.as_bytes_mut(), &self.block_device),
                 DIRENT_SZ
             );
@@ -73,6 +88,12 @@ impl Inode {
         None
     }
 
+    ///
+    /// 查找文件/目录所在的索引节点
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn find(&self, name: &str) -> Option<Arc<Inode>> {
         let fs = self.fs.lock();
         self.read_disk_node(|disk_inode: &DiskInode| {
@@ -120,6 +141,7 @@ impl Inode {
     /// @date: 2026/3/28
     pub fn create(&self, name: &str) -> Option<Arc<Inode>> {
         let mut fs = self.fs.lock();
+        // 查找文件名是否已存在
         let op = |root_inode: &DiskInode| {
             assert!(root_inode.is_dir());
             self.find_inode_id(name, root_inode)
@@ -135,14 +157,17 @@ impl Inode {
         get_block_cache(new_inode_block_id as usize, Arc::clone(&self.block_device))
             .lock()
             .modify(new_inode_block_offset, |new_inode: &mut DiskInode| {
+                // 初始化文件类型的节点
                 new_inode.initialize(DiskInodeType::File);
             });
 
         self.modify_disk_inode(|root_inode| {
+            // 扩充节点容量
             let file_count = (root_inode.size as usize) / DIRENT_SZ;
             let new_size = (file_count + 1) * DIRENT_SZ;
             self.increase_size(new_size as u32, root_inode, &mut fs);
             let dirent = DirEntry::new(name, new_inode_id);
+            // 写入新增内容
             root_inode.write_at(
                 file_count * DIRENT_SZ,
                 dirent.as_bytes(),
@@ -150,6 +175,7 @@ impl Inode {
             );
         });
 
+        // 获取文件索引节点所在的索引块ID和偏移
         let (block_id, block_offset) = fs.get_disk_inode_pos(new_inode_id);
         block_cache_sync_all();
         Some(Arc::new(Self::new(
@@ -160,6 +186,12 @@ impl Inode {
         )))
     }
 
+    ///
+    /// 列出节点里的文件/目录名
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn ls(&self) -> Vec<String> {
         let _fs = self.fs.lock();
         self.read_disk_node(|disk_inode| {
@@ -177,11 +209,23 @@ impl Inode {
         })
     }
 
+    ///
+    /// 读取索引块指向的数据块内容
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn read_at(&self, offset: usize, buf: &mut [u8]) -> usize {
         let _fs = self.fs.lock();
         self.read_disk_node(|disk_inode| disk_inode.read_at(offset, buf, &self.block_device))
     }
 
+    ///
+    /// 向索引块指向的数据块写入内容
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn write_at(&self, offset: usize, buf: &[u8]) -> usize {
         let mut fs = self.fs.lock();
         let size = self.modify_disk_inode(|disk_inode| {
@@ -192,6 +236,12 @@ impl Inode {
         size
     }
 
+    ///
+    /// 清理文件内容
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn clear(&self) {
         let mut fs = self.fs.lock();
         self.modify_disk_inode(|disk_inode| {

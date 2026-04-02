@@ -190,7 +190,7 @@ impl EasyFileSystem {
     }
 
     ///
-    ///
+    /// 清空数据块内容
     ///
     /// @author: tryte
     ///
