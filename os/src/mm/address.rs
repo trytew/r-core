@@ -39,9 +39,9 @@ const VA_WIDTH_SV39: usize = 39;
 #[allow(unused)]
 const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SIZE_BITS;
 
-/// 物理内存地址
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub struct PhysAddr(pub usize);
+pub trait StepByOne {
+    fn step(&mut self);
+}
 
 /// 物理内存页号
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
@@ -54,6 +54,10 @@ pub struct VirtAddr(pub usize);
 /// 虚拟内存页号
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct VirtPageNum(pub usize);
+
+/// 物理内存地址
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub struct PhysAddr(pub usize);
 
 impl PhysAddr {
     ///
@@ -173,6 +177,12 @@ impl From<PhysAddr> for PhysPageNum {
     }
 }
 
+impl StepByOne for PhysPageNum {
+    fn step(&mut self) {
+        self.0 += 1;
+    }
+}
+
 impl VirtAddr {
     ///
     /// 向上取整
@@ -282,14 +292,14 @@ impl Debug for VirtPageNum {
     }
 }
 
-impl From<PhysAddr> for usize {
-    fn from(value: PhysAddr) -> Self {
-        value.0
+impl StepByOne for VirtPageNum {
+    fn step(&mut self) {
+        self.0 += 1;
     }
 }
 
-impl From<PhysPageNum> for usize {
-    fn from(value: PhysPageNum) -> Self {
+impl From<PhysAddr> for usize {
+    fn from(value: PhysAddr) -> Self {
         value.0
     }
 }
@@ -307,16 +317,6 @@ impl From<VirtAddr> for usize {
 impl From<VirtPageNum> for usize {
     fn from(value: VirtPageNum) -> Self {
         value.0
-    }
-}
-
-pub trait StepByOne {
-    fn step(&mut self);
-}
-
-impl StepByOne for VirtPageNum {
-    fn step(&mut self) {
-        self.0 += 1;
     }
 }
 

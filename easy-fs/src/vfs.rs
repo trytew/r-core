@@ -25,6 +25,12 @@ pub struct Inode {
 }
 
 impl Inode {
+    ///
+    /// 实例化磁盘节点
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/2
     pub fn new(
         block_id: u32,
         block_offset: usize,

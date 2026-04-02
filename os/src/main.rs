@@ -8,6 +8,8 @@ extern crate alloc;
 mod boards;
 mod config;
 mod console;
+pub mod drivers;
+pub mod fs;
 mod lang_items;
 mod loader;
 mod mm;

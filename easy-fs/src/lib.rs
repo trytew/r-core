@@ -17,3 +17,5 @@ pub const BLOCK_SZ: usize = 512;
 pub use block_dev::BlockDevice;
 
 pub use efs::*;
+
+pub use vfs::Inode;
