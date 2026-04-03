@@ -41,6 +41,7 @@ pub fn easy_fs_pack() -> std::io::Result<()> {
             .write(true)
             .create(true)
             .open(format!("{}{}", target_path, "fs.img"))?;
+        f.set_len(16 * 2048 * 512)?;
         f
     })));
 
