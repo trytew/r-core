@@ -1,10 +1,12 @@
 use crate::config::TRAP_CONTEXT;
+use crate::fs::{File, Stdin, Stdout};
 use crate::mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UpSafeCell;
 use crate::task::context::TaskContext;
 use crate::task::pid::{pid_alloc, KernelStack, PidHandle};
 use crate::trap::{trap_handler, TrapContext};
 use alloc::sync::{Arc, Weak};
+use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefMut;
 
@@ -31,15 +33,25 @@ pub enum TaskStatus {
 ///
 /// @date: 2026/3/6
 pub struct TaskControlBlockInner {
-    pub trap_cx_ppn: PhysPageNum, // 应用“陷入”上下文的物理地址
+    /// 应用“陷入”上下文的物理地址
+    pub trap_cx_ppn: PhysPageNum,
     #[allow(unused)]
-    pub base_size: usize, // 初始进程所占大小
-    pub task_cx: TaskContext,     // 应用“陷入”上下文
-    pub task_status: TaskStatus,  // 应用状态
-    pub memory_set: MemorySet,    // 应用内存区域
-    pub parent: Option<Weak<TaskControlBlock>>, // 父进程
-    pub children: Vec<Arc<TaskControlBlock>>, // 子进程
-    pub exit_code: i32,           // 退出状态值
+    /// 初始进程所占大小
+    pub base_size: usize,
+    /// 应用“陷入”上下文
+    pub task_cx: TaskContext,
+    /// 应用状态
+    pub task_status: TaskStatus,
+    /// 应用内存区域
+    pub memory_set: MemorySet,
+    /// 父进程
+    pub parent: Option<Weak<TaskControlBlock>>,
+    /// 子进程
+    pub children: Vec<Arc<TaskControlBlock>>,
+    /// 退出状态值
+    pub exit_code: i32,
+    /// 已打开的文件描述符
+    pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>,
 }
 
 impl TaskControlBlockInner {
@@ -134,6 +146,14 @@ impl TaskControlBlock {
                     parent: None,
                     children: Vec::new(),
                     exit_code: 0,
+                    fd_table: vec![
+                        // 0 -> stdin
+                        Some(Arc::new(Stdin)),
+                        // 1 -> stdout
+                        Some(Arc::new(Stdout)),
+                        // 2 -> stderr
+                        Some(Arc::new(Stdout)),
+                    ],
                 })
             },
         };
@@ -217,6 +237,7 @@ impl TaskControlBlock {
                     parent: Some(Arc::downgrade(self)),
                     children: Vec::new(),
                     exit_code: 0,
+                    fd_table: vec![],
                 })
             },
         });

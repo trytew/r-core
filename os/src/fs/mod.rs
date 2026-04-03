@@ -1,4 +1,11 @@
 mod inode;
+mod stdio;
+
+pub use inode::list_apps;
+pub use inode::open_file;
+pub use inode::OpenFlags;
+pub use stdio::Stdin;
+pub use stdio::Stdout;
 
 use crate::mm::UserBuffer;
 

@@ -1,11 +1,59 @@
-use crate::mm::{frame_alloc, frame_dealloc, FrameTracker, PhysAddr, PhysPageNum, StepByOne};
+use crate::mm::{
+    frame_alloc, frame_dealloc, kernel_token, FrameTracker, PageTable, PhysAddr, PhysPageNum,
+    StepByOne, VirtAddr,
+};
 use crate::sync::UpSafeCell;
 use alloc::vec::Vec;
+use easy_fs::BlockDevice;
 use lazy_static::lazy_static;
-use virtio_drivers::Hal;
+use virtio_drivers::{Hal, VirtIOBlk};
+
+const VIRTIO0: usize = 0x1000_1000;
 
 lazy_static! {
     static ref QUEUE_FRAMES: UpSafeCell<Vec<FrameTracker>> = unsafe { UpSafeCell::new(Vec::new()) };
+}
+
+///
+/// 虚拟设备块
+///
+/// @author: tryte
+///
+/// @date: 2026/4/3
+pub struct VirtIOBlock(UpSafeCell<VirtIOBlk<'static, VirtioHal>>);
+
+impl VirtIOBlock {
+    pub fn new() -> Self {
+        unsafe { Self(UpSafeCell::new(VirtIOBlk::<VirtioHal>::new(&mut *VIRTIO0))) }
+    }
+}
+
+impl BlockDevice for VirtIOBlock {
+    ///
+    /// 读取设备块内容
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/3
+    fn read_block(&self, block_id: usize, buf: &mut [u8]) {
+        self.0
+            .exclusive_access()
+            .read_block(block_id, buf)
+            .expect("Error when reading VirtBlock");
+    }
+
+    ///
+    /// 写入内容到设备块中
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/3
+    fn write_block(&self, block_id: usize, buf: &[u8]) {
+        self.0
+            .exclusive_access()
+            .write_block(block_id, buf)
+            .expect("Error where writing VirtBlock");
+    }
 }
 
 pub struct VirtioHal;
@@ -35,13 +83,14 @@ impl Hal for VirtioHal {
         0
     }
 
-    fn phys_to_virt(paddr: usize) -> usize {
-        todo!()
+    fn phys_to_virt(addr: usize) -> usize {
+        addr
     }
 
-    fn virt_to_phys(vaddr: usize) -> PhysAddr {
-        todo!()
+    fn virt_to_phys(vaddr: usize) -> usize {
+        PageTable::from_token(kernel_token())
+            .translate_va(VirtAddr::from(vaddr))
+            .unwrap()
+            .0
     }
 }
-
-pub struct VirtIOBlock(UpSafeCell<VirtIOBlock<'static, VirtioHal>>);

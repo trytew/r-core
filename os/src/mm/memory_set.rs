@@ -725,6 +725,16 @@ impl MemorySet {
     }
 }
 
+///
+/// 获取内核空间的 mmu 设置
+///
+/// @author: tryte
+///
+/// @date: 2026/4/3
+pub fn kernel_token() -> usize {
+    KERNEL_SPACE.exclusive_access().token()
+}
+
 #[allow(unused)]
 pub fn remap_test() {
     let mut kernel_space = KERNEL_SPACE.exclusive_access();

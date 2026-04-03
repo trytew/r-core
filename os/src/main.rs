@@ -11,7 +11,6 @@ mod console;
 pub mod drivers;
 pub mod fs;
 mod lang_items;
-mod loader;
 mod mm;
 mod sbi;
 mod sync;
@@ -24,8 +23,6 @@ use core::arch::global_asm;
 
 // 加载入口汇编文件
 global_asm!(include_str!("./entry.asm"));
-// 加载用户态程序，该汇编代码由 build.rs 生成
-global_asm!(include_str!("./linker_app.asm"));
 
 ///
 /// 清空栈数据
@@ -86,7 +83,7 @@ fn rust_main() -> ! {
 
     timer::set_next_tigger();
 
-    loader::list_apps();
+    fs::list_apps();
 
     task::run_tasks();
 

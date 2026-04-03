@@ -8,6 +8,8 @@
 
 cd ../user/ && \
 ./build.sh && \
+cd ../easy-fs-use/
+./build.sh
 cd ../os/ && \
 ./build.sh && \
 qemu-system-riscv64 -machine virt \
