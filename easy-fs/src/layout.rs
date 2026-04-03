@@ -146,6 +146,7 @@ impl DiskInode {
     /// @author: tryte
     ///
     /// @date: 2026/3/17
+    #[allow(unused)]
     pub fn is_file(&self) -> bool {
         self.type_ == DiskInodeType::File
     }

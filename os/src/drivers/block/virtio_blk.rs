@@ -6,7 +6,7 @@ use crate::sync::UpSafeCell;
 use alloc::vec::Vec;
 use easy_fs::BlockDevice;
 use lazy_static::lazy_static;
-use virtio_drivers::{Hal, VirtIOBlk};
+use virtio_drivers::{Hal, VirtIOBlk, VirtIOHeader};
 
 const VIRTIO0: usize = 0x1000_1000;
 
@@ -24,7 +24,11 @@ pub struct VirtIOBlock(UpSafeCell<VirtIOBlk<'static, VirtioHal>>);
 
 impl VirtIOBlock {
     pub fn new() -> Self {
-        unsafe { Self(UpSafeCell::new(VirtIOBlk::<VirtioHal>::new(&mut *VIRTIO0))) }
+        unsafe {
+            Self(UpSafeCell::new(
+                VirtIOBlk::<VirtioHal>::new(&mut *(VIRTIO0 as *mut VirtIOHeader)).unwrap(),
+            ))
+        }
     }
 }
 

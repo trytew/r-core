@@ -1,3 +1,4 @@
+use crate::drivers::BLOCK_DEVICE;
 use crate::fs::File;
 use crate::mm::UserBuffer;
 use crate::println;
@@ -11,6 +12,7 @@ use lazy_static::lazy_static;
 lazy_static! {
     pub static ref ROOT_INODE: Arc<Inode> = {
         let efs = EasyFileSystem::open(BLOCK_DEVICE.clone());
+        Arc::new(EasyFileSystem::root_inode(&efs))
     };
 }
 
@@ -26,7 +28,7 @@ pub struct OSInode {
 }
 
 impl OSInode {
-    pub fn new(readable: bool, writeable: bool, indoe: Arc<Inode>) -> Self {
+    pub fn new(readable: bool, writeable: bool, inode: Arc<Inode>) -> Self {
         Self {
             readable,
             writeable,

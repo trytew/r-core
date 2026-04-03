@@ -1,11 +1,11 @@
-use crate::loader::get_app_data_by_name;
+use crate::fs::{open_file, OpenFlags};
 use crate::println;
 use crate::sbi::shutdown;
 use crate::task::context::TaskContext;
 pub use crate::task::manager::add_task;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::sync::Arc;
-use lazy_static::lazy_static;
+use lazy_static::*;
 pub use processor::*;
 
 mod context;
@@ -16,9 +16,11 @@ mod switch;
 mod task;
 
 lazy_static! {
-    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
-        get_app_data_by_name("initproc").unwrap()
-    ));
+    pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new({
+        let inode = open_file("initproc", OpenFlags::RDONY).unwrap();
+        let v = inode.read_all();
+        TaskControlBlock::new(v.as_slice())
+    });
 }
 
 ///
