@@ -1,4 +1,4 @@
-use crate::config::kernel_stack_position;
+use crate::config::{KERNEL_STACK_SIZE, PAGE_SIZE, TRAMPOLINE};
 use crate::mm::{MapPermission, VirtAddr, KERNEL_SPACE};
 use crate::sync::UpSafeCell;
 use alloc::vec::Vec;
@@ -102,6 +102,25 @@ impl KernelStack {
         KernelStack { pid: pid_handle.0 }
     }
 
+    #[allow(unused)]
+    ///
+    /// 将值放到内核栈栈顶
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/7
+    pub fn push_to_top<T>(&self, value: T) -> *mut T
+    where
+        T: Sized,
+    {
+        let kernel_stack_top = self.get_top();
+        let ptr_mut = (kernel_stack_top - core::mem::size_of::<T>()) as *mut T;
+        unsafe {
+            *ptr_mut = value;
+        }
+        ptr_mut
+    }
+
     ///
     /// 获取内核栈栈顶
     ///
@@ -132,4 +151,17 @@ impl Drop for KernelStack {
 /// @date: 2026/3/3
 pub fn pid_alloc() -> PidHandle {
     PID_ALLOCATOR.exclusive_access().alloc()
+}
+
+///
+/// 获取进程内核栈底和栈顶
+///
+/// @author: tryte
+///
+/// @date: 2026/1/30
+pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
+    // 内核栈的空间是8kb + 4kb，其中有 4kb 是作为灰页（保护页）不映射进页表
+    let top = TRAMPOLINE - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE); // 高地址
+    let bottom = top - KERNEL_STACK_SIZE; // 低地址
+    (bottom, top)
 }

@@ -94,6 +94,15 @@ impl TaskControlBlockInner {
     pub fn is_zombie(&self) -> bool {
         self.get_status() == TaskStatus::Zombie
     }
+
+    pub fn alloc_fd(&mut self) -> usize {
+        if let Some(fd) = (0..self.fd_table.len()).find(|fd| self.fd_table[*fd].is_none()) {
+            fd
+        } else {
+            self.fd_table.push(None);
+            self.fd_table.len() - 1
+        }
+    }
 }
 
 ///
@@ -280,13 +289,13 @@ impl TaskControlBlock {
         inner.memory_set = memory_set;
         inner.trap_cx_ppn = trap_cx_ppn;
         inner.base_size = user_sp;
-        let trap_cx = inner.get_trap_cx();
-        *trap_cx = TrapContext::app_init_context(
+        let trap_cx = TrapContext::app_init_context(
             entry_point,
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             self.kernel_stack.get_top(),
             trap_handler as *const () as usize,
         );
+        *inner.get_trap_cx() = trap_cx;
     }
 }

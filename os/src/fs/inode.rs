@@ -36,6 +36,12 @@ impl OSInode {
         }
     }
 
+    ///
+    /// 读取文件所有内容
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/7
     pub fn read_all(&self) -> Vec<u8> {
         let mut inner = self.inner.exclusive_access();
         let mut buffer = [0_u8; 512];
@@ -147,30 +153,6 @@ impl OpenFlags {
             (false, true)
         } else {
             (true, true)
-        }
-    }
-
-    pub fn open_file(name: &str, flags: OpenFlags) -> Option<Arc<OSInode>> {
-        let (readable, writeable) = flags.read_write();
-        if flags.contains(OpenFlags::CREATE) {
-            if let Some(inode) = ROOT_INODE.find(name) {
-                inode.clear();
-                Some(Arc::new(OSInode::new(readable, writeable, inode)))
-            } else {
-                ROOT_INODE.find(name).map(|inode| {
-                    if flags.contains(OpenFlags::TRUNC) {
-                        inode.clear();
-                    }
-                    Arc::new(OSInode::new(readable, writeable, inode))
-                })
-            }
-        } else {
-            ROOT_INODE.find(name).map(|inode| {
-                if flags.contains(Self::TRUNC) {
-                    inode.clear();
-                }
-                Arc::new(OSInode::new(readable, writeable, inode))
-            })
         }
     }
 }

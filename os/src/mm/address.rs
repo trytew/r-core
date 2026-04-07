@@ -1,8 +1,8 @@
 use crate::config::PAGE_SIZE;
 use crate::config::PAGE_SIZE_BITS;
 use crate::mm::page_table::PageTableEntry;
-use core::fmt::Debug;
 use core::fmt::Formatter;
+use core::fmt::{Debug, Write};
 
 ///
 /// 当开启 MMU 后，所有内存地址访问都由直接物理内存访问变为虚拟内存访问，
@@ -105,6 +105,10 @@ impl PhysAddr {
         self.page_offset() == 0
     }
 
+    pub fn get_ref<T>(&self) -> &'static T {
+        unsafe { (self.0 as *const T).as_ref().unwrap() }
+    }
+
     ///
     /// 获取可变指针
     ///
@@ -113,6 +117,12 @@ impl PhysAddr {
     /// @date: 2026/3/7
     pub fn get_mut<T>(&self) -> &'static mut T {
         unsafe { (self.0 as *mut T).as_mut().unwrap() }
+    }
+}
+
+impl Debug for PhysAddr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("PA:{:#x}", self.0))
     }
 }
 
@@ -161,6 +171,12 @@ impl PhysPageNum {
     pub fn get_mut<T>(&self) -> &'static mut T {
         let pa: PhysAddr = self.clone().into();
         unsafe { (pa.0 as *mut T).as_mut().unwrap() }
+    }
+}
+
+impl Debug for PhysPageNum {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("PPN:{:#x}", self.0))
     }
 }
 
@@ -227,6 +243,12 @@ impl VirtAddr {
     /// @date: 2026/1/15
     pub fn aligned(&self) -> bool {
         self.page_offset() == 0
+    }
+}
+
+impl Debug for VirtAddr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("VA:{:#x}", self.0))
     }
 }
 
@@ -301,6 +323,12 @@ impl StepByOne for VirtPageNum {
 impl From<PhysAddr> for usize {
     fn from(value: PhysAddr) -> Self {
         value.0
+    }
+}
+
+impl From<PhysPageNum> for usize {
+    fn from(v: PhysPageNum) -> Self {
+        v.0
     }
 }
 

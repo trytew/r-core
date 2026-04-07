@@ -8,7 +8,7 @@ use easy_fs::BlockDevice;
 use lazy_static::lazy_static;
 use virtio_drivers::{Hal, VirtIOBlk, VirtIOHeader};
 
-const VIRTIO0: usize = 0x1000_1000;
+const VIRTIO0: usize = 0x10_001_000;
 
 lazy_static! {
     static ref QUEUE_FRAMES: UpSafeCell<Vec<FrameTracker>> = unsafe { UpSafeCell::new(Vec::new()) };
@@ -77,8 +77,8 @@ impl Hal for VirtioHal {
         pa.0
     }
 
-    fn dma_dealloc(paddr: usize, pages: usize) -> i32 {
-        let pa = PhysAddr::from(paddr);
+    fn dma_dealloc(pa: usize, pages: usize) -> i32 {
+        let pa = PhysAddr::from(pa);
         let mut ppn_base: PhysPageNum = pa.into();
         for _ in 0..pages {
             frame_dealloc(ppn_base);

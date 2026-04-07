@@ -405,16 +405,30 @@ pub fn translated_str(token: usize, ptr: *const u8) -> String {
             .get_mut());
         if ch == 0 {
             break;
-        } else {
-            string.push(ch as char);
-            va += 1;
         }
+        string.push(ch as char);
+        va += 1;
     }
     string
 }
 
+#[allow(unused)]
 ///
-/// 通过用户空间页表和指针获取可变指针
+/// 通过用户空间页表和指针获取不可变引用
+///
+/// @author: tryte
+///
+/// @date: 2026/4/7
+pub fn translated_ref<T>(token: usize, ptr: *mut T) -> &'static T {
+    let page_table = PageTable::from_token(token);
+    page_table
+        .translate_va(VirtAddr::from(ptr as usize))
+        .unwrap()
+        .get_ref()
+}
+
+///
+/// 通过用户空间页表和指针获取可变引用
 ///
 /// @author: tryte
 ///

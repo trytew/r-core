@@ -5,7 +5,7 @@ pub const USER_STACK_SIZE: usize = 4096 * 2;
 pub const KERNEL_STACK_SIZE: usize = 4096 * 2;
 
 /// 内核堆内存大小 3MB
-pub const KERNEL_HEAP_SIZE: usize = 0x30_0000;
+pub const KERNEL_HEAP_SIZE: usize = 0x20_0000;
 
 /// 页容量（4kb）
 pub const PAGE_SIZE: usize = 0x1_000;
@@ -18,18 +18,5 @@ pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 
 /// “陷入”上下文
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
-
-///
-/// 获取进程内核栈底和栈顶
-///
-/// @author: tryte
-///
-/// @date: 2026/1/30
-pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
-    // 内核栈的空间是8kb + 4kb，其中有 4kb 是作为灰页（保护页）不映射进页表
-    let top = TRAMPOLINE - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE); // 高地址
-    let bottom = top - KERNEL_STACK_SIZE; // 低地址
-    (bottom, top)
-}
 
 pub use crate::boards::*;

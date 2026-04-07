@@ -9,6 +9,7 @@ use core::fmt::Formatter;
 use lazy_static::lazy_static;
 
 type FrameAllocatorImpl = StackFrameAllocator;
+
 lazy_static! {
     // 创建全局物理页帧管理器
     pub static ref FRAME_ALLOCATOR: UpSafeCell<FrameAllocatorImpl> =
@@ -98,11 +99,11 @@ trait FrameAllocator {
 ///
 /// @date: 2026/1/9
 pub struct StackFrameAllocator {
-    // 当前物理页号
+    /// 当前物理页号
     current: usize,
-    // 结束物理页号
+    /// 结束物理页号
     end: usize,
-    // 以后入先出的方式保存了被回收的物理页号
+    /// 以后入先出的方式保存了被回收的物理页号
     recycled: Vec<usize>,
 }
 
@@ -117,6 +118,7 @@ impl StackFrameAllocator {
         // 设置页帧的物理起始和结束页号
         self.current = l.0;
         self.end = r.0;
+        println!("last {} Physical Frames.", self.end - self.current);
     }
 }
 

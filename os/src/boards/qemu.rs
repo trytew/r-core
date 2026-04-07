@@ -20,6 +20,9 @@ pub const MEMORY_END: usize = 0x88_000_000;
 /// @author: tryte
 ///
 /// @date: 2026/1/17
-pub const MMIO: &[(usize, usize)] = &[(0x0010_0000, 0x00_2000)];
+pub const MMIO: &[(usize, usize)] = &[
+    (0x00_100_000, 0x002_000), // VIRT_TEST/RTC in virt machine
+    (0x10_001_000, 0x001_000), // Virtio Block in virt machine
+];
 
 pub type BlockDeviceImpl = crate::drivers::block::VirtIOBlock;
