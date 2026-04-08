@@ -88,6 +88,23 @@ name = "user-tests"
 test = false
 bench = false
 
+[[bin]]
+name = "touch-file-a"
+test = false
+bench = false
+
+[[bin]]
+name = "cat-file-a"
+test = false
+bench = false
+
+
+[[bin]]
+name = "huge-write"
+test = false
+bench = false
+
 [dependencies]
 riscv = "0.15.0"
 buddy_system_allocator = "0.6"
+bitflags = "1.2.1"

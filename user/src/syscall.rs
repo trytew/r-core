@@ -1,5 +1,11 @@
 use core::arch::asm;
 
+/// 打开中断号
+const SYSCALL_OPEN: usize = 56;
+
+/// 关闭中断号
+const SYSCALL_CLOSE: usize = 57;
+
 /// 读中断号
 const SYSCALL_READ: usize = 63;
 
@@ -45,6 +51,26 @@ fn syscall(id: usize, args: [usize; 3]) -> isize {
         )
     }
     ret
+}
+
+///
+/// 系统打开文件
+///
+/// @author: tryte
+///
+/// @date: 2026/4/8
+pub fn sys_open(path: &str, flags: u32) -> isize {
+    syscall(SYSCALL_OPEN, [path.as_ptr() as usize, flags as usize, 0])
+}
+
+///
+/// 系统关闭文件
+///
+/// @author: tryte
+///
+/// @date: 2026/4/8
+pub fn sys_close(fd: usize) -> isize {
+    syscall(SYSCALL_CLOSE, [fd, 0, 0])
 }
 
 ///

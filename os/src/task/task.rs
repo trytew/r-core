@@ -95,10 +95,18 @@ impl TaskControlBlockInner {
         self.get_status() == TaskStatus::Zombie
     }
 
+    ///
+    /// 分配新文件描述符
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/8
     pub fn alloc_fd(&mut self) -> usize {
+        // 查找空文件描述符
         if let Some(fd) = (0..self.fd_table.len()).find(|fd| self.fd_table[*fd].is_none()) {
             fd
         } else {
+            // 新增空文件描述符并返回
             self.fd_table.push(None);
             self.fd_table.len() - 1
         }

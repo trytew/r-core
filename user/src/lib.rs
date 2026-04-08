@@ -6,6 +6,7 @@ pub mod console;
 mod lang_items;
 mod syscall;
 
+use bitflags::bitflags;
 use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
 use syscall::*;
@@ -50,6 +51,36 @@ pub extern "C" fn _start() -> ! {
 #[unsafe(no_mangle)]
 fn main() -> i32 {
     panic!("Cannot found main");
+}
+
+bitflags! {
+pub struct OpenFlags:u32 {
+        const RDONLY = 0;
+        const WRONLY = 1 << 0;
+        const RDWR = 1 << 1;
+        const CREATE = 1 << 9;
+        const TRUNC = 1 << 10;
+    }
+}
+
+///
+/// 打开文件
+///
+/// @author: tryte
+///
+/// @date: 2026/4/8
+pub fn open(path: &str, flags: OpenFlags) -> isize {
+    sys_open(path, flags.bits)
+}
+
+///
+/// 关闭文件
+///
+/// @author: tryte
+///
+/// @date: 2026/4/8
+pub fn close(fd: usize) -> isize {
+    sys_close(fd)
 }
 
 ///
