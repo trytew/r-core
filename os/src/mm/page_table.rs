@@ -442,15 +442,33 @@ pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
         .get_mut()
 }
 
+///
+/// 用户空间缓冲区
+///
+/// @author: tryte
+///
+/// @date: 2026/4/13
 pub struct UserBuffer {
     pub buffers: Vec<&'static mut [u8]>,
 }
 
 impl UserBuffer {
+    ///
+    /// 创建
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/13
     pub fn new(buffers: Vec<&'static mut [u8]>) -> Self {
         Self { buffers }
     }
 
+    ///
+    /// 长度
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/13
     pub fn len(&self) -> usize {
         let mut total: usize = 0;
         for b in self.buffers.iter() {

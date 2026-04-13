@@ -2,12 +2,6 @@ use crate::fs::{open_file, OpenFlags};
 use crate::mm::{translated_byte_buffer, translated_str, UserBuffer};
 use crate::task::{current_task, current_user_token};
 
-/// 终端输入文件描述符
-const FD_STDIN: usize = 0;
-
-/// 终端输出文件描述符
-const FD_STDOUT: usize = 1;
-
 ///
 /// 系统读
 ///
