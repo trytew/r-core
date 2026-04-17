@@ -1,6 +1,10 @@
-内核和应用地址空间
+文件系统
 
 第六章第四节
+
+easy-fs-use:
+cd easy-fs-use
+./build.sh
 
 os:
 
