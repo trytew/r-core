@@ -1,11 +1,10 @@
 mod inode;
+mod pipe;
 mod stdio;
 
-pub use inode::list_apps;
-pub use inode::open_file;
-pub use inode::OpenFlags;
-pub use stdio::Stdin;
-pub use stdio::Stdout;
+pub use inode::*;
+pub use pipe::*;
+pub use stdio::*;
 
 use crate::mm::UserBuffer;
 

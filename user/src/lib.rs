@@ -84,6 +84,16 @@ pub fn close(fd: usize) -> isize {
 }
 
 ///
+/// 创建管道
+///
+/// @author: tryte
+///
+/// @date: 2026/4/17
+pub fn pipe(pipe_fd: &mut [usize]) -> isize {
+    sys_pipe(pipe_fd)
+}
+
+///
 /// 读
 ///
 /// @author: tryte

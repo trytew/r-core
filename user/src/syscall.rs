@@ -6,6 +6,9 @@ const SYSCALL_OPEN: usize = 56;
 /// 关闭中断号
 const SYSCALL_CLOSE: usize = 57;
 
+/// 创建管道
+const SYSCALL_PIPE: usize = 59;
+
 /// 读中断号
 const SYSCALL_READ: usize = 63;
 
@@ -71,6 +74,16 @@ pub fn sys_open(path: &str, flags: u32) -> isize {
 /// @date: 2026/4/8
 pub fn sys_close(fd: usize) -> isize {
     syscall(SYSCALL_CLOSE, [fd, 0, 0])
+}
+
+///
+/// 创建管道
+///
+/// @author: tryte
+///
+/// @date: 2026/4/17
+pub fn sys_pipe(pipe: &mut [usize]) -> isize {
+    syscall(SYSCALL_PIPE, [pipe.as_mut_ptr() as usize, 0, 0])
 }
 
 ///

@@ -1,4 +1,4 @@
-use crate::syscall::fs::{sys_close, sys_open, sys_read, sys_write};
+use crate::syscall::fs::{sys_close, sys_open, sys_pipe, sys_read, sys_write};
 use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_waitpid, sys_yield,
 };
@@ -11,6 +11,9 @@ const SYSCALL_OPEN: usize = 56;
 
 /// 关闭中断号
 const SYSCALL_CLOSE: usize = 57;
+
+/// 创建管道
+const SYSCALL_PIPE: usize = 59;
 
 /// 读中断号
 const SYSCALL_READ: usize = 63;
@@ -49,6 +52,7 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
     match syscall_id {
         SYSCALL_OPEN => sys_open(args[0] as *const u8, args[1] as u32),
         SYSCALL_CLOSE => sys_close(args[0]),
+        SYSCALL_PIPE => sys_pipe(args[0] as *mut usize),
         SYSCALL_READ => sys_read(args[0], args[1] as *const u8, args[2]),
         SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
         SYSCALL_EXIT => sys_exit(args[0] as i32),

@@ -98,9 +98,13 @@ name = "cat-file-a"
 test = false
 bench = false
 
-
 [[bin]]
 name = "huge-write"
+test = false
+bench = false
+
+[[bin]]
+name = "pipe-test"
 test = false
 bench = false
 
