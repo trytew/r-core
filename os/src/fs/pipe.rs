@@ -22,6 +22,12 @@ pub struct PipeRingBuffer {
 }
 
 impl PipeRingBuffer {
+    ///
+    /// 实例化管道缓冲区
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/18
     pub fn new() -> Self {
         Self {
             arr: [0; RING_BUFFER_SIZE],
@@ -96,7 +102,7 @@ impl Pipe {
     pub fn write_end_with_buffer(buffer: Arc<UpSafeCell<PipeRingBuffer>>) -> Self {
         Self {
             readable: false,
-            writeable: false,
+            writeable: true,
             buffer,
         }
     }
@@ -172,6 +178,12 @@ impl File for Pipe {
     }
 }
 
+///
+/// 创建管道读端和写端
+///
+/// @author: tryte
+///
+/// @date: 2026/4/18
 pub fn make_pipe() -> (Arc<Pipe>, Arc<Pipe>) {
     let buffer = Arc::new(unsafe { UpSafeCell::new(PipeRingBuffer::new()) });
     let read_end = Arc::new(Pipe::read_end_with_buffer(buffer.clone()));

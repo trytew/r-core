@@ -102,6 +102,12 @@ pub fn sys_close(fd: usize) -> isize {
     0
 }
 
+///
+/// 创建管道
+///
+/// @author: tryte
+///
+/// @date: 2026/4/18
 pub fn sys_pipe(pipe: *mut usize) -> isize {
     let task = current_task().unwrap();
     let token = current_user_token();
