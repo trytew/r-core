@@ -357,18 +357,26 @@ impl MemorySet {
     /// |   |    |--Vec<FrameTracker> 的元素         |
     /// |   |    |   |                              |
     /// |   |    |   |--FrameTracker                |
+    /// |   |    |                                  |
+    /// |   |    |--INITPROC 与堆分配的相关内容         |
+    /// |   |    |                                  |
+    /// |   |    |--TASK_MANAGER 与堆分配的相关内容     |
     /// |   |                                       |
     /// |   |-- FRAME_ALLOCATOR                     |
     /// |   |                                       |
     /// |   |-- KERNEL_SPACE                        |
-    /// |        |                                  |
-    /// |        |-- PageTable                      |
-    /// |        |    |                             |
-    /// |        |    |-- root_ppn                  |
-    /// |        |    |                             |
-    /// |        |    |-- frames (Vec)              |
-    /// |        |                                  |
-    /// |        |-- areas (Vec<MapArea>)           |
+    /// |   |    |                                  |
+    /// |   |    |-- PageTable                      |
+    /// |   |    |    |                             |
+    /// |   |    |    |-- root_ppn                  |
+    /// |   |    |    |                             |
+    /// |   |    |    |-- frames (Vec)              |
+    /// |   |    |                                  |
+    /// |   |    |-- areas (Vec<MapArea>)           |
+    /// |   |                                       |
+    /// |   |-- INITPROC                            |
+    /// |   |                                       |
+    /// |   |-- TASK_MANAGER                        |
     /// |                                           |
     /// | ekernel                                   |
     /// |-------------------------------------------|--> 内核内存起始
