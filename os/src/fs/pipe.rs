@@ -13,11 +13,22 @@ enum RingBufferStatus {
     Normal,
 }
 
+///
+/// 管道数据缓冲区
+///
+/// @author: tryte
+///
+/// @date: 2026/4/21
 pub struct PipeRingBuffer {
+    /// 缓冲区数据
     arr: [u8; 32],
+    /// 头
     head: usize,
+    /// 尾
     tail: usize,
+    /// 缓冲区状态
     status: RingBufferStatus,
+    /// 结束写
     write_end: Option<Weak<Pipe>>,
 }
 
@@ -42,9 +53,18 @@ impl PipeRingBuffer {
         self.write_end = Some(Arc::downgrade(write_end));
     }
 
+    ///
+    /// 写入单字节数据
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     pub fn write_byte(&mut self, byte: u8) {
+        // 设置管道缓冲区状态为正常
         self.status = RingBufferStatus::Normal;
+        // 向管道尾部添加数据
         self.arr[self.tail] = byte;
+        // 计算管道缓冲区是否已满
         self.tail = (self.tail + 1) % RING_BUFFER_SIZE;
         if self.tail == self.head {
             self.status = RingBufferStatus::Full;
@@ -61,6 +81,12 @@ impl PipeRingBuffer {
         c
     }
 
+    ///
+    /// 返回缓冲区已读数量
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     pub fn available_read(&self) -> usize {
         if self.status == RingBufferStatus::Empty {
             0
@@ -71,6 +97,12 @@ impl PipeRingBuffer {
         }
     }
 
+    ///
+    /// 返回缓冲区可写数量
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     pub fn available_write(&self) -> usize {
         if self.status == RingBufferStatus::Full {
             0
@@ -91,6 +123,12 @@ pub struct Pipe {
 }
 
 impl Pipe {
+    ///
+    /// 读端设置缓冲区和状态
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     pub fn read_end_with_buffer(buffer: Arc<UpSafeCell<PipeRingBuffer>>) -> Self {
         Self {
             readable: true,
@@ -99,6 +137,12 @@ impl Pipe {
         }
     }
 
+    ///
+    /// 写端设置缓冲区和状态
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     pub fn write_end_with_buffer(buffer: Arc<UpSafeCell<PipeRingBuffer>>) -> Self {
         Self {
             readable: false,
@@ -117,13 +161,25 @@ impl File for Pipe {
         self.writeable
     }
 
+    ///
+    /// 读取管道数据
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     fn read(&self, buf: UserBuffer) -> usize {
+        // 判断管道是否可读
         assert!(self.readable());
+        // 需要读取长度
         let want_to_read = buf.len();
+        // 获取需要读取的迭代器
         let mut buf_iter = buf.into_iter();
+        // 已读长度
         let mut already_read = 0_usize;
         loop {
+            // 获取管道缓冲区
             let mut ring_buffer = self.buffer.exclusive_access();
+            // 判断管道是否可读
             let loop_read = ring_buffer.available_read();
             if loop_read == 0 {
                 if ring_buffer.all_write_end_closed() {
@@ -149,24 +205,44 @@ impl File for Pipe {
         }
     }
 
+    ///
+    /// 写入管道数据
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     fn write(&self, buf: UserBuffer) -> usize {
+        // 判断是否可写
         assert!(self.writeable());
+        // 获取需要写入数据的长度
         let want_to_write = buf.len();
+        // 获取需要写入数据的迭代器
         let mut buf_iter = buf.into_iter();
+        // 已写长度
         let mut already_write = 0_usize;
+        // 循环写入
         loop {
+            // 获取管道缓冲区
             let mut ring_buffer = self.buffer.exclusive_access();
+            // 获取可写长度
             let loop_write = ring_buffer.available_write();
+            // 可写长度为0（暂时已满，需要等待数据读取才有位置继续写入）
             if loop_write == 0 {
+                // 释放可变引用，因为 suspend_current_and_run_next 是汇编代码跳转，不会触发 Defer 特征
                 drop(ring_buffer);
+                // 让出 CPU 时间片
                 suspend_current_and_run_next();
                 continue;
             }
 
+            // 写入指定长度数据
             for _ in 0..loop_write {
                 if let Some(byte_ref) = buf_iter.next() {
+                    // 写入单字节数据
                     ring_buffer.write_byte(unsafe { *byte_ref });
+                    // 已写数量+1
                     already_write += 1;
+                    // 若已写数量和需要写入的数量相同则代表写入结束，返回写入数量结果
                     if already_write == want_to_write {
                         return want_to_write;
                     }
@@ -185,9 +261,14 @@ impl File for Pipe {
 ///
 /// @date: 2026/4/18
 pub fn make_pipe() -> (Arc<Pipe>, Arc<Pipe>) {
+    // 创建数据缓冲区
     let buffer = Arc::new(unsafe { UpSafeCell::new(PipeRingBuffer::new()) });
+    // 创建读端
     let read_end = Arc::new(Pipe::read_end_with_buffer(buffer.clone()));
+    // 创建写端
     let write_end = Arc::new(Pipe::write_end_with_buffer(buffer.clone()));
+    // 设置写结束
     buffer.exclusive_access().set_write_end(&write_end);
+    // 返回读写端
     (read_end, write_end)
 }

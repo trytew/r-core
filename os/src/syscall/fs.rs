@@ -109,15 +109,24 @@ pub fn sys_close(fd: usize) -> isize {
 ///
 /// @date: 2026/4/18
 pub fn sys_pipe(pipe: *mut usize) -> isize {
+    // 获取当前进程
     let task = current_task().unwrap();
+    // 获取进程 MMU
     let token = current_user_token();
+    // 获取进程控制块
     let mut inner = task.inner_exclusive_access();
     let (pipe_read, pipe_write) = make_pipe();
+    // 分配进程文件描述符
     let read_fd = inner.alloc_fd();
+    // 将读端添加到进程文件已打开文件描述符列表
     inner.fd_table[read_fd] = Some(pipe_read);
+    // 分配进程文件描述符
     let write_fd = inner.alloc_fd();
+    // 将写端添加到进程文件已打开文件描述符列表
     inner.fd_table[write_fd] = Some(pipe_write);
+    // 返回读端内存地址
     *translated_refmut(token, pipe) = read_fd;
+    // 返回写端内存地址
     *translated_refmut(token, unsafe { pipe.add(1) }) = write_fd;
     0
 }

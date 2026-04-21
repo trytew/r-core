@@ -443,7 +443,7 @@ pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
 }
 
 ///
-/// 用户空间缓冲区
+/// 用户数据缓冲区
 ///
 /// @author: tryte
 ///
@@ -500,6 +500,12 @@ pub struct UserBufferIterator {
 impl Iterator for UserBufferIterator {
     type Item = *mut u8;
 
+    ///
+    /// 迭代数据
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/21
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_buffer >= self.buffers.len() {
             None
