@@ -22,9 +22,9 @@ enum RingBufferStatus {
 pub struct PipeRingBuffer {
     /// 缓冲区数据
     arr: [u8; 32],
-    /// 头
+    /// 迭代头
     head: usize,
-    /// 尾
+    /// 迭代尾
     tail: usize,
     /// 缓冲区状态
     status: RingBufferStatus,
@@ -49,6 +49,12 @@ impl PipeRingBuffer {
         }
     }
 
+    ///
+    /// 设置 pipe 弱引用，用来判断 pipe 是否已被所有持有的进程关闭
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/22
     pub fn set_write_end(&mut self, write_end: &Arc<Pipe>) {
         self.write_end = Some(Arc::downgrade(write_end));
     }
@@ -121,6 +127,12 @@ impl PipeRingBuffer {
         }
     }
 
+    ///
+    /// 判断 pipe 是否已被关闭
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/22
     pub fn all_write_end_closed(&self) -> bool {
         self.write_end.as_ref().unwrap().upgrade().is_none()
     }
@@ -204,6 +216,7 @@ impl File for Pipe {
             // 判断管道是否可读
             let loop_read = ring_buffer.available_read();
             if loop_read == 0 {
+                // 判断 pipe 是否已被关闭，是则直接返回已读数据长度
                 if ring_buffer.all_write_end_closed() {
                     return already_read;
                 }

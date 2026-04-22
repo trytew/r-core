@@ -449,6 +449,7 @@ pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
 ///
 /// @date: 2026/4/13
 pub struct UserBuffer {
+    /// 因为内存分页，所以 buffer 是一个二级数组结构
     pub buffers: Vec<&'static mut [u8]>,
 }
 
@@ -482,6 +483,12 @@ impl IntoIterator for UserBuffer {
     type Item = *mut u8;
     type IntoIter = UserBufferIterator;
 
+    ///
+    /// 创建迭代器
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/22
     fn into_iter(self) -> Self::IntoIter {
         UserBufferIterator {
             buffers: self.buffers,
@@ -491,6 +498,12 @@ impl IntoIterator for UserBuffer {
     }
 }
 
+///
+/// 用户数据缓冲区迭代器
+///
+/// @author: tryte
+///
+/// @date: 2026/4/22
 pub struct UserBufferIterator {
     buffers: Vec<&'static mut [u8]>,
     current_buffer: usize,
