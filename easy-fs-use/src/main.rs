@@ -1,8 +1,4 @@
-use easy_fs::{EasyFileSystem, BLOCK_SZ};
-use easy_fs_use::{easy_fs_pack, BlockFile};
-use std::fs::OpenOptions;
-use std::io::Seek;
-use std::sync::{Arc, Mutex};
+use easy_fs_use::easy_fs_pack;
 
 mod block_file;
 
@@ -12,6 +8,11 @@ fn main() {
 
 #[test]
 fn efs_test() -> std::io::Result<()> {
+    use easy_fs::{EasyFileSystem, BLOCK_SZ};
+    use easy_fs_use::BlockFile;
+    use std::fs::OpenOptions;
+    use std::sync::{Arc, Mutex};
+
     let block_file = Arc::new(BlockFile(Mutex::new({
         let f = OpenOptions::new()
             .read(true)

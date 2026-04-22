@@ -19,7 +19,6 @@ mod task;
 mod timer;
 mod trap;
 
-use crate::drivers::block::block_device_test;
 use core::arch::global_asm;
 
 // 加载入口汇编文件

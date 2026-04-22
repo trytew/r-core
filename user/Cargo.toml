@@ -17,6 +17,7 @@ bench = false
 name = "user-shell"
 test = false
 bench = false
+path = "src/bin/user_shell.rs"
 
 [[bin]]
 name = "exit"
@@ -27,36 +28,43 @@ bench = false
 name = "fantastic-text"
 test = false
 bench = false
+path = "src/bin/fantastic_text.rs"
 
 [[bin]]
 name = "fork-exec"
 test = false
 bench = false
+path = "src/bin/fork_exec.rs"
 
 [[bin]]
 name = "hello-world"
 test = false
 bench = false
+path = "src/bin/hello_world.rs"
 
 [[bin]]
 name = "fork-test"
 test = false
 bench = false
+path = "src/bin/fork_test.rs"
 
 [[bin]]
-name = "fork-test-2"
+name = "fork-test2"
 test = false
 bench = false
+path = "src/bin/fork_test2.rs"
 
 [[bin]]
 name = "fork-test-simple"
 test = false
 bench = false
+path = "src/bin/fork_test_simple.rs"
 
 [[bin]]
 name = "fork-tree"
 test = false
 bench = false
+path = "src/bin/fork_tree.rs"
 
 [[bin]]
 name = "matrix"
@@ -72,11 +80,13 @@ bench = false
 name = "sleep-simple"
 test = false
 bench = false
+path = "src/bin/sleep_simple.rs"
 
 [[bin]]
 name = "stack-overflow"
 test = false
 bench = false
+path = "src/bin/stack_overflow.rs"
 
 [[bin]]
 name = "yield"
@@ -87,28 +97,38 @@ bench = false
 name = "user-tests"
 test = false
 bench = false
+path = "src/bin/user_tests.rs"
 
 [[bin]]
 name = "touch-file-a"
 test = false
 bench = false
+path = "src/bin/touch_file_a.rs"
 
 [[bin]]
 name = "cat-file-a"
 test = false
 bench = false
+path = "src/bin/cat_file_a.rs"
 
 [[bin]]
 name = "huge-write"
 test = false
 bench = false
+path = "src/bin/huge_write.rs"
 
 [[bin]]
 name = "pipe-test"
 test = false
 bench = false
+path = "src/bin/pipe_test.rs"
+
+[[bin]]
+name = "pipe-large-test"
+test = false
+bench = false
+path = "src/bin/pipe_large_test.rs"
 
 [dependencies]
-riscv = "0.15.0"
 buddy_system_allocator = "0.6"
 bitflags = "1.2.1"

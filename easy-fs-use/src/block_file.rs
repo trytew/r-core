@@ -4,10 +4,12 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::sync::Mutex;
 
 /// 逻辑块大小，单位：字节
+#[allow(unused)]
 const BLOCK_SZ: usize = 512;
 
 pub struct BlockFile(pub Mutex<File>);
 
+#[allow(unused)]
 impl BlockDevice for BlockFile {
     fn read_block(&self, block_id: usize, buf: &mut [u8]) {
         let mut file = self.0.lock().unwrap();

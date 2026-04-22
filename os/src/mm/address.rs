@@ -1,8 +1,6 @@
-use crate::config::PAGE_SIZE;
-use crate::config::PAGE_SIZE_BITS;
+use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
 use crate::mm::page_table::PageTableEntry;
-use core::fmt::Formatter;
-use core::fmt::{Debug, Write};
+use core::fmt::{Debug, Formatter};
 
 ///
 /// 当开启 MMU 后，所有内存地址访问都由直接物理内存访问变为虚拟内存访问，

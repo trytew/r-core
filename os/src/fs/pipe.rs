@@ -71,11 +71,21 @@ impl PipeRingBuffer {
         }
     }
 
+    ///
+    /// 读取单字节数据
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/22
     pub fn read_byte(&mut self) -> u8 {
+        // 设置管道缓冲区状态为正常
         self.status = RingBufferStatus::Normal;
+        // 读取上次迭代后的第一个字节
         let c = self.arr[self.head];
+        // 读取位置后移
         self.head = (self.head + 1) % RING_BUFFER_SIZE;
         if self.head == self.tail {
+            // 管道已读取结束
             self.status = RingBufferStatus::Empty;
         }
         c
@@ -153,10 +163,22 @@ impl Pipe {
 }
 
 impl File for Pipe {
+    ///
+    /// 是否可读
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/22
     fn readable(&self) -> bool {
         self.readable
     }
 
+    ///
+    /// 是否可写
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/22
     fn writeable(&self) -> bool {
         self.writeable
     }
