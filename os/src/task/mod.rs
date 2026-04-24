@@ -16,9 +16,12 @@ mod switch;
 mod task;
 
 lazy_static! {
+    // 实例化初始进程
     pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new({
+        // 读取初始进程内容
         let inode = open_file("initproc", OpenFlags::RDONY).unwrap();
         let v = inode.read_all();
+        // 创建初始进程控制块
         TaskControlBlock::new(v.as_slice())
     });
 }

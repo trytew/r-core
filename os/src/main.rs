@@ -87,6 +87,5 @@ fn rust_main() -> ! {
 
     task::run_tasks();
 
-    println!("Hello world!");
     panic!("Shutdown machine!");
 }

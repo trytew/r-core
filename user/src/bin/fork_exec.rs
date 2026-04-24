@@ -22,7 +22,7 @@ pub fn main() -> i32 {
             "pid {}: forked child start executing hello_world app...",
             getpid()
         );
-        exec("hello_world\0");
+        exec("hello_world\0", &[core::ptr::null::<u8>()]);
         100
     } else {
         let mut exit_code = 0;

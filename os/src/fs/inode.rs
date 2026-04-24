@@ -180,7 +180,9 @@ pub fn list_apps() {
 ///
 /// @date: 2026/4/3
 pub fn open_file(name: &str, flags: OpenFlags) -> Option<Arc<OSInode>> {
+    // 获取打开文件设置的读写权限
     let (readable, writeable) = flags.read_write();
+    // 当文件不存在时是否需要创建
     if flags.contains(OpenFlags::CREATE) {
         if let Some(inode) = ROOT_INODE.find(name) {
             inode.clear();

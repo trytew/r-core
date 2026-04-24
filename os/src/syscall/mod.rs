@@ -1,10 +1,12 @@
-use crate::syscall::fs::{sys_close, sys_open, sys_pipe, sys_read, sys_write};
+use crate::syscall::fs::{sys_close, sys_dup, sys_open, sys_pipe, sys_read, sys_write};
 use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_waitpid, sys_yield,
 };
 
 mod fs;
 mod process;
+
+const SYSCALL_DUP: usize = 24;
 
 /// 打开中断号
 const SYSCALL_OPEN: usize = 56;
@@ -50,6 +52,7 @@ const SYSCALL_WAITPID: usize = 260;
 /// @date: 2025/12/10
 pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
     match syscall_id {
+        SYSCALL_DUP => sys_dup(args[0]),
         SYSCALL_OPEN => sys_open(args[0] as *const u8, args[1] as u32),
         SYSCALL_CLOSE => sys_close(args[0]),
         SYSCALL_PIPE => sys_pipe(args[0] as *mut usize),
@@ -60,7 +63,7 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_GET_TIME => sys_get_time(),
         SYSCALL_GETPID => sys_getpid(),
         SYSCALL_FORK => sys_fork(),
-        SYSCALL_EXEC => sys_exec(args[0] as *const u8),
+        SYSCALL_EXEC => sys_exec(args[0] as *const u8, args[1] as *const usize),
         SYSCALL_WAITPID => sys_waitpid(args[0] as isize, args[1] as *mut i32),
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }

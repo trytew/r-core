@@ -7,13 +7,79 @@ extern crate alloc;
 extern crate user_lib;
 
 use alloc::string::String;
+use alloc::vec::Vec;
 use user_lib::console::getchar;
-use user_lib::{exec, fork, getpid, println, waitpid};
+use user_lib::{close, dup, exec, fork, getpid, open, pipe, println, waitpid, OpenFlags};
 
 const LF: u8 = 0x0a_u8;
 const CR: u8 = 0x0d_u8;
 const DL: u8 = 0x7f_u8;
 const BS: u8 = 0x08_u8;
+
+#[derive(Debug)]
+struct ProcessArguments {
+    input: String,
+    output: String,
+    args_copy: Vec<String>,
+    args_addr: Vec<*const u8>,
+}
+
+impl ProcessArguments {
+    ///
+    /// 解析启动参数
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/4/24
+    pub fn new(command: &str) -> Self {
+        // 记录入参
+        let args: Vec<_> = command.split(" ").collect();
+
+        let mut args_copy: Vec<String> = args
+            .iter()
+            .filter(|&args| !args.is_empty())
+            .map(|&arg| {
+                let mut string = String::new();
+                string.push_str(arg);
+                string.push('\0');
+                string
+            })
+            .collect();
+
+        // 从入参列表中挑出重定向输入
+        let mut input = String::new();
+        if let Some((idx, _)) = args_copy
+            .iter()
+            .enumerate()
+            .find(|(_, arg)| arg.as_str() == "<\0")
+        {
+            input = args_copy[idx + 1].clone();
+            args_copy.drain(idx..=idx + 1);
+        }
+
+        // 从入参列表中挑出重定向输出
+        let mut output = String::new();
+        if let Some((idx, _)) = args_copy
+            .iter()
+            .enumerate()
+            .find(|(_, arg)| arg.as_str() == ">\0")
+        {
+            output = args_copy[idx + 1].clone();
+            args_copy.drain(idx..=idx + 1);
+        }
+
+        // 记录入参地址
+        let mut args_addr: Vec<*const u8> = args_copy.iter().map(|arg| arg.as_ptr()).collect();
+        args_addr.push(core::ptr::null::<u8>());
+
+        Self {
+            input,
+            output,
+            args_copy,
+            args_addr,
+        }
+    }
+}
 
 ///
 /// shell 进程
@@ -33,25 +99,122 @@ pub fn main() -> i32 {
             LF | CR => {
                 println!("");
                 if !line.is_empty() {
-                    line.push('\0');
-                    let pid = fork();
-                    if pid == 0 {
-                        // 子进程
-                        if exec(line.as_str()) == -1 {
-                            println!("Error when executing!");
-                            return -4;
+                    let split_arr: Vec<_> = line.as_str().split('|').collect();
+                    let process_arguments_list: Vec<_> = split_arr
+                        .iter()
+                        .map(|&cmd| ProcessArguments::new(cmd))
+                        .collect();
+
+                    let mut valid = true;
+                    for (i, process_args) in process_arguments_list.iter().enumerate() {
+                        if i == 0 {
+                            if !process_args.output.is_empty() {
+                                valid = false;
+                            }
+                        } else if i == process_arguments_list.len() - 1 {
+                            if !process_args.input.is_empty() {
+                                valid = false;
+                            }
+                        } else if !process_args.output.is_empty() || !process_args.input.is_empty()
+                        {
+                            valid = false;
                         }
-                        unreachable!();
+                    }
+
+                    if process_arguments_list.len() == 1 {
+                        valid = true;
+                    }
+
+                    if !valid {
+                        println!("Invalid command: Inputs/Outputs cannot be correctly bind")
                     } else {
-                        let mut exit_code: i32 = 0;
-                        let exit_pid = waitpid(pid as usize, &mut exit_code);
-                        assert_eq!(pid, exit_pid);
-                        println!("Shell: Process {} exited with code {}", pid, exit_code);
-                        // 退出 shell
-                        if line.as_str() == "exit\0" {
-                            println!("Shell pid: {}, exit", getpid());
-                            return 0;
+                        let mut pipes_fd: Vec<[usize; 2]> = Vec::new();
+                        if !process_arguments_list.is_empty() {
+                            for _ in 0..process_arguments_list.len() - 1 {
+                                let mut pipe_fd = [0_usize; 2];
+                                pipe(&mut pipe_fd);
+                                pipes_fd.push(pipe_fd);
+                            }
                         }
+                        let mut children: Vec<_> = Vec::new();
+                        for (i, process_argument) in process_arguments_list.iter().enumerate() {
+                            let pid = fork();
+                            if pid == 0 {
+                                let input = &process_argument.input;
+                                let output = &process_argument.output;
+                                let args_copy = &process_argument.args_copy;
+                                let args_addr = &process_argument.args_addr;
+
+                                // 重定向输入
+                                if !input.is_empty() {
+                                    let input_fd = open(input.as_str(), OpenFlags::RDONLY);
+                                    if input_fd == -1 {
+                                        println!("Error when opening file {}", input);
+                                        return -4;
+                                    }
+                                    let input_fd = input_fd as usize;
+                                    close(0);
+                                    assert_eq!(dup(input_fd), 0);
+                                    close(input_fd);
+                                }
+
+                                // 重定向输出
+                                if !output.is_empty() {
+                                    let output_fd = open(
+                                        output.as_str(),
+                                        OpenFlags::CREATE | OpenFlags::WRONLY,
+                                    );
+                                    if output_fd == -1 {
+                                        println!("Error when opening file {}", output);
+                                        return -4;
+                                    }
+                                    let output_fd = output_fd as usize;
+                                    close(1);
+                                    assert_eq!(dup(output_fd), 1);
+                                    close(output_fd);
+                                }
+
+                                if i > 0 {
+                                    close(0);
+                                    let read_end = pipes_fd.get(i - 1).unwrap()[0];
+                                    assert_eq!(dup(read_end), 0);
+                                }
+
+                                if i < process_arguments_list.len() - 1 {
+                                    close(1);
+                                    let write_end = pipes_fd.get(1).unwrap()[1];
+                                    assert_eq!(dup(write_end), 1);
+                                }
+
+                                for pipe_fd in pipes_fd.iter() {
+                                    close(pipe_fd[0]);
+                                    close(pipe_fd[1]);
+                                }
+
+                                if exec(args_copy[0].as_str(), args_addr.as_slice()) == -1 {
+                                    println!("Error when executing");
+                                    return -4;
+                                }
+                                unreachable!();
+                            } else {
+                                children.push(pid);
+                            }
+                        }
+                        for pipe_fd in pipes_fd.iter() {
+                            close(pipe_fd[0]);
+                            close(pipe_fd[1]);
+                        }
+                        let mut exit_code: i32 = 0;
+                        for pid in children.into_iter() {
+                            let exit_pid = waitpid(pid as usize, &mut exit_code);
+                            assert_eq!(pid, exit_pid);
+                        }
+                    }
+
+                    // 退出 shell
+                    if line.as_str() == "exit" {
+                        println!("Shell pid: {}, exit", getpid());
+                        return 0;
                     }
                     line.clear();
                 }

@@ -1,11 +1,13 @@
 #![no_std]
 #![feature(linkage)]
 #![feature(alloc_error_handler)]
+extern crate alloc;
 
 pub mod console;
 mod lang_items;
 mod syscall;
 
+use alloc::vec::Vec;
 use bitflags::bitflags;
 use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
@@ -34,12 +36,33 @@ pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
 // 方便我们在后续链接的时候调整它的位置使得它能够作为用户库的入口
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
-pub extern "C" fn _start() -> ! {
+pub extern "C" fn _start(argc: usize, argv: usize) -> ! {
+    // 设置用户进程的堆分配器
     unsafe {
         HEAP.lock()
             .init(addr_of_mut!(HEAP_SPACE) as usize, USER_HEAP_SIZE);
     }
-    exit(main());
+    let mut v: Vec<&'static str> = Vec::new();
+    // argc 代表参数的个数
+    for i in 0..argc {
+        // 获取第一个参数内容的起始地址
+        let str_start =
+            unsafe { ((argv + i * size_of::<usize>()) as *const usize).read_volatile() };
+
+        // 读取内容，\0 结束
+        let len = (0_usize..)
+            .find(|i| unsafe { ((str_start + *i) as *const u8).read_volatile() == 0 })
+            .unwrap();
+
+        // 添加参数内容到切片
+        v.push(
+            core::str::from_utf8(unsafe {
+                core::slice::from_raw_parts(str_start as *const u8, len)
+            })
+            .unwrap(),
+        );
+    }
+    exit(main(argc, v.as_slice()));
     panic!("unreachable after sys_exit!")
 }
 
@@ -49,7 +72,7 @@ pub extern "C" fn _start() -> ! {
 // 那么编译也能够通过，但会在运行时报错
 #[linkage = "weak"]
 #[unsafe(no_mangle)]
-fn main() -> i32 {
+fn main(_argc: usize, _argv: &[&str]) -> i32 {
     panic!("Cannot found main");
 }
 
@@ -61,6 +84,10 @@ pub struct OpenFlags:u32 {
         const CREATE = 1 << 9;
         const TRUNC = 1 << 10;
     }
+}
+
+pub fn dup(fd: usize) -> isize {
+    sys_dup(fd)
 }
 
 ///
@@ -169,8 +196,8 @@ pub fn fork() -> isize {
 /// @author: tryte
 ///
 /// @date: 2026/3/7
-pub fn exec(path: &str) -> isize {
-    sys_exec(path)
+pub fn exec(path: &str, args: &[*const u8]) -> isize {
+    sys_exec(path, args)
 }
 
 ///

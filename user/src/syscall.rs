@@ -1,5 +1,8 @@
 use core::arch::asm;
 
+///
+const SYSCALL_DUP: usize = 24;
+
 /// 打开中断号
 const SYSCALL_OPEN: usize = 56;
 
@@ -54,6 +57,10 @@ fn syscall(id: usize, args: [usize; 3]) -> isize {
         )
     }
     ret
+}
+
+pub fn sys_dup(fd: usize) -> isize {
+    syscall(SYSCALL_DUP, [fd, 0, 0])
 }
 
 ///
@@ -165,8 +172,11 @@ pub fn sys_fork() -> isize {
 /// @author: tryte
 ///
 /// @date: 2026/3/7
-pub fn sys_exec(path: &str) -> isize {
-    syscall(SYSCALL_EXEC, [path.as_ptr() as usize, 0, 0])
+pub fn sys_exec(path: &str, args: &[*const u8]) -> isize {
+    syscall(
+        SYSCALL_EXEC,
+        [path.as_ptr() as usize, args.as_ptr() as usize, 0],
+    )
 }
 
 ///
