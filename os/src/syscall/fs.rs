@@ -132,6 +132,12 @@ pub fn sys_pipe(pipe: *mut usize) -> isize {
     0
 }
 
+///
+/// 复制文件描述符
+///
+/// @author: tryte
+///
+/// @date: 2026/5/14
 pub fn sys_dup(fd: usize) -> isize {
     let task = current_task().unwrap();
     let mut inner = task.inner_exclusive_access();

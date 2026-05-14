@@ -296,6 +296,23 @@ impl TaskControlBlock {
             .unwrap()
             .ppn();
 
+        // 传入启动参数，放入进程的用户栈，最终布局
+        // 高地址
+        // ──────────────────
+        // argv[3] = NULL
+        // argv[2]
+        // argv[1]
+        // argv[0]
+        // ──────────────────
+        // "user_program\0"
+        // "arg1\0"
+        // "arg2\0"
+        // 空洞
+        // ──────────────────
+        // 低地址
+        // 根据 C ABI 要求，
+        //  1. argv数组最后一个元素是NULL，因此argv数组的长度是 args.len() + 1
+        //  2. 栈内数据需要保证 8 字节对齐
         user_sp -= (args.len() + 1) * core::mem::size_of::<usize>();
         let arg_base = user_sp;
         let mut argv: Vec<_> = (0..=args.len())
@@ -306,8 +323,8 @@ impl TaskControlBlock {
                 )
             })
             .collect();
-
         *argv[args.len()] = 0;
+
         for i in 0..args.len() {
             user_sp -= args[i].len() + 1;
             *argv[i] = user_sp;
@@ -318,6 +335,7 @@ impl TaskControlBlock {
             }
             *translated_refmut(memory_set.token(), p as *mut u8) = 0;
         }
+        // 填充字节，保证栈内字节对齐
         user_sp -= user_sp % core::mem::size_of::<usize>();
 
         // 将当前进程的内容替换成新进程内容

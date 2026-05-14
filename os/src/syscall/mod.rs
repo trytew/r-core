@@ -6,6 +6,7 @@ use crate::syscall::process::{
 mod fs;
 mod process;
 
+/// 复制文件描述符中断号
 const SYSCALL_DUP: usize = 24;
 
 /// 打开中断号
