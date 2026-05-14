@@ -42,7 +42,7 @@ pub fn add_initproc() {
 /// @author: tryte
 ///
 /// @date: 2026/3/6
-pub const IDLE_PID: usize = 1;
+pub const IDLE_PID: usize = 0;
 
 ///
 /// 退出当前进程运行下一个进程

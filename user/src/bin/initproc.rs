@@ -28,6 +28,7 @@ fn main() -> i32 {
                 "[initproc] Released a zombie process, pid={}, exit_code={}",
                 pid, exit_code
             );
+            break;
         }
     }
     0
