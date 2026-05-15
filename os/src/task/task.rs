@@ -2,8 +2,10 @@ use crate::config::TRAP_CONTEXT;
 use crate::fs::{File, Stdin, Stdout};
 use crate::mm::{translated_refmut, MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE};
 use crate::sync::UpSafeCell;
+use crate::task::action::SignalActions;
 use crate::task::context::TaskContext;
 use crate::task::pid::{pid_alloc, KernelStack, PidHandle};
+use crate::task::signal::SignalFlags;
 use crate::trap::{trap_handler, TrapContext};
 use alloc::string::String;
 use alloc::sync::{Arc, Weak};
@@ -53,6 +55,21 @@ pub struct TaskControlBlockInner {
     pub exit_code: i32,
     /// 已打开的文件描述符
     pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>,
+
+    /// 进程接收到的信号
+    pub signals: SignalFlags,
+    /// 进程的全局信号掩码，在这个信号集合内的信号将被该进程全局屏蔽
+    pub signal_mask: SignalFlags,
+    /// 正在处理的信号
+    pub handling_sig: isize,
+    /// 信号处理动作
+    pub signal_actions: SignalActions,
+    /// 进程是否已被终止
+    pub killed: bool,
+    /// 进程是否被冻结
+    pub frozen: bool,
+    /// 返回执行地址上下文
+    pub trap_ctx_backup: Option<TrapContext>,
 }
 
 impl TaskControlBlockInner {
@@ -173,6 +190,13 @@ impl TaskControlBlock {
                         // 2 -> stderr
                         Some(Arc::new(Stdout)),
                     ],
+                    signals: SignalFlags::empty(),
+                    signal_mask: SignalFlags::empty(),
+                    handling_sig: -1,
+                    signal_actions: SignalActions::default(),
+                    killed: false,
+                    frozen: false,
+                    trap_ctx_backup: None,
                 })
             },
         };
@@ -266,6 +290,13 @@ impl TaskControlBlock {
                     children: Vec::new(),
                     exit_code: 0,
                     fd_table: new_fd_table,
+                    signals: SignalFlags::empty(),
+                    signal_mask: parent_inner.signal_mask,
+                    handling_sig: -1,
+                    signal_actions: parent_inner.signal_actions.clone(),
+                    killed: false,
+                    frozen: false,
+                    trap_ctx_backup: None,
                 })
             },
         });

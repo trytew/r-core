@@ -13,6 +13,7 @@ use riscv::register::sstatus::{Sstatus, SPP};
 ///
 /// @date: 2025/12/11
 #[repr(C)]
+#[derive(Debug, Clone, Copy)]
 pub struct TrapContext {
     pub x: [usize; 32],      // 寄存器，32个
     pub sstatus: Sstatus,    // CSR 状态

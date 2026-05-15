@@ -2,16 +2,22 @@ use crate::fs::{open_file, OpenFlags};
 use crate::println;
 use crate::sbi::shutdown;
 use crate::task::context::TaskContext;
-pub use crate::task::manager::add_task;
+use crate::task::manager::remove_from_pid2task;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::sync::Arc;
 use lazy_static::*;
-pub use processor::*;
 
+pub use crate::task::manager::*;
+pub use action::*;
+pub use processor::*;
+pub use signal::*;
+
+mod action;
 mod context;
 mod manager;
 mod pid;
 mod processor;
+mod signal;
 mod switch;
 mod task;
 
@@ -68,6 +74,9 @@ pub fn exit_current_and_run_next(exit_code: i32) {
         }
     }
 
+    // 移除进程索引 map
+    remove_from_pid2task(task.getpid());
+
     // 将当前进程设置为僵尸态
     let mut inner = task.inner_exclusive_access();
     inner.task_status = TaskStatus::Zombie;
@@ -113,4 +122,164 @@ pub fn suspend_current_and_run_next() {
 
     // 调度运行下一个进程
     schedule(task_cx_ptr);
+}
+
+///
+/// 检查当前进程是否有错误信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/15
+pub fn check_signals_error_of_current() -> Option<(i32, &'static str)> {
+    // 获取当前进程控制块
+    let task = current_task().unwrap();
+    let task_inner = task.inner_exclusive_access();
+    // 检查有没有收到出错信号
+    task_inner.signals.check_error()
+}
+
+pub fn current_add_signal(signal: SignalFlags) {
+    let task = current_task().unwrap();
+    let mut task_inner = task.inner_exclusive_access();
+    task_inner.signals |= signal;
+}
+
+///
+/// 处理内核发送的信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/15
+fn call_kernel_signal_handler(signal: SignalFlags) {
+    // 获取当前进程控制块
+    let task = current_task().unwrap();
+    let mut task_inner = task.inner_exclusive_access();
+
+    match signal {
+        SignalFlags::SIGSTOP => {
+            // 暂停进程信号
+            task_inner.frozen = true;
+            // 异或进程信号，消耗信号，代表信号已执行
+            task_inner.signals ^= SignalFlags::SIGSTOP;
+        }
+        SignalFlags::SIGCONT => {
+            // 恢复暂停的进程
+            if task_inner.signals.contains(SignalFlags::SIGCONT) {
+                // 异或进程信号，消耗信号，代表信号已执行
+                task_inner.signals ^= SignalFlags::SIGCONT;
+                task_inner.frozen = false;
+            }
+        }
+        _ => {
+            // 终止进程
+            task_inner.killed = true;
+        }
+    }
+}
+
+///
+/// 执行用户态发送的信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/15
+fn call_user_signal_handler(sig: usize, signal: SignalFlags) {
+    // 获取进程控制块
+    let task = current_task().unwrap();
+    let mut task_inner = task.inner_exclusive_access();
+
+    // 查找进程设置的处理函数
+    let handler = task_inner.signal_actions.table[sig].handler;
+    if handler != 0 {
+        // 设置信号在处理中
+        task_inner.handling_sig = sig as isize;
+
+        // 异或进程信号，消耗信号，代表信号已执行
+        task_inner.signals ^= signal;
+
+        // 记录当前进程的“陷入”上下文，用于信号执行后返回进程当前时刻上下文
+        let trap_ctx = task_inner.get_trap_cx();
+        task_inner.trap_ctx_backup = Some(*trap_ctx);
+
+        // 将进程的下一条执行语句设置为信号执行函数地址
+        trap_ctx.sepc = handler;
+
+        // 返回执行的信号
+        trap_ctx.x[10] = sig;
+    } else {
+        println!("[K] task/call_user_signal_handler: default action: ignore it or kill process");
+    }
+}
+
+///
+/// 检查处理等待的信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/15
+fn check_pending_signals() {
+    // 检查所有信号
+    for sig in 0..(MAX_SIG + 1) {
+        // 获取进程控制块
+        let task = current_task().unwrap();
+        let task_inner = task.inner_exclusive_access();
+        // 筛选需要检查的信号
+        let signal = SignalFlags::from_bits(1 << sig).unwrap();
+        // 查看进程是否收到对应的信号且不在屏蔽的信号内
+        if task_inner.signals.contains(signal) && (!task_inner.signal_mask.contains(signal)) {
+            // 查看信号是否能处理
+            let mut masked = true;
+            let handling_sig = task_inner.handling_sig;
+            // 当处理的信号等于1或者在忽略的信号代表当前信号需要处理
+            if handling_sig == 1 {
+                masked = false;
+            } else {
+                let handling_sig = handling_sig as usize;
+                if !task_inner.signal_actions.table[handling_sig]
+                    .mask
+                    .contains(signal)
+                {
+                    masked = false;
+                }
+            }
+            if !masked {
+                drop(task_inner);
+                drop(task);
+                if signal == SignalFlags::SIGKILL
+                    || signal == SignalFlags::SIGSTOP
+                    || signal == SignalFlags::SIGCONT
+                    || signal == SignalFlags::SIGDEF
+                {
+                    call_kernel_signal_handler(signal);
+                } else {
+                    call_user_signal_handler(sig, signal);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+///
+/// 处理信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/15
+pub fn handle_signals() {
+    loop {
+        // 检查等待处理的信号
+        check_pending_signals();
+        // 获取进程状态
+        let (frozen, killed) = {
+            let task = current_task().unwrap();
+            let task_inner = task.inner_exclusive_access();
+            (task_inner.frozen, task_inner.killed)
+        };
+        // 如果当前进程处于非冻结非结束状态就返回执行
+        if !frozen || killed {
+            break;
+        }
+        suspend_current_and_run_next()
+    }
 }
