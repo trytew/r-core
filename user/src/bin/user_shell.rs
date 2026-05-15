@@ -196,7 +196,7 @@ pub fn main() -> i32 {
                                 // 除了最后一个运行的程序其余程序都关闭输出流，因为输出数据是下一个程序的输入，通过管道输入
                                 if i < process_arguments_list.len() - 1 {
                                     close(1);
-                                    let write_end = pipes_fd.get(1).unwrap()[1];
+                                    let write_end = pipes_fd.get(i).unwrap()[1];
                                     assert_eq!(dup(write_end), 1);
                                 }
 
@@ -217,7 +217,7 @@ pub fn main() -> i32 {
                                 children.push(pid);
                             }
                         }
-                        // 关闭进程管道
+                        // 父进程关闭所有进程管道避免管道一直无法关闭
                         for pipe_fd in pipes_fd.iter() {
                             close(pipe_fd[0]);
                             close(pipe_fd[1]);

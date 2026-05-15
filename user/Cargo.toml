@@ -134,6 +134,18 @@ name = "cat"
 test = false
 bench = false
 
+[[bin]]
+name = "cmdline-args"
+test = false
+bench = false
+path = "src/bin/cmdline_args.rs"
+
+[[bin]]
+name = "count-lines"
+test = false
+bench = false
+path = "src/bin/count_lines.rs"
+
 [dependencies]
 buddy_system_allocator = "0.6"
 bitflags = "1.2.1"
