@@ -152,6 +152,24 @@ test = false
 bench = false
 path = "src/bin/count_lines.rs"
 
+[[bin]]
+name = "sig-simple"
+test = false
+bench = false
+path = "src/bin/sig_simple.rs"
+
+[[bin]]
+name = "sig-simple2"
+test = false
+bench = false
+path = "src/bin/sig_simple2.rs"
+
+[[bin]]
+name = "sig-tests"
+test = false
+bench = false
+path = "src/bin/sig_tests.rs"
+
 [dependencies]
 buddy_system_allocator = "0.6"
 bitflags = "1.2.1"

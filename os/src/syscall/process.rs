@@ -197,10 +197,18 @@ pub fn sys_sig_proc_mask(mask: u32) -> isize {
     }
 }
 
+///
+/// 信号执行返回
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
 pub fn sys_sig_return() -> isize {
     if let Some(task) = current_task() {
         let mut inner = task.inner_exclusive_access();
+        // 处理信号设置为空
         inner.handling_sig = -1;
+        // 获取进程上下文，并恢复成信号执行前的状态
         let trap_ctx = inner.get_trap_cx();
         *trap_ctx = inner.trap_ctx_backup.unwrap();
         trap_ctx.x[0] as isize
@@ -209,6 +217,12 @@ pub fn sys_sig_return() -> isize {
     }
 }
 
+///
+/// 检查信号执行动作设置是否合法
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
 fn check_sigaction_error(signal: SignalFlags, action: usize, old_action: usize) -> bool {
     if action == 0
         || old_action == 0
@@ -221,11 +235,18 @@ fn check_sigaction_error(signal: SignalFlags, action: usize, old_action: usize) 
     }
 }
 
+///
+/// 设置信号执行动作
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
 pub fn sys_sigaction(
     signum: i32,
     action: *const SignalAction,
     old_action: *mut SignalAction,
 ) -> isize {
+    // 获取当前进程
     let token = current_user_token();
     let task = current_task().unwrap();
     let mut inner = task.inner_exclusive_access();
@@ -236,8 +257,10 @@ pub fn sys_sigaction(
         if check_sigaction_error(flag, action as usize, old_action as usize) {
             return -1;
         }
+        // 获取旧的信号动作地址
         let prev_action = inner.signal_actions.table[signum as usize];
         *translated_refmut(token, old_action) = prev_action;
+        // 设置新的信号动作地址
         inner.signal_actions.table[signum as usize] = *translated_ref(token, action);
         0
     } else {

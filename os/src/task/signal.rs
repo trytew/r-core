@@ -1,4 +1,3 @@
-use crate::println;
 use bitflags::bitflags;
 
 pub const MAX_SIG: usize = 31;
@@ -18,7 +17,7 @@ bitflags! {
         const SIGUSR1 = 1<<10;
         const SIGSEGV = 1<<11;
         const SIGUSR2 = 1<<12;
-        const SIGIPE = 1<<13;
+        const SIGPIPE = 1<<13;
         const SIGALRM = 1<<14;
         const SIGTERM = 1<<15;
         const SIGSTKFLT = 1<<16;
@@ -61,7 +60,7 @@ impl SignalFlags {
         } else if self.contains(Self::SIGSEGV) {
             Some((-11, "Segmentation Fault, SIGSEGV=11"))
         } else {
-            println!("[K] signal flags check error {:?}", self);
+            // println!("[K] signal flags check error {:?}", self);
             None
         }
     }

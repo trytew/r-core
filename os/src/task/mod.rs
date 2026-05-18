@@ -231,7 +231,7 @@ fn check_pending_signals() {
             let mut masked = true;
             let handling_sig = task_inner.handling_sig;
             // 当处理的信号等于1或者在忽略的信号代表当前信号需要处理
-            if handling_sig == 1 {
+            if handling_sig == -1 {
                 masked = false;
             } else {
                 let handling_sig = handling_sig as usize;

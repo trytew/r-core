@@ -5,7 +5,7 @@ use crate::println;
 use crate::syscall::sys_call;
 use crate::task::{
     check_signals_error_of_current, current_add_signal, current_trap_cx, handle_signals,
-    suspend_current_and_run_next, SignalFlags,
+    suspend_current_and_run_next, take_current_task, SignalFlags,
 };
 use crate::task::{current_user_token, exit_current_and_run_next};
 use crate::timer::set_next_tigger;
@@ -129,6 +129,7 @@ pub fn trap_handler() -> ! {
 
     // 检查当前进程有没有错误信号，有的话就退出当前进程
     if let Some((errno, msg)) = check_signals_error_of_current() {
+        // 获取当前进程的控制块
         println!("[kernel] {}", msg);
         exit_current_and_run_next(errno);
     }

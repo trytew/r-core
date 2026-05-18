@@ -5,12 +5,14 @@ extern crate alloc;
 
 pub mod console;
 mod lang_items;
+mod signal;
 mod syscall;
 
 use alloc::vec::Vec;
 use bitflags::bitflags;
 use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
+pub use signal::*;
 use syscall::*;
 
 const USER_HEAP_SIZE: usize = 16384;
@@ -63,7 +65,6 @@ pub extern "C" fn _start(argc: usize, argv: usize) -> ! {
         );
     }
     exit(main(argc, v.as_slice()));
-    panic!("unreachable after sys_exit!")
 }
 
 // 使用 Rust 的宏将其函数符号 main 标志为弱链接。
@@ -146,7 +147,7 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
 /// @author: tryte
 ///
 /// @date: 2025/11/20
-pub fn exit(exit_code: i32) -> isize {
+pub fn exit(exit_code: i32) -> ! {
     sys_exit(exit_code)
 }
 
@@ -158,6 +159,54 @@ pub fn exit(exit_code: i32) -> isize {
 /// @date: 2026/1/4
 pub fn yield_() -> isize {
     sys_yield()
+}
+
+///
+/// 发送信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn kill(pid: usize, signum: i32) -> isize {
+    sys_kill(pid, signum)
+}
+
+///
+/// 设置信号执行的动作
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn sigaction(
+    signum: i32,
+    action: Option<&SignalAction>,
+    old_action: Option<&mut SignalAction>,
+) -> isize {
+    sys_sigaction(
+        signum,
+        action.map_or(core::ptr::null(), |a| a),
+        old_action.map_or(core::ptr::null_mut(), |a| a),
+    )
+}
+
+///
+/// 屏蔽信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn sig_proc_mask(mask: u32) -> isize {
+    sys_sig_proc_mask(mask)
+}
+
+///
+/// 信号执行动作结束返回
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn sig_return() -> isize {
+    sys_sig_return()
 }
 
 ///

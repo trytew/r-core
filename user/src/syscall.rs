@@ -1,3 +1,4 @@
+use crate::signal::SignalAction;
 use core::arch::asm;
 
 ///
@@ -23,6 +24,18 @@ const SYSCALL_EXIT: usize = 93;
 
 /// 时间中断号
 const SYSCALL_YIELD: usize = 124;
+
+/// 发送信号中断号
+const SYSCALL_KILL: usize = 129;
+
+/// 设置信号执行函数中断号
+const SYSCALL_SIG_ACTION: usize = 134;
+
+/// 屏蔽信号中断号
+const SYSCALL_SIG_PROC_MASK: usize = 135;
+
+/// 信号执行返回中断号
+const SYSCALL_SIG_RETURN: usize = 139;
 
 /// 获取时间中断号
 const SYSCALL_GET_TIME: usize = 169;
@@ -122,8 +135,9 @@ pub fn sys_write(fd: usize, buffer: &[u8]) -> isize {
 /// @author: tryte
 ///
 /// @date: 2025/11/20
-pub fn sys_exit(exit_code: i32) -> isize {
-    syscall(SYSCALL_EXIT, [exit_code as usize, 0, 0])
+pub fn sys_exit(exit_code: i32) -> ! {
+    syscall(SYSCALL_EXIT, [exit_code as usize, 0, 0]);
+    panic!("sys exit never returns");
 }
 
 ///
@@ -134,6 +148,54 @@ pub fn sys_exit(exit_code: i32) -> isize {
 /// @date: 2026/1/4
 pub fn sys_yield() -> isize {
     syscall(SYSCALL_YIELD, [0, 0, 0])
+}
+
+///
+/// 发送信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn sys_kill(pid: usize, signal: i32) -> isize {
+    syscall(SYSCALL_KILL, [pid, signal as usize, 0])
+}
+
+///
+/// 设置信号响应动作
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn sys_sigaction(
+    signum: i32,
+    action: *const SignalAction,
+    old_action: *mut SignalAction,
+) -> isize {
+    // 调用
+    syscall(
+        SYSCALL_SIG_ACTION,
+        [signum as usize, action as usize, old_action as usize],
+    )
+}
+
+///
+/// 屏蔽信号
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn sys_sig_proc_mask(mask: u32) -> isize {
+    syscall(SYSCALL_SIG_PROC_MASK, [mask as usize, 0, 0])
+}
+
+///
+/// 信号执行返回
+///
+/// @author: tryte
+///
+/// @date: 2026/5/18
+pub fn sys_sig_return() -> isize {
+    syscall(SYSCALL_SIG_RETURN, [0, 0, 0])
 }
 
 ///

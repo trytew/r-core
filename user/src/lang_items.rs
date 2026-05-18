@@ -1,5 +1,5 @@
 // #![feature(panic_info_message)]
-use crate::println;
+use crate::{getpid, kill, println, SignalFlags};
 use core::panic::PanicInfo;
 
 ///
@@ -20,5 +20,6 @@ fn panic(panic_info: &PanicInfo) -> ! {
     } else {
         println!("Panicked: {}", panic_info.message());
     }
-    loop {}
+    kill(getpid() as usize, SignalFlags::SIGABRT.bits());
+    unreachable!();
 }
