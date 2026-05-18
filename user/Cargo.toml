@@ -130,9 +130,27 @@ bench = false
 path = "src/bin/pipe_large_test.rs"
 
 [[bin]]
+name = "getchar"
+test = false
+bench = false
+path = "src/bin/getchar.rs"
+
+[[bin]]
 name = "cat"
 test = false
 bench = false
+
+[[bin]]
+name = "cmdline-args"
+test = false
+bench = false
+path = "src/bin/cmdline_args.rs"
+
+[[bin]]
+name = "count-lines"
+test = false
+bench = false
+path = "src/bin/count_lines.rs"
 
 [dependencies]
 buddy_system_allocator = "0.6"
