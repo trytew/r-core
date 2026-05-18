@@ -130,6 +130,12 @@ bench = false
 path = "src/bin/pipe_large_test.rs"
 
 [[bin]]
+name = "getchar"
+test = false
+bench = false
+path = "src/bin/getchar.rs"
+
+[[bin]]
 name = "cat"
 test = false
 bench = false
