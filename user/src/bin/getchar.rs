@@ -1,0 +1,25 @@
+#![no_std]
+#![no_main]
+
+#[macro_use]
+extern crate user_lib;
+
+use user_lib::console::getchar;
+
+const LF: u8 = 0x0au8;
+const CR: u8 = 0x0du8;
+
+#[unsafe(no_mangle)]
+pub fn main() -> i32 {
+    println!("getchar starting... Press 'ENTER' will quit.");
+
+    loop {
+        let c = getchar();
+
+        println!("Got char {}", c);
+        if c == LF || c == CR {
+            println!("exit(0)");
+            return 0;
+        }
+    }
+}
