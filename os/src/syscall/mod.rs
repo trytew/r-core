@@ -7,6 +7,7 @@ use crate::task::SignalAction;
 
 mod fs;
 mod process;
+pub mod thread;
 
 /// 复制文件描述符中断号
 const SYSCALL_DUP: usize = 24;

@@ -16,6 +16,9 @@ pub const PAGE_SIZE_BITS: usize = 0x0C;
 /// “跳板”虚拟地址
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 
+/// “陷入”上下文起始地址
+pub const TRAP_CONTEXT_BASE: usize = TRAMPOLINE - PAGE_SIZE;
+
 /// “陷入”上下文
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
 

@@ -1,6 +1,6 @@
-进程间通信与 I/O 重定向
+并发
 
-第七章第五节
+第八章第三节
 
 easy-fs-use:
 cd easy-fs-use

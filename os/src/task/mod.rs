@@ -3,7 +3,7 @@ use crate::println;
 use crate::sbi::shutdown;
 use crate::task::context::TaskContext;
 use crate::task::manager::remove_from_pid2task;
-use crate::task::task::{TaskControlBlock, TaskStatus};
+pub(crate) use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::sync::Arc;
 use lazy_static::*;
 
@@ -11,11 +11,13 @@ pub use crate::task::manager::*;
 pub use action::*;
 pub use processor::*;
 pub use signal::*;
+pub use task::*;
 
 mod action;
 mod context;
+mod id;
 mod manager;
-mod pid;
+mod process;
 mod processor;
 mod signal;
 mod switch;

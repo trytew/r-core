@@ -1,5 +1,6 @@
 use crate::sync::UpSafeCell;
-use crate::task::task::TaskControlBlock;
+use crate::task::process::ProcessControlBlock;
+use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::collections::{BTreeMap, VecDeque};
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
@@ -10,7 +11,7 @@ lazy_static! {
         unsafe { UpSafeCell::new(TaskManager::new()) };
 
     // 进程map [pid]进程控制块
-    pub static ref PID2TCB: UpSafeCell<BTreeMap<usize, Arc<TaskControlBlock>>> =
+    pub static ref PID2PCB: UpSafeCell<BTreeMap<usize, Arc<ProcessControlBlock>>> =
         unsafe { UpSafeCell::new(BTreeMap::new()) };
 }
 
@@ -65,13 +66,21 @@ impl TaskManager {
 ///
 /// @date: 2026/3/5
 pub fn add_task(task: Arc<TaskControlBlock>) {
-    // 添加进程索引map
-    PID2TCB
-        .exclusive_access()
-        .insert(task.getpid(), Arc::clone(&task));
-
     // 将进程控制块加入进程管理器
     TASK_MANAGER.exclusive_access().add(task);
+}
+
+///
+/// 唤醒进程
+///
+/// @author: tryte
+///
+/// @date: 2026/5/19
+pub fn wakeup_task(task: Arc<TaskControlBlock>) {
+    let mut task_inner = task.inner_exclusive_access();
+    task_inner.task_status = TaskStatus::Ready;
+    drop(task_inner);
+    add_task(task);
 }
 
 ///
@@ -85,14 +94,24 @@ pub fn fetch_task() -> Option<Arc<TaskControlBlock>> {
 }
 
 ///
-/// 根据 pid 查找进程
+/// 根据 pid 查找线程
 ///
 /// @author: tryte
 ///
 /// @date: 2026/5/15
-pub fn pid2task(pid: usize) -> Option<Arc<TaskControlBlock>> {
-    let map = PID2TCB.exclusive_access();
+pub fn pid2process(pid: usize) -> Option<Arc<ProcessControlBlock>> {
+    let map = PID2PCB.exclusive_access();
     map.get(&pid).map(Arc::clone)
+}
+
+///
+/// 添加线程到线程索引map
+///
+/// @author: tryte
+///
+/// @date: 2026/5/19
+pub fn insert_into_pid2process(pid: usize, process: Arc<ProcessControlBlock>) {
+    PID2PCB.exclusive_access().insert(pid, process);
 }
 
 ///
@@ -102,7 +121,7 @@ pub fn pid2task(pid: usize) -> Option<Arc<TaskControlBlock>> {
 ///
 /// @date: 2026/5/15
 pub fn remove_from_pid2task(pid: usize) {
-    let mut map = PID2TCB.exclusive_access();
+    let mut map = PID2PCB.exclusive_access();
     if map.remove(&pid).is_none() {
         panic!("cannot find pid {} in pid2task!", pid)
     }
