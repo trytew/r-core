@@ -8,7 +8,7 @@ extern crate user_lib;
 use user_lib::{close, open, read, OpenFlags};
 
 ///
-/// 查看文件a
+/// 查看文件
 ///
 /// @author: tryte
 ///

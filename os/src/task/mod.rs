@@ -230,10 +230,11 @@ fn check_pending_signals() {
             // 查看信号是否能处理
             let mut masked = true;
             let handling_sig = task_inner.handling_sig;
-            // 当处理的信号等于1或者在忽略的信号代表当前信号需要处理
+            // 当正在处理的信号等于 -1 代表没有在处理信号
             if handling_sig == -1 {
                 masked = false;
             } else {
+                // 若有信号正在执行，检查当前信号是否被临时屏蔽
                 let handling_sig = handling_sig as usize;
                 if !task_inner.signal_actions.table[handling_sig]
                     .mask
@@ -242,6 +243,7 @@ fn check_pending_signals() {
                     masked = false;
                 }
             }
+
             if !masked {
                 drop(task_inner);
                 drop(task);
@@ -250,8 +252,10 @@ fn check_pending_signals() {
                     || signal == SignalFlags::SIGCONT
                     || signal == SignalFlags::SIGDEF
                 {
+                    // 处理内核信号
                     call_kernel_signal_handler(signal);
                 } else {
+                    // 处理用户信号
                     call_user_signal_handler(sig, signal);
                     return;
                 }
@@ -268,7 +272,7 @@ fn check_pending_signals() {
 /// @date: 2026/5/15
 pub fn handle_signals() {
     loop {
-        // 检查等待处理的信号
+        // 检查并执行等待处理的信号
         check_pending_signals();
         // 获取进程状态
         let (frozen, killed) = {

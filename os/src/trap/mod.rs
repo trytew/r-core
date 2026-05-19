@@ -5,7 +5,7 @@ use crate::println;
 use crate::syscall::sys_call;
 use crate::task::{
     check_signals_error_of_current, current_add_signal, current_trap_cx, handle_signals,
-    suspend_current_and_run_next, take_current_task, SignalFlags,
+    suspend_current_and_run_next, SignalFlags,
 };
 use crate::task::{current_user_token, exit_current_and_run_next};
 use crate::timer::set_next_tigger;

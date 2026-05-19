@@ -8,6 +8,12 @@ name = "user_lib"
 test = false
 bench = false
 
+
+[dependencies]
+buddy_system_allocator = "0.6"
+bitflags = "1.2.1"
+riscv = { git = "https://github.com/trytew/riscv", features = ["inline-asm"] }
+
 [[bin]]
 name = "initproc"
 test = false
@@ -170,6 +176,32 @@ test = false
 bench = false
 path = "src/bin/sig_tests.rs"
 
-[dependencies]
-buddy_system_allocator = "0.6"
-bitflags = "1.2.1"
+[[bin]]
+name = "infloop"
+test = false
+bench = false
+path = "src/bin/infloop.rs"
+
+[[bin]]
+name = "priv-csr"
+test = false
+bench = false
+path = "src/bin/priv_csr.rs"
+
+[[bin]]
+name = "priv-inst"
+test = false
+bench = false
+path = "src/bin/priv_inst.rs"
+
+[[bin]]
+name = "store-fault"
+test = false
+bench = false
+path = "src/bin/store_fault.rs"
+
+[[bin]]
+name = "until-timeout"
+test = false
+bench = false
+path = "src/bin/until_timeout.rs"
