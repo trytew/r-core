@@ -1,7 +1,7 @@
 use crate::mm::PhysPageNum;
 use crate::sync::UpSafeCell;
 use crate::task::context::TaskContext;
-use crate::task::id::{kernel_stack_alloc, KernelStack, TaskUserRes};
+use crate::task::id::{kernel_stack_alloc, KernelStack, TaskUserResource};
 use crate::task::process::ProcessControlBlock;
 use crate::trap::TrapContext;
 use alloc::sync::{Arc, Weak};
@@ -20,7 +20,7 @@ use core::cell::RefMut;
 pub enum TaskStatus {
     Ready,   // 待运行
     Running, // 运行中
-    Zombie,  // 僵尸态
+    Blocked, // 阻塞态
 }
 
 ///
@@ -30,7 +30,7 @@ pub enum TaskStatus {
 ///
 /// @date: 2026/3/6
 pub struct TaskControlBlockInner {
-    pub res: Option<TaskUserRes>,
+    pub res: Option<TaskUserResource>,
     /// 应用“陷入”上下文的物理地址
     pub trap_cx_ppn: PhysPageNum,
     /// 应用“陷入”上下文
@@ -58,32 +58,45 @@ impl TaskControlBlockInner {
     /// @author: tryte
     ///
     /// @date: 2026/3/7
+    #[allow(unused)]
     fn get_status(&self) -> TaskStatus {
         self.task_status
     }
 }
 
 ///
-/// 进程控制块
+/// 线程控制块
 ///
 /// @author: tryte
 ///
 /// @date: 2025/12/18
 pub struct TaskControlBlock {
+    /// 所属进程
     pub process: Weak<ProcessControlBlock>,
+    /// 内核栈
     #[allow(unused)]
     pub kernel_stack: KernelStack,
+    /// 线程信息
     inner: UpSafeCell<TaskControlBlockInner>,
 }
 
 impl TaskControlBlock {
+    ///
+    /// 创建线程
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     pub fn new(
         process: Arc<ProcessControlBlock>,
         user_stack_base: usize,
         alloc_user_res: bool,
     ) -> Self {
-        let res = TaskUserRes::new(Arc::clone(&process), user_stack_base, alloc_user_res);
+        // 创建用户态资源
+        let res = TaskUserResource::new(Arc::clone(&process), user_stack_base, alloc_user_res);
+        // “陷入”上下文地址物理地址，这里记录“陷入”上下文的物理地址也是因为这个上下文只在内核态下会用到
         let trap_cx_ppn = res.trap_cx_ppn();
+        // 创建内核栈，内核内存空间地址
         let kernel_stack = kernel_stack_alloc();
         let kernel_stack_top = kernel_stack.get_top();
         Self {

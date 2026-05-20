@@ -1,14 +1,14 @@
 mod context;
 
-use crate::config::{TRAMPOLINE, TRAP_CONTEXT};
+use crate::config::TRAMPOLINE;
 use crate::println;
 use crate::syscall::sys_call;
 use crate::task::{
-    check_signals_error_of_current, current_add_signal, current_trap_cx, handle_signals,
+    check_signals_error_of_current, current_add_signal, current_trap_cx, current_trap_cx_user_va,
     suspend_current_and_run_next, SignalFlags,
 };
 use crate::task::{current_user_token, exit_current_and_run_next};
-use crate::timer::set_next_tigger;
+use crate::timer::{check_timer, set_next_tigger};
 pub use context::TrapContext;
 use core::arch::{asm, global_asm};
 use riscv::register::mtvec::TrapMode;
@@ -113,6 +113,7 @@ pub fn trap_handler() -> ! {
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             set_next_tigger();
+            check_timer();
             suspend_current_and_run_next();
         }
         _ => {
@@ -123,9 +124,6 @@ pub fn trap_handler() -> ! {
             )
         }
     }
-
-    // 处理信号
-    handle_signals();
 
     // 检查当前进程有没有错误信号，有的话就退出当前进程
     if let Some((errno, msg)) = check_signals_error_of_current() {
@@ -148,7 +146,7 @@ pub fn trap_return() -> ! {
     // 设置应用用户态触发“陷入”时的处理函数地址
     set_user_trap_entry();
     // 获取当前应用的“陷入”上下文虚拟地址
-    let trap_cx_ptr = TRAP_CONTEXT;
+    let trap_cx_user_va = current_trap_cx_user_va();
     // 获取用户空间的 MMU 设置
     let user_satp = current_user_token();
     unsafe extern "C" {
@@ -166,7 +164,7 @@ pub fn trap_return() -> ! {
             "jr {restore_va}", restore_va = in(reg) restore_va,
             // in(...) / out(...) 是进入 asm 前的寄存器状态要求，换而言之下面两句一定会比前面两句代码更早执行
             // 将“陷入”上下文作为参数传入
-            in("a0") trap_cx_ptr,
+            in("a0") trap_cx_user_va,
             // 将用户空间的 MMU 设置作为参数传入
             in("a1") user_satp,
             // 告知 rust 该函数没有返回

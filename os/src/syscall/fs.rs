@@ -1,6 +1,6 @@
 use crate::fs::{make_pipe, open_file, OpenFlags};
 use crate::mm::{translated_byte_buffer, translated_refmut, translated_str, UserBuffer};
-use crate::task::{current_task, current_user_token};
+use crate::task::{current_process, current_user_token};
 use alloc::sync::Arc;
 
 ///
@@ -13,8 +13,8 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
     // 获取当前进程的 MMU 设置
     let token = current_user_token();
     // 获取当前进程控制块
-    let task = current_task().unwrap();
-    let inner = task.inner_exclusive_access();
+    let process = current_process();
+    let inner = process.inner_exclusive_access();
     if fd >= inner.fd_table.len() {
         return -1;
     }
@@ -41,8 +41,8 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
     // 获取当前进程的 MMU 设置
     let token = current_user_token();
     // 获取当前进程控制块
-    let task = current_task().unwrap();
-    let inner = task.inner_exclusive_access();
+    let process = current_process();
+    let inner = process.inner_exclusive_access();
     if fd >= inner.fd_table.len() {
         return -1;
     }
@@ -67,14 +67,14 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
 /// @date: 2026/4/8
 pub fn sys_open(path: *const u8, flags: u32) -> isize {
     // 获取当前进程控制块
-    let task = current_task().unwrap();
+    let process = current_process();
     // 获取当前进程的 MMU 设置
     let token = current_user_token();
     // 读取文件路径
     let path = translated_str(token, path);
     // 打开文件
     if let Some(inode) = open_file(path.as_str(), OpenFlags::from_bits(flags).unwrap()) {
-        let mut inner = task.inner_exclusive_access();
+        let mut inner = process.inner_exclusive_access();
         // 将文件设置进新的文件描述符并返回文件描述符
         let fd = inner.alloc_fd();
         inner.fd_table[fd] = Some(inode);
@@ -91,8 +91,8 @@ pub fn sys_open(path: *const u8, flags: u32) -> isize {
 ///
 /// @date: 2026/4/8
 pub fn sys_close(fd: usize) -> isize {
-    let task = current_task().unwrap();
-    let mut inner = task.inner_exclusive_access();
+    let process = current_process();
+    let mut inner = process.inner_exclusive_access();
     if fd >= inner.fd_table.len() {
         return -1;
     }
@@ -111,11 +111,11 @@ pub fn sys_close(fd: usize) -> isize {
 /// @date: 2026/4/18
 pub fn sys_pipe(pipe: *mut usize) -> isize {
     // 获取当前进程
-    let task = current_task().unwrap();
+    let process = current_process();
     // 获取进程 MMU
     let token = current_user_token();
     // 获取进程控制块
-    let mut inner = task.inner_exclusive_access();
+    let mut inner = process.inner_exclusive_access();
     let (pipe_read, pipe_write) = make_pipe();
     // 分配进程文件描述符
     let read_fd = inner.alloc_fd();
@@ -139,8 +139,8 @@ pub fn sys_pipe(pipe: *mut usize) -> isize {
 ///
 /// @date: 2026/5/14
 pub fn sys_dup(fd: usize) -> isize {
-    let task = current_task().unwrap();
-    let mut inner = task.inner_exclusive_access();
+    let process = current_process();
+    let mut inner = process.inner_exclusive_access();
     if fd >= inner.fd_table.len() {
         return -1;
     }

@@ -62,6 +62,7 @@ __alltraps:
     # 将用户态的寄存器状态恢复，从 TrapContext 的内容中读取
 __restore:
     # a0: 当前应用的“陷入”上下文 TrapContext; a1: 用户空间地址
+
     # 切换用户空间，这样才能正确获取到当前应用的“陷入”上下文，因为 TrapContext 传入的是虚拟地址
     csrw satp, a1
     # 刷新虚拟内存地址快表内容

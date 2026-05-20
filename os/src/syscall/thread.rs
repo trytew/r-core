@@ -32,7 +32,7 @@ pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
         new_task_res.user_stack_top(),
         kernel_token(),
         new_task.kernel_stack.get_top(),
-        trap_handler as usize,
+        trap_handler as *const () as usize,
     );
     (*new_task_trap_cx).x[10] = arg;
     new_task_tid as isize
@@ -59,4 +59,18 @@ pub fn sys_wait_tid(tid: usize) -> i32 {
     }
 
     let mut exit_code: Option<i32> = None;
+    let waited_task = process_inner.tasks[tid].as_ref();
+    if let Some(waited_task) = waited_task {
+        if let Some(waited_exit_code) = waited_task.inner_exclusive_access().exit_code {
+            exit_code = Some(waited_exit_code);
+        }
+    } else {
+        return -1;
+    }
+    if let Some(exit_code) = exit_code {
+        process_inner.tasks[tid] = None;
+        exit_code
+    } else {
+        -2
+    }
 }

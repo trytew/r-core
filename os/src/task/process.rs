@@ -12,19 +12,35 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefMut;
 
+///
+/// 进程控制块实际内容
+///
+/// @author: tryte
+///
+/// @date: 2026/5/20
 pub struct ProcessControlBlockInner {
+    /// 是否处于僵尸态
     pub is_zombie: bool,
+    /// 进程内容所在内存区域
     pub memory_set: MemorySet,
+    /// 父进程
     pub parent: Option<Weak<ProcessControlBlock>>,
+    /// 子进程
     pub children: Vec<Arc<ProcessControlBlock>>,
+    /// 退出码
     pub exit_code: i32,
+    /// 持有的文件描述符列表
     pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>,
+    /// 接收到的信号
     pub signals: SignalFlags,
+    /// 线程
     pub tasks: Vec<Option<Arc<TaskControlBlock>>>,
+    /// 线程ID分配器
     pub tasks_res_allocator: RecycleAllocator,
 }
 
 impl ProcessControlBlockInner {
+    #[allow(unused)]
     pub fn get_user_token(&self) -> usize {
         self.memory_set.token()
     }
@@ -40,6 +56,12 @@ impl ProcessControlBlockInner {
         }
     }
 
+    ///
+    /// 分配线程ID
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     pub fn alloc_tid(&mut self) -> usize {
         self.tasks_res_allocator.alloc()
     }
@@ -57,6 +79,12 @@ impl ProcessControlBlockInner {
     }
 }
 
+///
+/// 进程控制块
+///
+/// @author: tryte
+///
+/// @date: 2026/5/20
 pub struct ProcessControlBlock {
     pub pid: PidHandle,
     inner: UpSafeCell<ProcessControlBlockInner>,
@@ -76,7 +104,7 @@ impl ProcessControlBlock {
         // 分配进程id
         let pid_handle = pid_alloc();
 
-        // 创建进程控制器，这里记录“陷入”上下文的物理地址也是因为这个上下文只在内核态下会用到
+        // 创建进程控制器
         let process = Arc::new(Self {
             pid: pid_handle,
             inner: unsafe {
@@ -101,6 +129,7 @@ impl ProcessControlBlock {
             },
         });
 
+        // 创建主线程
         let task = Arc::new(TaskControlBlock::new(
             Arc::clone(&process),
             user_stack_base,
@@ -108,8 +137,8 @@ impl ProcessControlBlock {
         ));
 
         let task_inner = task.inner_exclusive_access();
-        // 创建“陷入”上下文，这里看起来是在直接操作物理地址，但是因为在内核态的情况下（已经使用了内核页表的 MMU 设置），所以这里还是使用
-        // 虚拟内存地址访问，因为内核态下页表的虚拟内存地址使用的恒等映射。
+        // 创建“陷入”上下文，这里看起来是在直接操作物理地址，但是因为在内核态的情况下（已经使用了内核页表的 MMU 设置）
+        // 页表的虚拟内存地址使用的恒等映射，所以这里还是使用虚拟内存地址访问
         let trap_cx = task_inner.get_trap_cx();
         let user_stack_top = task_inner.res.as_ref().unwrap().user_stack_top();
         let kernel_stack_top = task.kernel_stack.get_top();
@@ -138,10 +167,12 @@ impl ProcessControlBlock {
             trap_handler as *const () as usize,
         );
 
+        // 将主线程添加进进程
         let mut process_inner = process.inner_exclusive_access();
         process_inner.tasks.push(Some(Arc::clone(&task)));
         drop(process_inner);
         insert_into_pid2process(process.getpid(), Arc::clone(&process));
+        // 将线程加入线程管理器
         add_task(task);
         process
     }
@@ -210,7 +241,7 @@ impl ProcessControlBlock {
                 .res
                 .as_ref()
                 .unwrap()
-                .user_stack_base,
+                .user_stack_base(),
             // here we do not allocate trap_cx or ustack again
             // but mention that we allocate a new kstack here
             false,
@@ -239,7 +270,7 @@ impl ProcessControlBlock {
         assert_eq!(self.inner_exclusive_access().thread_count(), 1);
 
         // 创建新的内存区域描述集合
-        let (memory_set, mut user_stack_base, entry_point) = MemorySet::from_elf(elf_data);
+        let (memory_set, user_stack_base, entry_point) = MemorySet::from_elf(elf_data);
         let new_token = memory_set.token();
         self.inner_exclusive_access().memory_set = memory_set;
 

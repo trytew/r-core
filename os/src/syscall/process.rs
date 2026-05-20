@@ -1,8 +1,8 @@
 use crate::fs::{open_file, OpenFlags};
 use crate::mm::{translated_ref, translated_refmut, translated_str};
 use crate::task::{
-    add_task, current_task, current_user_token, exit_current_and_run_next, pid2task, suspend_current_and_run_next,
-    SignalAction, SignalFlags, MAX_SIG,
+    current_process, current_task, current_user_token, exit_current_and_run_next, pid2process,
+    suspend_current_and_run_next, SignalFlags,
 };
 use crate::timer::get_time_ms;
 use alloc::string::String;
@@ -48,7 +48,7 @@ pub fn sys_get_time() -> isize {
 ///
 /// @date: 2026/3/7
 pub fn sys_getpid() -> isize {
-    current_task().unwrap().pid.0 as isize
+    current_task().unwrap().process.upgrade().unwrap().getpid() as isize
 }
 
 ///
@@ -63,15 +63,16 @@ pub fn sys_getpid() -> isize {
 /// @date: 2026/3/7
 pub fn sys_fork() -> isize {
     // 获取当前进程控制块
-    let current_task = current_task().unwrap();
-    let new_task = current_task.fork();
+    let current_process = current_process();
+    let new_process = current_process.fork();
     // 获取新进程的进程ID
-    let new_pid = new_task.getpid();
+    let new_pid = new_process.getpid();
+    let new_process_inner = new_process.inner_exclusive_access();
+    let task = new_process_inner.tasks[0].as_ref().unwrap();
     // 获取新进程的“陷入”上下文
-    let trap_cx = new_task.inner_exclusive_access().get_trap_cx();
+    let trap_cx = task.inner_exclusive_access().get_trap_cx();
     // 子进程的 fork 返回 0
     trap_cx.x[10] = 0;
-    add_task(new_task);
     new_pid as isize
 }
 
@@ -97,9 +98,9 @@ pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
     }
     if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONY) {
         let all_data = app_inode.read_all();
-        let task = current_task().unwrap();
+        let process = current_process();
         let argc = args_vec.len();
-        task.exec(all_data.as_slice(), args_vec);
+        process.exec(all_data.as_slice(), args_vec);
         argc as isize
     } else {
         -1
@@ -120,7 +121,7 @@ pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
 ///
 /// @date: 2026/3/7
 pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
-    let task = current_task().unwrap();
+    let task = current_process();
 
     let mut inner = task.inner_exclusive_access();
     if !inner
@@ -133,7 +134,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 
     let pair = inner.children.iter().enumerate().find(|(_, p)| {
         // 当前子进程为僵尸态且查找任意子进程 或和传入的进程id一致
-        p.inner_exclusive_access().is_zombie() && (pid == -1 || pid as usize == p.getpid())
+        p.inner_exclusive_access().is_zombie && (pid == -1 || pid as usize == p.getpid())
     });
 
     // 回收子进程资源
@@ -159,9 +160,9 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 ///
 /// @date: 2026/5/15
 pub fn sys_kill(pid: usize, signum: i32) -> isize {
-    if let Some(task) = pid2task(pid) {
+    if let Some(process) = pid2process(pid) {
         if let Some(flag) = SignalFlags::from_bits(1 << signum) {
-            let mut task_ref = task.inner_exclusive_access();
+            let mut task_ref = process.inner_exclusive_access();
             if task_ref.signals.contains(flag) {
                 return -1;
             }
@@ -170,99 +171,6 @@ pub fn sys_kill(pid: usize, signum: i32) -> isize {
         } else {
             -1
         }
-    } else {
-        -1
-    }
-}
-
-///
-/// 设置进程屏蔽的信号
-///
-/// @author: tryte
-///
-/// @date: 2026/5/15
-pub fn sys_sig_proc_mask(mask: u32) -> isize {
-    if let Some(task) = current_task() {
-        let mut inner = task.inner_exclusive_access();
-        // 设置新的屏蔽信号并返回就的信号屏蔽
-        let old_mask = inner.signal_mask;
-        if let Some(flag) = SignalFlags::from_bits(mask) {
-            inner.signal_mask = flag;
-            old_mask.bits() as isize
-        } else {
-            -1
-        }
-    } else {
-        -1
-    }
-}
-
-///
-/// 信号执行返回
-///
-/// @author: tryte
-///
-/// @date: 2026/5/18
-pub fn sys_sig_return() -> isize {
-    if let Some(task) = current_task() {
-        let mut inner = task.inner_exclusive_access();
-        // 处理信号设置为空
-        inner.handling_sig = -1;
-        // 获取进程上下文，并恢复成信号执行前的状态
-        let trap_ctx = inner.get_trap_cx();
-        *trap_ctx = inner.trap_ctx_backup.unwrap();
-        trap_ctx.x[0] as isize
-    } else {
-        -1
-    }
-}
-
-///
-/// 检查信号执行动作设置是否合法
-///
-/// @author: tryte
-///
-/// @date: 2026/5/18
-fn check_sigaction_error(signal: SignalFlags, action: usize, old_action: usize) -> bool {
-    if action == 0
-        || old_action == 0
-        || signal == SignalFlags::SIGKILL
-        || signal == SignalFlags::SIGSTOP
-    {
-        true
-    } else {
-        false
-    }
-}
-
-///
-/// 设置信号执行动作
-///
-/// @author: tryte
-///
-/// @date: 2026/5/18
-pub fn sys_sigaction(
-    signum: i32,
-    action: *const SignalAction,
-    old_action: *mut SignalAction,
-) -> isize {
-    // 获取当前进程
-    let token = current_user_token();
-    let task = current_task().unwrap();
-    let mut inner = task.inner_exclusive_access();
-    if signum as usize > MAX_SIG {
-        return -1;
-    }
-    if let Some(flag) = SignalFlags::from_bits(1 << signum) {
-        if check_sigaction_error(flag, action as usize, old_action as usize) {
-            return -1;
-        }
-        // 获取旧的信号动作地址
-        let prev_action = inner.signal_actions.table[signum as usize];
-        *translated_refmut(token, old_action) = prev_action;
-        // 设置新的信号动作地址
-        inner.signal_actions.table[signum as usize] = *translated_ref(token, action);
-        0
     } else {
         -1
     }

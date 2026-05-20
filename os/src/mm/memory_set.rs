@@ -570,37 +570,14 @@ impl MemorySet {
         }
         // 用已使用的虚拟地址结束地址作为程序栈底
         let max_end_va: VirtAddr = max_end_vpn.into();
-        let mut user_stack_bottom: usize = max_end_va.into();
+        let mut user_stack_base: usize = max_end_va.into();
 
         // 灰页，不进入分页内存寻址
-        user_stack_bottom += PAGE_SIZE;
-
-        // 用户栈顶（8KB）
-        let user_stack_top = user_stack_bottom + USER_STACK_SIZE;
-        memory_set.push(
-            MapArea::new(
-                user_stack_bottom.into(),
-                user_stack_top.into(),
-                MapType::Framed,
-                MapPermission::R | MapPermission::W | MapPermission::U,
-            ),
-            None,
-        );
-
-        // 映射“陷入”上下文地址
-        memory_set.push(
-            MapArea::new(
-                TRAP_CONTEXT.into(),
-                TRAMPOLINE.into(),
-                MapType::Framed,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
+        user_stack_base += PAGE_SIZE;
 
         (
             memory_set,                            // 应用内存区域集合
-            user_stack_top,                        // 用户栈顶
+            user_stack_base,                       // 用户栈顶
             elf_header.pt2.entry_point() as usize, // 应用的入口虚拟内存地址
         )
     }

@@ -76,8 +76,6 @@ fn rust_main() -> ! {
     mm::init();
     mm::remap_test();
 
-    task::add_initproc();
-
     trap::init();
     trap::enable_timer_interrupt();
 
@@ -85,7 +83,8 @@ fn rust_main() -> ! {
 
     fs::list_apps();
 
+    task::add_initproc();
     task::run_tasks();
 
-    panic!("Shutdown machine!");
+    panic!("Unreachable in rust_main!");
 }

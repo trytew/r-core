@@ -6,7 +6,7 @@ use alloc::sync::Arc;
 use lazy_static::lazy_static;
 
 lazy_static! {
-    // 进程管理器
+    // 线程管理器
     pub static ref TASK_MANAGER: UpSafeCell<TaskManager> =
         unsafe { UpSafeCell::new(TaskManager::new()) };
 
@@ -57,16 +57,27 @@ impl TaskManager {
     pub fn fetch(&mut self) -> Option<Arc<TaskControlBlock>> {
         self.ready_queue.pop_front()
     }
+
+    pub fn remove(&mut self, task: Arc<TaskControlBlock>) {
+        if let Some((id, _)) = self
+            .ready_queue
+            .iter()
+            .enumerate()
+            .find(|(_, t)| Arc::as_ptr(t) == Arc::as_ptr(&task))
+        {
+            self.ready_queue.remove(id);
+        }
+    }
 }
 
 ///
-/// 添加进程
+/// 添加线程
 ///
 /// @author: tryte
 ///
 /// @date: 2026/3/5
 pub fn add_task(task: Arc<TaskControlBlock>) {
-    // 将进程控制块加入进程管理器
+    // 将线程控制块加入线程管理器
     TASK_MANAGER.exclusive_access().add(task);
 }
 
@@ -81,6 +92,10 @@ pub fn wakeup_task(task: Arc<TaskControlBlock>) {
     task_inner.task_status = TaskStatus::Ready;
     drop(task_inner);
     add_task(task);
+}
+
+pub fn remove_task(task: Arc<TaskControlBlock>) {
+    TASK_MANAGER.exclusive_access().remove(task);
 }
 
 ///
@@ -120,7 +135,7 @@ pub fn insert_into_pid2process(pid: usize, process: Arc<ProcessControlBlock>) {
 /// @author: tryte
 ///
 /// @date: 2026/5/15
-pub fn remove_from_pid2task(pid: usize) {
+pub fn remove_from_pid2process(pid: usize) {
     let mut map = PID2PCB.exclusive_access();
     if map.remove(&pid).is_none() {
         panic!("cannot find pid {} in pid2task!", pid)

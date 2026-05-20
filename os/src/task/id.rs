@@ -12,7 +12,7 @@ lazy_static! {
     static ref PID_ALLOCATOR: UpSafeCell<RecycleAllocator> =
         unsafe { UpSafeCell::new(RecycleAllocator::new()) };
 
-    // 内核栈分配器
+    // 内核栈ID分配器
     static ref KERNEL_STACK_ALLOCATOR: UpSafeCell<RecycleAllocator> =
         unsafe { UpSafeCell::new(RecycleAllocator::new()) };
 }
@@ -138,42 +138,71 @@ impl Drop for KernelStack {
     }
 }
 
-pub struct TaskUserRes {
+///
+/// 线程的用户态资源
+///
+/// @author: tryte
+///
+/// @date: 2026/5/20
+pub struct TaskUserResource {
+    /// 线程ID
     pub tid: usize,
+    // 用户栈地址（虚拟地址）
     pub user_stack_base: usize,
+    /// 所属进程
     pub process: Weak<ProcessControlBlock>,
 }
 
-impl TaskUserRes {
+impl TaskUserResource {
+    ///
+    /// 创建线程用户态资源
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     pub fn new(
         process: Arc<ProcessControlBlock>,
         user_stack_base: usize,
         alloc_user_res: bool,
     ) -> Self {
+        // 生成线程ID
         let tid = process.inner_exclusive_access().alloc_tid();
+
         let task_user_res = Self {
             tid,
             user_stack_base,
             process: Arc::downgrade(&process),
         };
         if alloc_user_res {
+            // 分配用户资源内存
             task_user_res.alloc_user_res();
         }
         task_user_res
     }
 
+    ///
+    /// 分配用户资源
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     pub fn alloc_user_res(&self) {
+        // 获取进程
         let process = self.process.upgrade().unwrap();
         let mut process_inner = process.inner_exclusive_access();
+        // 获取用户栈位置
         let user_stack_bottom = user_stack_bottom_from_tid(self.user_stack_base, self.tid);
         let user_stack_top = user_stack_bottom + USER_STACK_SIZE;
+        // 分配用户栈空间（从进程已使用内存+灰页后开始）
         process_inner.memory_set.insert_framed_area(
             user_stack_bottom.into(),
             user_stack_top.into(),
             MapPermission::R | MapPermission::W | MapPermission::U,
         );
+        // 获取“陷入”上下文地址（从“跳板”地址往下 tid * PAGE_SIZE 开始）
         let trap_cx_bottom = trap_cx_bottom_from_tid(self.tid);
         let trap_cx_top = trap_cx_bottom + PAGE_SIZE;
+        // 分配“陷入”上下文内存
         process_inner.memory_set.insert_framed_area(
             trap_cx_bottom.into(),
             trap_cx_top.into(),
@@ -197,6 +226,7 @@ impl TaskUserRes {
             .remove_area_with_start_vpn(trap_cx_bottom_va.into());
     }
 
+    #[allow(unused)]
     pub fn alloc_tid(&mut self) {
         self.tid = self
             .process
@@ -212,9 +242,21 @@ impl TaskUserRes {
         process_inner.dealloc_tid(self.tid);
     }
 
+    pub fn trap_cx_user_va(&self) -> usize {
+        trap_cx_bottom_from_tid(self.tid)
+    }
+
+    ///
+    /// 获取“陷入”上下文物理地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     pub fn trap_cx_ppn(&self) -> PhysPageNum {
+        // 获取进程
         let process = self.process.upgrade().unwrap();
         let process_inner = process.inner_exclusive_access();
+        // 计算“陷入”上下文起始地址
         let trap_cx_bottom_va: VirtAddr = trap_cx_bottom_from_tid(self.tid).into();
         process_inner
             .memory_set
@@ -229,6 +271,13 @@ impl TaskUserRes {
 
     pub fn user_stack_top(&self) -> usize {
         user_stack_bottom_from_tid(self.user_stack_base, self.tid) + USER_STACK_SIZE
+    }
+}
+
+impl Drop for TaskUserResource {
+    fn drop(&mut self) {
+        self.dealloc_tid();
+        self.dealloc_user_res();
     }
 }
 
@@ -248,9 +297,9 @@ pub fn pid_alloc() -> PidHandle {
 /// @author: tryte
 ///
 /// @date: 2026/1/30
-pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
+pub fn kernel_stack_position(kernel_stack_id: usize) -> (usize, usize) {
     // 内核栈的空间是8kb + 4kb，其中有 4kb 是作为灰页（保护页）不映射进页表
-    let top = TRAMPOLINE - app_id * (KERNEL_STACK_SIZE + PAGE_SIZE); // 高地址
+    let top = TRAMPOLINE - kernel_stack_id * (KERNEL_STACK_SIZE + PAGE_SIZE); // 高地址
     let bottom = top - KERNEL_STACK_SIZE; // 低地址
     (bottom, top)
 }
@@ -266,7 +315,7 @@ pub fn kernel_stack_alloc() -> KernelStack {
     let kernel_stack_id = KERNEL_STACK_ALLOCATOR.exclusive_access().alloc();
     // 计算内核栈位置
     let (kernel_stack_bottom, kernel_stack_top) = kernel_stack_position(kernel_stack_id);
-    // 分配内核栈空间
+    // 分配内核栈空间，这里用的是内核虚拟空间，与进程内存空间不重叠，因此不会影响进程内存空间
     KERNEL_SPACE.exclusive_access().insert_framed_area(
         kernel_stack_bottom.into(),
         kernel_stack_top.into(),

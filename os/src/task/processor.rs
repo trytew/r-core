@@ -1,6 +1,7 @@
 use crate::sync::UpSafeCell;
 use crate::task::context::TaskContext;
 use crate::task::manager::fetch_task;
+use crate::task::process::ProcessControlBlock;
 use crate::task::switch::__switch;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use crate::trap::TrapContext;
@@ -18,7 +19,9 @@ lazy_static! {
 ///
 /// @date: 2026/2/5
 pub struct Processor {
+    // 当前运行的进程
     current: Option<Arc<TaskControlBlock>>,
+    // 空闲应用上下文
     idle_task_cx: TaskContext,
 }
 
@@ -77,9 +80,9 @@ pub fn run_tasks() {
     loop {
         let mut processor = PROCESSOR.exclusive_access();
         if let Some(task) = fetch_task() {
-            // 获取空闲进程的应用上下文地址
+            // 获取空闲进程主线程的应用上下文地址
             let idle_task_cx_ptr = processor.get_idle_task_cx_ptr();
-            // 获取即将运行的进程的应用上下文地址
+            // 获取即将运行的线程的应用上下文地址
             let mut task_inner = task.inner_exclusive_access();
             let next_task_cx_ptr = &task_inner.task_cx as *const TaskContext;
             // 修改进程状态
@@ -108,6 +111,16 @@ pub fn current_task() -> Option<Arc<TaskControlBlock>> {
 }
 
 ///
+/// 获取正在运行的线程
+///
+/// @author: tryte
+///
+/// @date: 2026/5/20
+pub fn current_process() -> Arc<ProcessControlBlock> {
+    current_task().unwrap().process.upgrade().unwrap()
+}
+
+///
 /// 获取当前应用的虚拟地址页表设置
 ///
 /// @author: tryte
@@ -115,8 +128,7 @@ pub fn current_task() -> Option<Arc<TaskControlBlock>> {
 /// @date: 2026/3/6
 pub fn current_user_token() -> usize {
     let task = current_task().unwrap();
-    let token = task.inner_exclusive_access().get_user_token();
-    token
+    task.get_user_token()
 }
 
 ///
@@ -130,6 +142,20 @@ pub fn current_trap_cx() -> &'static mut TrapContext {
         .unwrap()
         .inner_exclusive_access()
         .get_trap_cx()
+}
+
+pub fn current_trap_cx_user_va() -> usize {
+    current_task()
+        .unwrap()
+        .inner_exclusive_access()
+        .res
+        .as_ref()
+        .unwrap()
+        .trap_cx_user_va()
+}
+
+pub fn current_kernel_stack_top() -> usize {
+    current_task().unwrap().kernel_stack.get_top()
 }
 
 ///
