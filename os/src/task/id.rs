@@ -193,12 +193,14 @@ impl TaskUserResource {
         // 获取用户栈位置
         let user_stack_bottom = user_stack_bottom_from_tid(self.user_stack_base, self.tid);
         let user_stack_top = user_stack_bottom + USER_STACK_SIZE;
+
         // 分配用户栈空间（从进程已使用内存+灰页后开始）
         process_inner.memory_set.insert_framed_area(
             user_stack_bottom.into(),
             user_stack_top.into(),
             MapPermission::R | MapPermission::W | MapPermission::U,
         );
+
         // 获取“陷入”上下文地址（从“跳板”地址往下 tid * PAGE_SIZE 开始）
         let trap_cx_bottom = trap_cx_bottom_from_tid(self.tid);
         let trap_cx_top = trap_cx_bottom + PAGE_SIZE;
@@ -210,16 +212,24 @@ impl TaskUserResource {
         );
     }
 
+    ///
+    /// 回收线程用户态资源
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     fn dealloc_user_res(&self) {
         let process = self.process.upgrade().unwrap();
         let mut process_inner = process.inner_exclusive_access();
+
+        // 回收用户栈
         let user_stack_bottom_va: VirtAddr =
             user_stack_bottom_from_tid(self.user_stack_base, self.tid).into();
-
         process_inner
             .memory_set
             .remove_area_with_start_vpn(user_stack_bottom_va.into());
 
+        // 回收“陷入上下文”
         let trap_cx_bottom_va: VirtAddr = trap_cx_bottom_from_tid(self.tid).into();
         process_inner
             .memory_set
@@ -236,6 +246,12 @@ impl TaskUserResource {
             .alloc_tid();
     }
 
+    ///
+    /// 回收线程ID
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     pub fn dealloc_tid(&self) {
         let process = self.process.upgrade().unwrap();
         let mut process_inner = process.inner_exclusive_access();

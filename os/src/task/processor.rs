@@ -87,11 +87,11 @@ pub fn run_tasks() {
             let next_task_cx_ptr = &task_inner.task_cx as *const TaskContext;
             // 修改进程状态
             task_inner.task_status = TaskStatus::Running;
-            // 释放借用
+            // 释放借用，因为 __switch 后会切走进程，导致自动 drop 不能触发
             drop(task_inner);
             // 将当前进程控制块设置为即将运行的进程控制块
             processor.current = Some(task);
-            // 释放借用
+            // 释放借用，因为 __switch 后会切走进程，导致自动 drop 不能触发
             drop(processor);
             unsafe {
                 __switch(idle_task_cx_ptr, next_task_cx_ptr);

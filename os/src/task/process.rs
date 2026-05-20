@@ -66,6 +66,12 @@ impl ProcessControlBlockInner {
         self.tasks_res_allocator.alloc()
     }
 
+    ///
+    /// 回收线程ID
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/20
     pub fn dealloc_tid(&mut self, tid: usize) {
         self.tasks_res_allocator.dealloc(tid)
     }
@@ -306,7 +312,7 @@ impl ProcessControlBlock {
             .map(|arg| {
                 translated_refmut(
                     new_token,
-                    (argv_base + argv_base + arg * core::mem::size_of::<usize>()) as *mut usize,
+                    (argv_base + arg * core::mem::size_of::<usize>()) as *mut usize,
                 )
             })
             .collect();
