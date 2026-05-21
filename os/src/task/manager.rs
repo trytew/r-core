@@ -58,6 +58,12 @@ impl TaskManager {
         self.ready_queue.pop_front()
     }
 
+    ///
+    /// 从待运行队列移除线程
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/21
     pub fn remove(&mut self, task: Arc<TaskControlBlock>) {
         if let Some((id, _)) = self
             .ready_queue
@@ -94,6 +100,12 @@ pub fn wakeup_task(task: Arc<TaskControlBlock>) {
     add_task(task);
 }
 
+///
+/// 移除线程
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub fn remove_task(task: Arc<TaskControlBlock>) {
     TASK_MANAGER.exclusive_access().remove(task);
 }

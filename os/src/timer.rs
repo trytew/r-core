@@ -73,11 +73,23 @@ pub fn set_next_tigger() {
     set_timer(get_time() + CLOCK_FREQ / TICKS_PER_SEC);
 }
 
+///
+/// 添加定时器
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub fn add_timer(expire_ms: usize, task: Arc<TaskControlBlock>) {
     let mut timers = TIMERS.exclusive_access();
     timers.push(TimerCondVar { expire_ms, task })
 }
 
+///
+/// 从定时器队列中移除线程
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub fn remove_timer(task: Arc<TaskControlBlock>) {
     let mut timers = TIMERS.exclusive_access();
     let mut temp = BinaryHeap::<TimerCondVar>::new();

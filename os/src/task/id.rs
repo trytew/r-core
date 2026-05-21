@@ -258,6 +258,12 @@ impl TaskUserResource {
         process_inner.dealloc_tid(self.tid);
     }
 
+    ///
+    /// 根据线程ID获取“陷入”上下文地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/21
     pub fn trap_cx_user_va(&self) -> usize {
         trap_cx_bottom_from_tid(self.tid)
     }
@@ -341,7 +347,7 @@ pub fn kernel_stack_alloc() -> KernelStack {
 }
 
 ///
-/// 根据线程id获取“陷入”上下文地址
+/// 根据线程ID获取“陷入”上下文地址
 ///
 /// @author: tryte
 ///

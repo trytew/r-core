@@ -1,11 +1,13 @@
 .altmacro
 # 汇编宏
 .macro SAVE_GP n
-    # 等效于 xn, n * 8(sp)
+    # 等效于 sd xn, n * 8(sp)
+    # sd 将 xn 的值复制到 n*8(sp)
     sd x\n, \n * 8(sp)
 .endm
 
 .macro LOAD_GP n
+    # ld 将 n*8(sp) 的值复制到 xn
     ld x\n, \n * 8(sp)
 .endm
 
@@ -44,7 +46,7 @@ __alltraps:
     # 保存 t0 的内容到 32 * 8(sp)
     sd t0, 32 * 8(sp)
     sd t1, 33 * 8(sp)
-    # 读取 sscratch 的值保存到 TrapContext，sscratch 的值是用户栈的地址
+    # 读取 sscratch 的值保存到 TrapContext，sscratch 的值是用户栈栈顶
     csrr t2, sscratch
     sd t2, 2 * 8(sp)
     # 加载内核 stap 到 t0
@@ -61,9 +63,12 @@ __alltraps:
 
     # 将用户态的寄存器状态恢复，从 TrapContext 的内容中读取
 __restore:
-    # a0: 当前应用的“陷入”上下文 TrapContext; a1: 用户空间地址
+    # __restore(
+    #   trap_cx: *mut TrapContext, // a0: 当前应用的“陷入”上下文用户空间虚拟地址
+    #   user_satp: usize,          // a1: 用户空间地址
+    # )
 
-    # 切换用户空间，这样才能正确获取到当前应用的“陷入”上下文，因为 TrapContext 传入的是虚拟地址
+    # 切换用户空间，这样才能正确获取到当前应用的“陷入”上下文，因为 TrapContext 传入的是用户空间虚拟地址
     csrw satp, a1
     # 刷新虚拟内存地址快表内容
     sfence.vma

@@ -144,6 +144,12 @@ pub fn current_trap_cx() -> &'static mut TrapContext {
         .get_trap_cx()
 }
 
+///
+/// 获取线程“陷入”上下文的用户空间虚拟地址
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub fn current_trap_cx_user_va() -> usize {
     current_task()
         .unwrap()
@@ -154,6 +160,12 @@ pub fn current_trap_cx_user_va() -> usize {
         .trap_cx_user_va()
 }
 
+///
+/// 获取当前线程内核栈顶
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub fn current_kernel_stack_top() -> usize {
     current_task().unwrap().kernel_stack.get_top()
 }

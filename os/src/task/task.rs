@@ -30,6 +30,7 @@ pub enum TaskStatus {
 ///
 /// @date: 2026/3/6
 pub struct TaskControlBlockInner {
+    /// 用户态资源
     pub res: Option<TaskUserResource>,
     /// 应用“陷入”上下文的物理地址
     pub trap_cx_ppn: PhysPageNum,

@@ -207,7 +207,7 @@ impl ProcessControlBlock {
         // 取出当前进程控制块
         let mut parent = self.inner_exclusive_access();
         assert_eq!(parent.thread_count(), 1);
-        // 创建新进程的内存描述集合并复制当前进程的内容
+        // 创建新进程的内存描述集并复制当前进程的内容
         let memory_set = MemorySet::from_existed_user(&parent.memory_set);
         // 分配进程ID
         let pid = pid_alloc();
