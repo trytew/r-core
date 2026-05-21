@@ -1,6 +1,6 @@
 use super::{PTEFlags, PhysPageNum, VPNRange, VirtPageNum};
 use crate::boards::MEMORY_END;
-use crate::config::{MMIO, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
+use crate::config::{MMIO, PAGE_SIZE, TRAMPOLINE};
 use crate::mm::address::{PhysAddr, StepByOne, VirtAddr};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::PageTableEntry;

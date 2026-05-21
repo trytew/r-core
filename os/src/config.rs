@@ -19,7 +19,4 @@ pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 /// “陷入”上下文起始地址
 pub const TRAP_CONTEXT_BASE: usize = TRAMPOLINE - PAGE_SIZE;
 
-/// “陷入”上下文
-pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
-
 pub use crate::boards::*;
