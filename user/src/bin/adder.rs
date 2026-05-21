@@ -56,5 +56,6 @@ pub fn main(argc: usize, argv: &[&str]) {
         wait_tid(tid);
     }
     println!("time cost is {}ms", get_time() - start);
+    println!("A is {}", unsafe { A });
     assert_eq!(unsafe { A }, unsafe { PER_THREAD } * thread_count);
 }
