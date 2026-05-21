@@ -184,7 +184,7 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 /// @author: tryte
 ///
 /// @date: 2026/5/15
-pub fn check_signals_error_of_current() -> Option<(i32, &'static str)> {
+pub fn check_signals_of_current() -> Option<(i32, &'static str)> {
     // 获取当前进程控制块
     let process = current_process();
     let process_inner = process.inner_exclusive_access();

@@ -4,7 +4,7 @@ use crate::config::TRAMPOLINE;
 use crate::println;
 use crate::syscall::sys_call;
 use crate::task::{
-    check_signals_error_of_current, current_add_signal, current_trap_cx, current_trap_cx_user_va,
+    check_signals_of_current, current_add_signal, current_trap_cx, current_trap_cx_user_va,
     suspend_current_and_run_next, SignalFlags,
 };
 use crate::task::{current_user_token, exit_current_and_run_next};
@@ -112,8 +112,11 @@ pub fn trap_handler() -> ! {
             current_add_signal(SignalFlags::SIGILL);
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
+            // 设置下一个定时中断触发时间
             set_next_tigger();
+            // 定时检查是否有超时的定时器
             check_timer();
+            // 运行下一个线程
             suspend_current_and_run_next();
         }
         _ => {
@@ -126,7 +129,7 @@ pub fn trap_handler() -> ! {
     }
 
     // 检查当前进程有没有错误信号，有的话就退出当前进程
-    if let Some((errno, msg)) = check_signals_error_of_current() {
+    if let Some((errno, msg)) = check_signals_of_current() {
         // 获取当前进程的控制块
         println!("[kernel] {}", msg);
         exit_current_and_run_next(errno);

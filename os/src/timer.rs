@@ -16,6 +16,12 @@ lazy_static! {
 const TICKS_PER_SEC: usize = 100;
 const MSEC_PER_SEC: usize = 1000;
 
+///
+/// 定时器
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub struct TimerCondVar {
     pub expire_ms: usize,
     pub task: Arc<TaskControlBlock>,
@@ -30,7 +36,14 @@ impl PartialEq for TimerCondVar {
 impl Eq for TimerCondVar {}
 
 impl PartialOrd for TimerCondVar {
+    ///
+    /// 比较定时器
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/5/21
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        // 过期时间取反，因此过期时间最小的最大
         let a = -(self.expire_ms as isize);
         let b = -(other.expire_ms as isize);
         Some(a.cmp(&b))
@@ -102,12 +115,22 @@ pub fn remove_timer(task: Arc<TaskControlBlock>) {
     timers.append(&mut temp);
 }
 
+///
+/// 查看是否已到时间
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub fn check_timer() {
+    // 获取当前时间
     let current_ms = get_time_ms();
     let mut timers = TIMERS.exclusive_access();
+    // 从过期时间最小的定时器开始遍历，因为定时器实现了 Ord Trait，比较时时间取反后再比较，因此过期时间最小的定时器值最大
     while let Some(timer) = timers.peek() {
         if timer.expire_ms <= current_ms {
+            // 过期，唤醒线程
             wakeup_task(Arc::clone(&timer.task));
+            // 定时器弹出
             timers.pop();
         } else {
             break;

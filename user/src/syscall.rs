@@ -22,6 +22,9 @@ const SYSCALL_WRITE: usize = 64;
 /// 退出中断号
 const SYSCALL_EXIT: usize = 93;
 
+/// 休眠中断号
+const SYSCALL_SLEEP: usize = 101;
+
 /// 时间中断号
 const SYSCALL_YIELD: usize = 124;
 
@@ -51,6 +54,15 @@ const SYSCALL_EXEC: usize = 221;
 
 /// 等待进程结束中断号
 const SYSCALL_WAITPID: usize = 260;
+
+/// 创建线程中断号
+const SYSCALL_THREAD_CREATE: usize = 1000;
+
+/// 获取线程ID
+const SYSCALL_GET_TID: usize = 1001;
+
+/// 等待线程结束中断号
+const SYSCALL_WAIT_TID: usize = 1002;
 
 ///
 /// 系统调用
@@ -138,6 +150,16 @@ pub fn sys_write(fd: usize, buffer: &[u8]) -> isize {
 pub fn sys_exit(exit_code: i32) -> ! {
     syscall(SYSCALL_EXIT, [exit_code as usize, 0, 0]);
     panic!("sys exit never returns");
+}
+
+///
+/// 休眠
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
+pub fn sys_sleep(sleep_ms: usize) -> isize {
+    syscall(SYSCALL_SLEEP, [sleep_ms, 0, 0])
 }
 
 ///
@@ -249,4 +271,34 @@ pub fn sys_exec(path: &str, args: &[*const u8]) -> isize {
 /// @date: 2026/3/7
 pub fn sys_waitpid(pid: isize, exit_code: *mut i32) -> isize {
     syscall(SYSCALL_WAITPID, [pid as usize, exit_code as usize, 0])
+}
+
+///
+/// 创建线程
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
+pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
+    syscall(SYSCALL_THREAD_CREATE, [entry, arg, 0])
+}
+
+///
+/// 获取线程ID
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
+pub fn sys_get_tid() -> isize {
+    syscall(SYSCALL_GET_TID, [0; 3])
+}
+
+///
+/// 等待线程结束
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
+pub fn sys_wait_tid(tid: usize) -> isize {
+    syscall(SYSCALL_WAIT_TID, [tid, 0, 0])
 }

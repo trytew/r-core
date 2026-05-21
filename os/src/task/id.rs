@@ -147,7 +147,7 @@ impl Drop for KernelStack {
 pub struct TaskUserResource {
     /// 线程ID
     pub tid: usize,
-    // 用户栈地址（虚拟地址）
+    /// 用户栈地址（虚拟地址）
     pub user_stack_base: usize,
     /// 所属进程
     pub process: Weak<ProcessControlBlock>,

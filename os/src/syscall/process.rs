@@ -159,14 +159,10 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 /// @author: tryte
 ///
 /// @date: 2026/5/15
-pub fn sys_kill(pid: usize, signum: i32) -> isize {
+pub fn sys_kill(pid: usize, signal: u32) -> isize {
     if let Some(process) = pid2process(pid) {
-        if let Some(flag) = SignalFlags::from_bits(1 << signum) {
-            let mut task_ref = process.inner_exclusive_access();
-            if task_ref.signals.contains(flag) {
-                return -1;
-            }
-            task_ref.signals.insert(flag);
+        if let Some(flag) = SignalFlags::from_bits(signal) {
+            process.inner_exclusive_access().signals |= flag;
             0
         } else {
             -1

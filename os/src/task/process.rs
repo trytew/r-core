@@ -1,9 +1,9 @@
 use crate::fs::{File, Stdin, Stdout};
 use crate::mm::{translated_refmut, MemorySet, KERNEL_SPACE};
 use crate::sync::UpSafeCell;
-use crate::task::id::{pid_alloc, PidHandle, RecycleAllocator};
+use crate::task::id::{pid_alloc, PidHandle, RecycleAllocator, TaskUserResource};
 use crate::task::task::TaskControlBlock;
-use crate::task::{add_task, insert_into_pid2process, SignalFlags};
+use crate::task::{add_task, insert_into_pid2process, remove_inactive_task, SignalFlags};
 use crate::trap::{trap_handler, TrapContext};
 use alloc::string::String;
 use alloc::sync::Arc;
@@ -239,6 +239,7 @@ impl ProcessControlBlock {
         });
         parent.children.push(Arc::clone(&child));
 
+        // 创建子进程的主线程
         let task = Arc::new(TaskControlBlock::new(
             Arc::clone(&child),
             parent
@@ -248,8 +249,7 @@ impl ProcessControlBlock {
                 .as_ref()
                 .unwrap()
                 .user_stack_base(),
-            // here we do not allocate trap_cx or ustack again
-            // but mention that we allocate a new kstack here
+            // 这里不再分配“陷入”上下文或者用户栈，但需要分配一个新的内核栈
             false,
         ));
         let mut child_inner = child.inner_exclusive_access();
@@ -275,13 +275,30 @@ impl ProcessControlBlock {
     pub fn exec(self: &Arc<Self>, elf_data: &[u8], args: Vec<String>) {
         assert_eq!(self.inner_exclusive_access().thread_count(), 1);
 
+        let mut process_inner = self.inner_exclusive_access();
+
+        // 保留主进程，终止所有子线程，它必须在锁定整个 memory_set 之前完成否则它们将被释放两次
+        let rest_tasks = process_inner.tasks.split_off(1);
+        let mut recycle_res = Vec::<TaskUserResource>::new();
+        for task in rest_tasks.iter() {
+            if let Some(task) = task {
+                // 释放子进程资源
+                remove_inactive_task(Arc::clone(&task));
+                if let Some(res) = task.inner_exclusive_access().res.take() {
+                    recycle_res.push(res);
+                }
+            }
+        }
+        recycle_res.clear();
+
         // 创建新的内存区域描述集合
         let (memory_set, user_stack_base, entry_point) = MemorySet::from_elf(elf_data);
         let new_token = memory_set.token();
-        self.inner_exclusive_access().memory_set = memory_set;
+        process_inner.memory_set = memory_set;
 
         // 将当前进程的内容替换成新进程内容
-        let task = self.inner_exclusive_access().get_task(0);
+        let task = process_inner.get_task(0);
+        drop(process_inner);
         let mut task_inner = task.inner_exclusive_access();
         task_inner.res.as_mut().unwrap().user_stack_base = user_stack_base;
         task_inner.res.as_mut().unwrap().alloc_user_res();

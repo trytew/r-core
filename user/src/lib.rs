@@ -152,6 +152,16 @@ pub fn exit(exit_code: i32) -> ! {
 }
 
 ///
+/// 休眠
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
+pub fn sleep(sleep_ms: usize) {
+    sys_sleep(sleep_ms);
+}
+
+///
 /// 让出时间片
 ///
 /// @author: tryte
@@ -287,19 +297,49 @@ pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
     }
 }
 
+///
+/// 非阻塞等待进程退出
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
 pub fn waitpid_nb(pid: usize, exit_code: &mut i32) -> isize {
     sys_waitpid(pid as isize, exit_code as *mut _)
 }
 
 ///
-/// 休眠
+/// 创建线程
 ///
 /// @author: tryte
 ///
-/// @date: 2026/3/9
-pub fn sleep(periods_ms: usize) {
-    let start = sys_get_time();
-    while sys_get_time() < start + periods_ms as isize {
-        sys_yield();
+/// @date: 2026/5/21
+pub fn thread_create(entry: usize, arg: usize) -> isize {
+    sys_thread_create(entry, arg)
+}
+
+///
+/// 获取线程ID
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
+pub fn get_tid() -> isize {
+    sys_get_tid()
+}
+
+///
+/// 等待线程退出
+///
+/// @author: tryte
+///
+/// @date: 2026/5/21
+pub fn wait_tid(tid: usize) -> isize {
+    loop {
+        match sys_wait_tid(tid) {
+            -2 => {
+                yield_();
+            }
+            exit_code => return exit_code,
+        }
     }
 }

@@ -205,3 +205,9 @@ name = "until-timeout"
 test = false
 bench = false
 path = "src/bin/until_timeout.rs"
+
+[[bin]]
+name = "adder"
+test = false
+bench = false
+path = "src/bin/adder.rs"
