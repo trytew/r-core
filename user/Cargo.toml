@@ -207,6 +207,30 @@ bench = false
 path = "src/bin/until_timeout.rs"
 
 [[bin]]
+name = "thread"
+test = false
+bench = false
+path = "src/bin/thread.rs"
+
+[[bin]]
+name = "thread-arg"
+test = false
+bench = false
+path = "src/bin/thread_arg.rs"
+
+[[bin]]
+name = "stackless-coroutine"
+test = false
+bench = false
+path = "src/bin/stackless_coroutine.rs"
+
+[[bin]]
+name = "stackful-coroutine"
+test = false
+bench = false
+path = "src/bin/stackful_coroutine.rs"
+
+[[bin]]
 name = "adder"
 test = false
 bench = false

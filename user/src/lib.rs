@@ -15,7 +15,7 @@ use core::ptr::addr_of_mut;
 pub use signal::*;
 use syscall::*;
 
-const USER_HEAP_SIZE: usize = 16384;
+const USER_HEAP_SIZE: usize = 32768;
 
 ///
 /// 堆空间大小
