@@ -343,3 +343,10 @@ pub fn wait_tid(tid: usize) -> isize {
         }
     }
 }
+
+#[macro_export]
+macro_rules! v_load {
+    ($var:expr) => {
+        unsafe { core::ptr::read_volatile(core::ptr::addr_of!($var)) }
+    };
+}

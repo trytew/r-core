@@ -235,3 +235,9 @@ name = "adder"
 test = false
 bench = false
 path = "src/bin/adder.rs"
+
+[[bin]]
+name = "adder-peterson-spin"
+test = false
+bench = false
+path = "src/bin/adder_peterson_spin.rs"

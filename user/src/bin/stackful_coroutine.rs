@@ -199,7 +199,8 @@ impl Runtime {
             // 将栈顶内存对齐，若不对齐，那么栈顶位置往下移
             let s_ptr = (s_ptr as usize & !7) as *mut u8;
 
-            // 设置协程执行函数结束地址
+            // 设置协程执行函数结束地址，这是为 函数f 设置结束后跳转的地址，
+            // 即 函数f 执行结束后 ret 跳转到 函数guard 回收协程
             available.ctx.x1 = guard as *const () as u64;
             // 设置协程的入口为执行函数入口
             available.ctx.nx1 = f as u64;
@@ -212,6 +213,12 @@ impl Runtime {
     }
 }
 
+///
+/// 协程执行函数结束后的调用
+///
+/// @author: tryte
+///
+/// @date: 2026/5/25
 fn guard() {
     unsafe {
         let rt_ptr = RUNTIME as *mut Runtime;
@@ -219,6 +226,12 @@ fn guard() {
     }
 }
 
+///
+/// 让出时间片
+///
+/// @author: tryte
+///
+/// @date: 2026/5/25
 pub fn yield_task() {
     unsafe {
         let rt_ptr = RUNTIME as *mut Runtime;
@@ -230,6 +243,11 @@ pub fn yield_task() {
 #[unsafe(no_mangle)]
 unsafe extern "C" fn switch(old: *mut TaskContext, new: *const TaskContext) {
     // a0: old, a1: new
+    // 切换协程
+    // 当协程第一次被切换时 x1（即 ra） 保存的是 函数guard 的入口地址，因为 函数f 是通过 jr f 直接跳转过去的
+    // 因此当协程结束时无法被回收，需要通过设置 函数f 的 ret 返回地址跳转到 函数guard
+    // 每调用一次函数，ra的值都会被存储到栈中，这是编译器对函数调用 call指令 的默认行为，
+    // 因此即使 x1（即 ra）每次都会被刷新，但是当 ret 返回后就会被还原成上一层函数调用的返回地址
     naked_asm!(
         "
         sd x1, 0x00(a0)
@@ -269,6 +287,12 @@ unsafe extern "C" fn switch(old: *mut TaskContext, new: *const TaskContext) {
     );
 }
 
+///
+/// 有栈协程
+///
+/// @author: tryte
+///
+/// @date: 2026/5/25
 #[unsafe(no_mangle)]
 pub fn main() {
     println!("stackful_coroutine begin...");
