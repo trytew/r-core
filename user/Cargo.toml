@@ -237,7 +237,43 @@ bench = false
 path = "src/bin/adder.rs"
 
 [[bin]]
+name = "adder-simple-spin"
+test = false
+bench = false
+path = "src/bin/adder_simple_spin.rs"
+
+[[bin]]
+name = "adder-simple-yield"
+test = false
+bench = false
+path = "src/bin/adder_simple_yield.rs"
+
+[[bin]]
 name = "adder-peterson-spin"
 test = false
 bench = false
 path = "src/bin/adder_peterson_spin.rs"
+
+[[bin]]
+name = "adder-peterson-yield"
+test = false
+bench = false
+path = "src/bin/adder_peterson_yield.rs"
+
+[[bin]]
+name = "barrier-fail"
+test = false
+bench = false
+path = "src/bin/barrier_fail.rs"
+
+[[bin]]
+name = "early-exit"
+test = false
+bench = false
+path = "src/bin/early_exit.rs"
+
+[[bin]]
+name = "early-exit2"
+test = false
+bench = false
+path = "src/bin/early_exit2.rs"
