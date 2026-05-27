@@ -345,8 +345,24 @@ pub fn wait_tid(tid: usize) -> isize {
 }
 
 #[macro_export]
+macro_rules! v_store {
+    ($var: expr,$value:expr) => {
+        unsafe {
+            core::ptr::write_volatile(core::ptr::addr_of_mut!($var), $value);
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! v_load {
     ($var:expr) => {
         unsafe { core::ptr::read_volatile(core::ptr::addr_of!($var)) }
+    };
+}
+
+#[macro_export]
+macro_rules! memory_fence {
+    () => {
+        core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst)
     };
 }
