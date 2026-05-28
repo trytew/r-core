@@ -231,12 +231,6 @@ bench = false
 path = "src/bin/stackful_coroutine.rs"
 
 [[bin]]
-name = "barrier-fail"
-test = false
-bench = false
-path = "src/bin/barrier_fail.rs"
-
-[[bin]]
 name = "early-exit"
 test = false
 bench = false
@@ -249,43 +243,7 @@ bench = false
 path = "src/bin/early_exit2.rs"
 
 [[bin]]
-name = "adder"
+name = "barrier-fail"
 test = false
 bench = false
-path = "src/bin/adder.rs"
-
-[[bin]]
-name = "adder-simple-spin"
-test = false
-bench = false
-path = "src/bin/adder_simple_spin.rs"
-
-[[bin]]
-name = "adder-simple-yield"
-test = false
-bench = false
-path = "src/bin/adder_simple_yield.rs"
-
-[[bin]]
-name = "peterson"
-test = false
-bench = false
-path = "src/bin/peterson.rs"
-
-[[bin]]
-name = "eisenberg"
-test = false
-bench = false
-path = "src/bin/eisenberg.rs"
-
-[[bin]]
-name = "adder-peterson-spin"
-test = false
-bench = false
-path = "src/bin/adder_peterson_spin.rs"
-
-[[bin]]
-name = "adder-peterson-yield"
-test = false
-bench = false
-path = "src/bin/adder_peterson_yield.rs"
+path = "src/bin/barrier_fail.rs"
