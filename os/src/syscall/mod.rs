@@ -2,7 +2,7 @@ use crate::syscall::fs::{sys_close, sys_dup, sys_open, sys_pipe, sys_read, sys_w
 use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_kill, sys_waitpid, sys_yield,
 };
-use crate::syscall::sync::sys_sleep;
+use crate::syscall::sync::{sys_mutex_create, sys_mutex_lock, sys_mutex_unlock, sys_sleep};
 use crate::syscall::thread::{sys_get_tid, sys_thread_create, sys_wait_tid};
 
 mod fs;
@@ -76,6 +76,15 @@ const SYSCALL_GET_TID: usize = 1001;
 /// 等待线程退出中断号
 const SYSCALL_WAIT_TID: usize = 1002;
 
+/// 创建线程锁
+const SYSCALL_MUTEX_CREATE: usize = 1010;
+
+/// 上锁
+const SYSCALL_MUTEX_LOCK: usize = 1011;
+
+/// 解锁
+const SYSCALL_MUTEX_UNLOCK: usize = 1012;
+
 ///
 /// 系统调用
 ///
@@ -102,6 +111,9 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_THREAD_CREATE => sys_thread_create(args[0], args[1]),
         SYSCALL_GET_TID => sys_get_tid(),
         SYSCALL_WAIT_TID => sys_wait_tid(args[0]) as isize,
+        SYSCALL_MUTEX_CREATE => sys_mutex_create(args[0] == 1),
+        SYSCALL_MUTEX_LOCK => sys_mutex_lock(args[0]),
+        SYSCALL_MUTEX_UNLOCK => sys_mutex_unlock(args[0]),
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }
 }

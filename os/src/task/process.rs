@@ -1,6 +1,6 @@
 use crate::fs::{File, Stdin, Stdout};
 use crate::mm::{translated_refmut, MemorySet, KERNEL_SPACE};
-use crate::sync::UpSafeCell;
+use crate::sync::{Mutex, UpSafeCell};
 use crate::task::id::{pid_alloc, PidHandle, RecycleAllocator, TaskUserResource};
 use crate::task::task::TaskControlBlock;
 use crate::task::{add_task, insert_into_pid2process, remove_inactive_task, SignalFlags};
@@ -37,6 +37,8 @@ pub struct ProcessControlBlockInner {
     pub tasks: Vec<Option<Arc<TaskControlBlock>>>,
     /// 线程ID分配器
     pub tasks_res_allocator: RecycleAllocator,
+    /// 锁列表
+    pub mutex_list: Vec<Option<Arc<dyn Mutex>>>,
 }
 
 impl ProcessControlBlockInner {
@@ -131,6 +133,7 @@ impl ProcessControlBlock {
                     signals: SignalFlags::empty(),
                     tasks: Vec::new(),
                     tasks_res_allocator: RecycleAllocator::new(),
+                    mutex_list: Vec::new(),
                 })
             },
         });
@@ -234,6 +237,7 @@ impl ProcessControlBlock {
                     signals: SignalFlags::empty(),
                     tasks: Vec::new(),
                     tasks_res_allocator: RecycleAllocator::new(),
+                    mutex_list: Vec::new(),
                 })
             },
         });

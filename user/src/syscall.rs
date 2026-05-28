@@ -64,6 +64,15 @@ const SYSCALL_GET_TID: usize = 1001;
 /// 等待线程结束中断号
 const SYSCALL_WAIT_TID: usize = 1002;
 
+/// 创建线程锁中断号
+const SYSCALL_MUTEX_CREATE: usize = 1010;
+
+/// 上锁中断号
+const SYSCALL_MUTEX_LOCK: usize = 1011;
+
+/// 解锁中断号
+const SYSCALL_MUTEX_UNLOCK: usize = 1012;
+
 ///
 /// 系统调用
 ///
@@ -301,4 +310,34 @@ pub fn sys_get_tid() -> isize {
 /// @date: 2026/5/21
 pub fn sys_wait_tid(tid: usize) -> isize {
     syscall(SYSCALL_WAIT_TID, [tid, 0, 0])
+}
+
+///
+/// 创建线程锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn sys_mutex_create(blocking: bool) -> isize {
+    syscall(SYSCALL_MUTEX_CREATE, [blocking as usize, 0, 0])
+}
+
+///
+/// 上锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn sys_mutex_lock(id: usize) -> isize {
+    syscall(SYSCALL_MUTEX_LOCK, [id, 0, 0])
+}
+
+///
+/// 解锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn sys_mutex_unlock(id: usize) -> isize {
+    syscall(SYSCALL_MUTEX_UNLOCK, [id, 0, 0])
 }

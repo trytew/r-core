@@ -344,6 +344,46 @@ pub fn wait_tid(tid: usize) -> isize {
     }
 }
 
+///
+/// 创建线程锁（非阻塞）
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn mutex_create() -> isize {
+    sys_mutex_create(false)
+}
+
+///
+/// 创建线程锁（阻塞等待锁）
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn mutex_blocking_create() -> isize {
+    sys_mutex_create(true)
+}
+
+///
+/// 上锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn mutex_lock(mutex_id: usize) {
+    sys_mutex_lock(mutex_id);
+}
+
+///
+/// 解锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn mutex_unlock(mutex_id: usize) {
+    sys_mutex_unlock(mutex_id);
+}
+
 #[macro_export]
 macro_rules! v_store {
     ($var: expr,$value:expr) => {

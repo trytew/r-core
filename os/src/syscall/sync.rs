@@ -1,5 +1,7 @@
-use crate::task::{block_current_and_run_next, current_task};
+use crate::sync::{Mutex, MutexBlocking, MutexSpin};
+use crate::task::{block_current_and_run_next, current_process, current_task};
 use crate::timer::{add_timer, get_time_ms};
+use alloc::sync::Arc;
 
 ///
 /// 休眠系统调用
@@ -15,5 +17,66 @@ pub fn sys_sleep(ms: usize) -> isize {
     add_timer(expire_ms, task);
     // 将进程设置为阻塞，时间未到时不再运行，由定时器唤醒
     block_current_and_run_next();
+    0
+}
+
+///
+/// 创建线程锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn sys_mutex_create(blocking: bool) -> isize {
+    let process = current_process();
+    let mutex: Option<Arc<dyn Mutex>> = if !blocking {
+        Some(Arc::new(MutexSpin::new()))
+    } else {
+        Some(Arc::new(MutexBlocking::new()))
+    };
+    let mut process_inner = process.inner_exclusive_access();
+    if let Some(id) = process_inner
+        .mutex_list
+        .iter()
+        .enumerate()
+        .find(|(_, item)| item.is_none())
+        .map(|(id, _)| id)
+    {
+        process_inner.mutex_list[id] = mutex;
+        id as isize
+    } else {
+        process_inner.mutex_list.push(mutex);
+        process_inner.mutex_list.len() as isize - 1
+    }
+}
+
+///
+/// 上锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn sys_mutex_lock(mutex_id: usize) -> isize {
+    let process = current_process();
+    let process_inner = process.inner_exclusive_access();
+    let mutex = Arc::clone(process_inner.mutex_list[mutex_id].as_ref().unwrap());
+    drop(process_inner);
+    drop(process);
+    mutex.lock();
+    0
+}
+
+///
+/// 解锁
+///
+/// @author: tryte
+///
+/// @date: 2026/5/28
+pub fn sys_mutex_unlock(mutex_id: usize) -> isize {
+    let process = current_process();
+    let process_inner = process.inner_exclusive_access();
+    let mutex = Arc::clone(process_inner.mutex_list[mutex_id].as_ref().unwrap());
+    drop(process_inner);
+    drop(process);
+    mutex.unlock();
     0
 }
