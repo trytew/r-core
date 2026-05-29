@@ -32,9 +32,9 @@ pub enum TaskStatus {
 pub struct TaskControlBlockInner {
     /// 用户态资源
     pub res: Option<TaskUserResource>,
-    /// 应用“陷入”上下文的物理地址
+    /// 应用“陷入”上下文的物理地址，记录用户态信息
     pub trap_cx_ppn: PhysPageNum,
-    /// 应用“陷入”上下文
+    /// 应用内核态上下文
     pub task_cx: TaskContext,
     /// 应用状态
     pub task_status: TaskStatus,
