@@ -13,6 +13,7 @@ bench = false
 buddy_system_allocator = "0.6"
 bitflags = "1.2.1"
 riscv = { git = "https://github.com/trytew/riscv", features = ["inline-asm"] }
+lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
 
 [[bin]]
 name = "initproc"
@@ -243,12 +244,6 @@ bench = false
 path = "src/bin/early_exit2.rs"
 
 [[bin]]
-name = "barrier-fail"
-test = false
-bench = false
-path = "src/bin/barrier_fail.rs"
-
-[[bin]]
 name = "adder"
 test = false
 bench = false
@@ -319,3 +314,27 @@ name = "mpsc-sem"
 test = false
 bench = false
 path = "src/bin/mpsc_sem.rs"
+
+[[bin]]
+name = "barrier-fail"
+test = false
+bench = false
+path = "src/bin/barrier_fail.rs"
+
+[[bin]]
+name = "barrier-condvar"
+test = false
+bench = false
+path = "src/bin/barrier_condvar.rs"
+
+[[bin]]
+name = "condsync-sem"
+test = false
+bench = false
+path = "src/bin/condsync_sem.rs"
+
+[[bin]]
+name = "condsync-condvar"
+test = false
+bench = false
+path = "src/bin/condsync_condvar.rs"

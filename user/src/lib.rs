@@ -414,6 +414,36 @@ pub fn semaphore_down(sem_id: usize) -> isize {
     sys_semaphore_down(sem_id)
 }
 
+///
+/// 创建条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn condvar_create() -> isize {
+    sys_condvar_create()
+}
+
+///
+/// 释放条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn condvar_signal(condvar_id: usize) -> isize {
+    sys_condvar_signal(condvar_id)
+}
+
+///
+/// 等待条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn condvar_wait(condvar_id: usize, mutex_id: usize) -> isize {
+    sys_condvar_wait(condvar_id, mutex_id)
+}
+
 #[macro_export]
 macro_rules! v_store {
     ($var: expr,$value:expr) => {

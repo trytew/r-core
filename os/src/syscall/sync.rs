@@ -1,4 +1,4 @@
-use crate::sync::{Mutex, MutexBlocking, MutexSpin, Semaphore};
+use crate::sync::{CondVar, Mutex, MutexBlocking, MutexSpin, Semaphore};
 use crate::task::{block_current_and_run_next, current_process, current_task};
 use crate::timer::{add_timer, get_time_ms};
 use alloc::sync::Arc;
@@ -135,5 +135,64 @@ pub fn sys_semaphore_down(sem_id: usize) -> isize {
     let sem = Arc::clone(process_inner.semaphore_list[sem_id].as_ref().unwrap());
     drop(process_inner);
     sem.down();
+    0
+}
+
+///
+/// 创建条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_condvar_create() -> isize {
+    let process = current_process();
+    let mut process_inner = process.inner_exclusive_access();
+    let id = if let Some(id) = process_inner
+        .condvar_list
+        .iter()
+        .enumerate()
+        .find(|(_, item)| item.is_none())
+        .map(|(id, _)| id)
+    {
+        process_inner.condvar_list[id] = Some(Arc::new(CondVar::new()));
+        id
+    } else {
+        process_inner
+            .condvar_list
+            .push(Some(Arc::new(CondVar::new())));
+
+        process_inner.condvar_list.len() - 1
+    };
+    id as isize
+}
+
+///
+/// 释放条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_condvar_signal(condvar_id: usize) -> isize {
+    let process = current_process();
+    let process_inner = process.inner_exclusive_access();
+    let condvar = Arc::clone(process_inner.condvar_list[condvar_id].as_ref().unwrap());
+    drop(process_inner);
+    condvar.signal();
+    0
+}
+
+///
+/// 等待条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_condvar_wait(condvar_id: usize, mutex_id: usize) -> isize {
+    let process = current_process();
+    let process_inner = process.inner_exclusive_access();
+    let condvar = Arc::clone(process_inner.condvar_list[condvar_id].as_ref().unwrap());
+    let mutex = Arc::clone(process_inner.mutex_list[mutex_id].as_ref().unwrap());
+    drop(process_inner);
+    condvar.wait(mutex);
     0
 }

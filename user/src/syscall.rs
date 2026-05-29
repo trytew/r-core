@@ -82,6 +82,15 @@ const SYSCALL_SEMAPHORE_UP: usize = 1021;
 /// 减少信号量中断号
 const SYSCALL_SEMAPHORE_DOWN: usize = 1022;
 
+/// 创建条件变量中断号
+const SYSCALL_CONDVAR_CREATE: usize = 1030;
+
+/// 释放条件变量中断号
+const SYSCALL_CONDVAR_SIGNAL: usize = 1031;
+
+/// 等待条件变量中断号
+const SYSCALL_CONDVAR_WAIT: usize = 1032;
+
 ///
 /// 系统调用
 ///
@@ -379,4 +388,34 @@ pub fn sys_semaphore_up(sem_id: usize) -> isize {
 /// @date: 2026/5/29
 pub fn sys_semaphore_down(sem_id: usize) -> isize {
     syscall(SYSCALL_SEMAPHORE_DOWN, [sem_id, 0, 0])
+}
+
+///
+/// 创建条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_condvar_create() -> isize {
+    syscall(SYSCALL_CONDVAR_CREATE, [0, 0, 0])
+}
+
+///
+/// 释放条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_condvar_signal(condvar_id: usize) -> isize {
+    syscall(SYSCALL_CONDVAR_SIGNAL, [condvar_id, 0, 0])
+}
+
+///
+/// 等待条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_condvar_wait(condvar_id: usize, mutex_id: usize) -> isize {
+    syscall(SYSCALL_CONDVAR_WAIT, [condvar_id, mutex_id, 0])
 }

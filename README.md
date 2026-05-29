@@ -1,6 +1,6 @@
 并发
 
-第八章第五节
+第八章第六节
 
 easy-fs-use:
 cd easy-fs-use

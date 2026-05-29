@@ -3,8 +3,8 @@ use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_kill, sys_waitpid, sys_yield,
 };
 use crate::syscall::sync::{
-    sys_mutex_create, sys_mutex_lock, sys_mutex_unlock, sys_semaphore_create, sys_semaphore_down,
-    sys_semaphore_up, sys_sleep,
+    sys_condvar_create, sys_condvar_signal, sys_condvar_wait, sys_mutex_create, sys_mutex_lock,
+    sys_mutex_unlock, sys_semaphore_create, sys_semaphore_down, sys_semaphore_up, sys_sleep,
 };
 use crate::syscall::thread::{sys_get_tid, sys_thread_create, sys_wait_tid};
 
@@ -79,23 +79,32 @@ const SYSCALL_GET_TID: usize = 1001;
 /// 等待线程退出中断号
 const SYSCALL_WAIT_TID: usize = 1002;
 
-/// 创建线程锁
+/// 创建线程锁中断号
 const SYSCALL_MUTEX_CREATE: usize = 1010;
 
-/// 上锁
+/// 上锁中断号
 const SYSCALL_MUTEX_LOCK: usize = 1011;
 
-/// 解锁
+/// 解锁中断号
 const SYSCALL_MUTEX_UNLOCK: usize = 1012;
 
-/// 创建信号量
+/// 创建信号量中断号
 const SYSCALL_SEMAPHORE_CREATE: usize = 1020;
 
-/// 增加信号量
+/// 增加信号量中断号
 const SYSCALL_SEMAPHORE_UP: usize = 1021;
 
-/// 减少信号量
+/// 减少信号量中断号
 const SYSCALL_SEMAPHORE_DOWN: usize = 1022;
+
+/// 创建条件变量中断号
+const SYSCALL_CONDVAR_CREATE: usize = 1030;
+
+/// 释放条件变量中断号
+const SYSCALL_CONDVAR_SIGNAL: usize = 1031;
+
+/// 等待条件变量中断号
+const SYSCALL_CONDVAR_WAIT: usize = 1032;
 
 ///
 /// 系统调用
@@ -129,6 +138,9 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_SEMAPHORE_CREATE => sys_semaphore_create(args[0]),
         SYSCALL_SEMAPHORE_UP => sys_semaphore_up(args[0]),
         SYSCALL_SEMAPHORE_DOWN => sys_semaphore_down(args[0]),
+        SYSCALL_CONDVAR_CREATE => sys_condvar_create(),
+        SYSCALL_CONDVAR_SIGNAL => sys_condvar_signal(args[0]),
+        SYSCALL_CONDVAR_WAIT => sys_condvar_wait(args[0], args[1]),
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }
 }
