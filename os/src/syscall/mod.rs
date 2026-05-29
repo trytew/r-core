@@ -2,7 +2,10 @@ use crate::syscall::fs::{sys_close, sys_dup, sys_open, sys_pipe, sys_read, sys_w
 use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_kill, sys_waitpid, sys_yield,
 };
-use crate::syscall::sync::{sys_mutex_create, sys_mutex_lock, sys_mutex_unlock, sys_sleep};
+use crate::syscall::sync::{
+    sys_mutex_create, sys_mutex_lock, sys_mutex_unlock, sys_semaphore_create, sys_semaphore_down,
+    sys_semaphore_up, sys_sleep,
+};
 use crate::syscall::thread::{sys_get_tid, sys_thread_create, sys_wait_tid};
 
 mod fs;
@@ -85,6 +88,15 @@ const SYSCALL_MUTEX_LOCK: usize = 1011;
 /// 解锁
 const SYSCALL_MUTEX_UNLOCK: usize = 1012;
 
+/// 创建信号量
+const SYSCALL_SEMAPHORE_CREATE: usize = 1020;
+
+/// 增加信号量
+const SYSCALL_SEMAPHORE_UP: usize = 1021;
+
+/// 减少信号量
+const SYSCALL_SEMAPHORE_DOWN: usize = 1022;
+
 ///
 /// 系统调用
 ///
@@ -114,6 +126,9 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_MUTEX_CREATE => sys_mutex_create(args[0] == 1),
         SYSCALL_MUTEX_LOCK => sys_mutex_lock(args[0]),
         SYSCALL_MUTEX_UNLOCK => sys_mutex_unlock(args[0]),
+        SYSCALL_SEMAPHORE_CREATE => sys_semaphore_create(args[0]),
+        SYSCALL_SEMAPHORE_UP => sys_semaphore_up(args[0]),
+        SYSCALL_SEMAPHORE_DOWN => sys_semaphore_down(args[0]),
         _ => panic!("Unsupported syscall_id: {}", syscall_id),
     }
 }

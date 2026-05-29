@@ -1,4 +1,4 @@
-use crate::sync::{Mutex, MutexBlocking, MutexSpin};
+use crate::sync::{Mutex, MutexBlocking, MutexSpin, Semaphore};
 use crate::task::{block_current_and_run_next, current_process, current_task};
 use crate::timer::{add_timer, get_time_ms};
 use alloc::sync::Arc;
@@ -78,5 +78,62 @@ pub fn sys_mutex_unlock(mutex_id: usize) -> isize {
     drop(process_inner);
     drop(process);
     mutex.unlock();
+    0
+}
+
+///
+/// 创建信号量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_semaphore_create(res_count: usize) -> isize {
+    let process = current_process();
+    let mut process_inner = process.inner_exclusive_access();
+    let id = if let Some(id) = process_inner
+        .semaphore_list
+        .iter()
+        .enumerate()
+        .find(|(_, item)| item.is_none())
+        .map(|(id, _)| id)
+    {
+        process_inner.semaphore_list[id] = Some(Arc::new(Semaphore::new(res_count)));
+        id
+    } else {
+        process_inner
+            .semaphore_list
+            .push(Some(Arc::new(Semaphore::new(res_count))));
+        process_inner.semaphore_list.len() - 1
+    };
+    id as isize
+}
+
+///
+/// 增加信号量值
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_semaphore_up(sem_id: usize) -> isize {
+    let process = current_process();
+    let process_inner = process.inner_exclusive_access();
+    let sem = Arc::clone(process_inner.semaphore_list[sem_id].as_ref().unwrap());
+    drop(process_inner);
+    sem.up();
+    0
+}
+
+///
+/// 减少信号量值
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn sys_semaphore_down(sem_id: usize) -> isize {
+    let process = current_process();
+    let process_inner = process.inner_exclusive_access();
+    let sem = Arc::clone(process_inner.semaphore_list[sem_id].as_ref().unwrap());
+    drop(process_inner);
+    sem.down();
     0
 }

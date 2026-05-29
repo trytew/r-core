@@ -384,6 +384,36 @@ pub fn mutex_unlock(mutex_id: usize) {
     sys_mutex_unlock(mutex_id);
 }
 
+///
+/// 创建信号量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn semaphore_create(res_count: usize) -> isize {
+    sys_semaphore_create(res_count)
+}
+
+///
+/// 增加信号量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn semaphore_up(sem_id: usize) -> isize {
+    sys_semaphore_up(sem_id)
+}
+
+///
+/// 减少信号量
+///
+/// @author: tryte
+///
+/// @date: 2026/5/29
+pub fn semaphore_down(sem_id: usize) -> isize {
+    sys_semaphore_down(sem_id)
+}
+
 #[macro_export]
 macro_rules! v_store {
     ($var: expr,$value:expr) => {

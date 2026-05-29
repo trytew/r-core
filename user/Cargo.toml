@@ -307,3 +307,21 @@ name = "adder-mutex-blocking"
 test = false
 bench = false
 path = "src/bin/adder_mutex_blocking.rs"
+
+[[bin]]
+name = "sync-sem"
+test = false
+bench = false
+path = "src/bin/sync_sem.rs"
+
+[[bin]]
+name = "condsync-sem"
+test = false
+bench = false
+path = "src/bin/condsync_sem.rs"
+
+[[bin]]
+name = "mpsc-sem"
+test = false
+bench = false
+path = "src/bin/mpsc_sem.rs"
