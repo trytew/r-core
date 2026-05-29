@@ -69,7 +69,6 @@
 //!
 //! PA = 0x4003_0000 + 0x678 = 0x4003_0678
 //! ```
-//!
 
 use crate::mm::address::PhysPageNum;
 use crate::mm::address::VirtPageNum;
