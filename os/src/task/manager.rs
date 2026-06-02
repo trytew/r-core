@@ -1,4 +1,4 @@
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use crate::task::process::ProcessControlBlock;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::collections::{BTreeMap, VecDeque};
@@ -7,12 +7,12 @@ use lazy_static::lazy_static;
 
 lazy_static! {
     // 线程管理器
-    pub static ref TASK_MANAGER: UpSafeCell<TaskManager> =
-        unsafe { UpSafeCell::new(TaskManager::new()) };
+    pub static ref TASK_MANAGER: UpIntrFreeCell<TaskManager> =
+        unsafe { UpIntrFreeCell::new(TaskManager::new()) };
 
     // 进程map [pid]进程控制块
-    pub static ref PID2PCB: UpSafeCell<BTreeMap<usize, Arc<ProcessControlBlock>>> =
-        unsafe { UpSafeCell::new(BTreeMap::new()) };
+    pub static ref PID2PCB: UpIntrFreeCell<BTreeMap<usize, Arc<ProcessControlBlock>>> =
+        unsafe { UpIntrFreeCell::new(BTreeMap::new()) };
 }
 
 ///

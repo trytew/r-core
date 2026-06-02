@@ -6,4 +6,4 @@ mod up;
 pub use condvar::*;
 pub use mutex::*;
 pub use semaphore::*;
-pub use up::UpSafeCell;
+pub use up::*;

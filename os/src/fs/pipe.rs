@@ -1,6 +1,6 @@
 use crate::fs::File;
 use crate::mm::UserBuffer;
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use crate::task::suspend_current_and_run_next;
 use alloc::sync::{Arc, Weak};
 
@@ -141,7 +141,7 @@ impl PipeRingBuffer {
 pub struct Pipe {
     readable: bool,
     writeable: bool,
-    buffer: Arc<UpSafeCell<PipeRingBuffer>>,
+    buffer: Arc<UpIntrFreeCell<PipeRingBuffer>>,
 }
 
 impl Pipe {
@@ -151,7 +151,7 @@ impl Pipe {
     /// @author: tryte
     ///
     /// @date: 2026/4/21
-    pub fn read_end_with_buffer(buffer: Arc<UpSafeCell<PipeRingBuffer>>) -> Self {
+    pub fn read_end_with_buffer(buffer: Arc<UpIntrFreeCell<PipeRingBuffer>>) -> Self {
         Self {
             readable: true,
             writeable: false,
@@ -165,7 +165,7 @@ impl Pipe {
     /// @author: tryte
     ///
     /// @date: 2026/4/21
-    pub fn write_end_with_buffer(buffer: Arc<UpSafeCell<PipeRingBuffer>>) -> Self {
+    pub fn write_end_with_buffer(buffer: Arc<UpIntrFreeCell<PipeRingBuffer>>) -> Self {
         Self {
             readable: false,
             writeable: true,
@@ -297,7 +297,7 @@ impl File for Pipe {
 /// @date: 2026/4/18
 pub fn make_pipe() -> (Arc<Pipe>, Arc<Pipe>) {
     // 创建数据缓冲区
-    let buffer = Arc::new(unsafe { UpSafeCell::new(PipeRingBuffer::new()) });
+    let buffer = Arc::new(unsafe { UpIntrFreeCell::new(PipeRingBuffer::new()) });
     // 创建读端
     let read_end = Arc::new(Pipe::read_end_with_buffer(buffer.clone()));
     // 创建写端

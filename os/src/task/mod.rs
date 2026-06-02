@@ -1,7 +1,7 @@
 use crate::fs::{open_file, OpenFlags};
 use crate::println;
 use crate::sbi::shutdown;
-use crate::task::context::TaskContext;
+pub use crate::task::context::TaskContext;
 pub(crate) use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -69,6 +69,19 @@ pub fn suspend_current_and_run_next() {
 
     // 调度运行下一个线程
     schedule(task_cx_ptr);
+}
+
+///
+/// 阻塞当前线程
+///
+/// @author: tryte
+///
+/// @date: 2026/6/2
+pub fn block_current_task() -> *mut TaskContext {
+    let task = take_current_task().unwrap();
+    let mut task_inner = task.inner_exclusive_access();
+    task_inner.task_status = TaskStatus::Blocked;
+    &mut task_inner.task_cx as *mut TaskContext
 }
 
 ///

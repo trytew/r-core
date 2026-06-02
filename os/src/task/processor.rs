@@ -1,4 +1,4 @@
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use crate::task::context::TaskContext;
 use crate::task::manager::fetch_task;
 use crate::task::process::ProcessControlBlock;
@@ -9,7 +9,8 @@ use alloc::sync::Arc;
 use lazy_static::lazy_static;
 
 lazy_static! {
-    pub static ref PROCESSOR: UpSafeCell<Processor> = unsafe { UpSafeCell::new(Processor::new()) };
+    pub static ref PROCESSOR: UpIntrFreeCell<Processor> =
+        unsafe { UpIntrFreeCell::new(Processor::new()) };
 }
 
 ///

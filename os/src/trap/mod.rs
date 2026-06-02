@@ -119,6 +119,9 @@ pub fn trap_handler() -> ! {
             // 运行下一个线程
             suspend_current_and_run_next();
         }
+        Trap::Interrupt(Interrupt::SupervisorExternal) => {
+            crate::boards::irq_handler();
+        }
         _ => {
             panic!(
                 "Unsupported trap {:?}, stval = {:#x}!",

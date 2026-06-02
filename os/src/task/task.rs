@@ -1,11 +1,10 @@
 use crate::mm::PhysPageNum;
-use crate::sync::UpSafeCell;
+use crate::sync::{UpIntrFreeCell, UpIntrRefMut};
 use crate::task::context::TaskContext;
 use crate::task::id::{kernel_stack_alloc, KernelStack, TaskUserResource};
 use crate::task::process::ProcessControlBlock;
 use crate::trap::TrapContext;
 use alloc::sync::{Arc, Weak};
-use core::cell::RefMut;
 
 ///
 /// 应用状态
@@ -78,7 +77,7 @@ pub struct TaskControlBlock {
     #[allow(unused)]
     pub kernel_stack: KernelStack,
     /// 线程信息
-    inner: UpSafeCell<TaskControlBlockInner>,
+    inner: UpIntrFreeCell<TaskControlBlockInner>,
 }
 
 impl TaskControlBlock {
@@ -104,7 +103,7 @@ impl TaskControlBlock {
             process: Arc::downgrade(&process),
             kernel_stack,
             inner: unsafe {
-                UpSafeCell::new(TaskControlBlockInner {
+                UpIntrFreeCell::new(TaskControlBlockInner {
                     res: Some(res),
                     trap_cx_ppn,
                     task_cx: TaskContext::goto_trap_return(kernel_stack_top),
@@ -115,7 +114,7 @@ impl TaskControlBlock {
         }
     }
 
-    pub fn inner_exclusive_access(&self) -> RefMut<'_, TaskControlBlockInner> {
+    pub fn inner_exclusive_access(&self) -> UpIntrRefMut<'_, TaskControlBlockInner> {
         self.inner.exclusive_access()
     }
 

@@ -6,7 +6,7 @@ use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::PageTableEntry;
 use crate::mm::PageTable;
 use crate::println;
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -17,8 +17,8 @@ use riscv::register::satp;
 
 lazy_static! {
     // 实例化内核空间
-    pub static ref KERNEL_SPACE: Arc<UpSafeCell<MemorySet>> =
-        Arc::new(unsafe { UpSafeCell::new(MemorySet::new_kernel()) });
+    pub static ref KERNEL_SPACE: Arc<UpIntrFreeCell<MemorySet>> =
+        Arc::new(unsafe { UpIntrFreeCell::new(MemorySet::new_kernel()) });
 }
 
 bitflags! {

@@ -1,6 +1,6 @@
 use crate::boards::CLOCK_FREQ;
 use crate::sbi::set_timer;
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use crate::task::{wakeup_task, TaskControlBlock};
 use alloc::collections::BinaryHeap;
 use alloc::sync::Arc;
@@ -9,8 +9,8 @@ use lazy_static::lazy_static;
 use riscv::register::time;
 
 lazy_static! {
-    static ref TIMERS: UpSafeCell<BinaryHeap<TimerCondVar>> =
-        unsafe { UpSafeCell::new(BinaryHeap::<TimerCondVar>::new()) };
+    static ref TIMERS: UpIntrFreeCell<BinaryHeap<TimerCondVar>> =
+        unsafe { UpIntrFreeCell::new(BinaryHeap::<TimerCondVar>::new()) };
 }
 
 const TICKS_PER_SEC: usize = 100;

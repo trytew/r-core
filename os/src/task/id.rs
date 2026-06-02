@@ -1,6 +1,6 @@
 use crate::config::{KERNEL_STACK_SIZE, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT_BASE, USER_STACK_SIZE};
 use crate::mm::{MapPermission, PhysPageNum, VirtAddr, KERNEL_SPACE};
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use crate::task::process::ProcessControlBlock;
 use alloc::sync::Arc;
 use alloc::sync::Weak;
@@ -9,12 +9,12 @@ use lazy_static::lazy_static;
 
 lazy_static! {
     // 进程ID分配器
-    static ref PID_ALLOCATOR: UpSafeCell<RecycleAllocator> =
-        unsafe { UpSafeCell::new(RecycleAllocator::new()) };
+    static ref PID_ALLOCATOR: UpIntrFreeCell<RecycleAllocator> =
+        unsafe { UpIntrFreeCell::new(RecycleAllocator::new()) };
 
     // 内核栈ID分配器
-    static ref KERNEL_STACK_ALLOCATOR: UpSafeCell<RecycleAllocator> =
-        unsafe { UpSafeCell::new(RecycleAllocator::new()) };
+    static ref KERNEL_STACK_ALLOCATOR: UpIntrFreeCell<RecycleAllocator> =
+        unsafe { UpIntrFreeCell::new(RecycleAllocator::new()) };
 }
 
 ///

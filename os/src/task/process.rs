@@ -76,7 +76,7 @@
 
 use crate::fs::{File, Stdin, Stdout};
 use crate::mm::{translated_refmut, MemorySet, KERNEL_SPACE};
-use crate::sync::{CondVar, Mutex, Semaphore, UpSafeCell};
+use crate::sync::{CondVar, Mutex, Semaphore, UpIntrFreeCell, UpIntrRefMut};
 use crate::task::id::{pid_alloc, PidHandle, RecycleAllocator, TaskUserResource};
 use crate::task::task::TaskControlBlock;
 use crate::task::{add_task, insert_into_pid2process, remove_inactive_task, SignalFlags};
@@ -86,7 +86,6 @@ use alloc::sync::Arc;
 use alloc::sync::Weak;
 use alloc::vec;
 use alloc::vec::Vec;
-use core::cell::RefMut;
 
 ///
 /// 进程控制块实际内容
@@ -175,7 +174,7 @@ impl ProcessControlBlockInner {
 /// @date: 2026/5/20
 pub struct ProcessControlBlock {
     pub pid: PidHandle,
-    inner: UpSafeCell<ProcessControlBlockInner>,
+    inner: UpIntrFreeCell<ProcessControlBlockInner>,
 }
 
 impl ProcessControlBlock {
@@ -196,7 +195,7 @@ impl ProcessControlBlock {
         let process = Arc::new(Self {
             pid: pid_handle,
             inner: unsafe {
-                UpSafeCell::new(ProcessControlBlockInner {
+                UpIntrFreeCell::new(ProcessControlBlockInner {
                     is_zombie: false,
                     memory_set,
                     parent: None,
@@ -268,7 +267,7 @@ impl ProcessControlBlock {
         process
     }
 
-    pub fn inner_exclusive_access(&self) -> RefMut<'_, ProcessControlBlockInner> {
+    pub fn inner_exclusive_access(&self) -> UpIntrRefMut<'_, ProcessControlBlockInner> {
         self.inner.exclusive_access()
     }
 
@@ -309,7 +308,7 @@ impl ProcessControlBlock {
         let child = Arc::new(Self {
             pid,
             inner: unsafe {
-                UpSafeCell::new(ProcessControlBlockInner {
+                UpIntrFreeCell::new(ProcessControlBlockInner {
                     is_zombie: false,
                     memory_set,
                     parent: Some(Arc::downgrade(self)),

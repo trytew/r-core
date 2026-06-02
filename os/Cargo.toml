@@ -20,4 +20,5 @@ virtio-drivers = { git = "https://github.com/trytew/virtio-drivers", rev = "4ee8
 buddy_system_allocator = "0.6"
 bitflags = "1.2.1"
 xmas-elf = "0.7.0"
+volatile = "0.3"
 easy-fs = { path = "../easy-fs" }

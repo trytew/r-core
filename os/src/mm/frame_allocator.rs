@@ -2,7 +2,7 @@ use crate::boards::MEMORY_END;
 use crate::mm::address::PhysAddr;
 use crate::mm::address::PhysPageNum;
 use crate::println;
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::fmt::Formatter;
@@ -12,8 +12,8 @@ type FrameAllocatorImpl = StackFrameAllocator;
 
 lazy_static! {
     // 创建全局物理页帧管理器
-    pub static ref FRAME_ALLOCATOR: UpSafeCell<FrameAllocatorImpl> =
-        unsafe { UpSafeCell::new(FrameAllocatorImpl::new()) };
+    pub static ref FRAME_ALLOCATOR: UpIntrFreeCell<FrameAllocatorImpl> =
+        unsafe { UpIntrFreeCell::new(FrameAllocatorImpl::new()) };
 }
 
 ///

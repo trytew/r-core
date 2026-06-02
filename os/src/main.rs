@@ -19,6 +19,7 @@ mod task;
 mod timer;
 mod trap;
 
+use crate::drivers::chardev::{CharDevice, UART};
 use core::arch::global_asm;
 
 // 加载入口汇编文件
@@ -76,10 +77,14 @@ fn rust_main() -> ! {
     mm::init();
     mm::remap_test();
 
+    UART.init();
+
     trap::init();
     trap::enable_timer_interrupt();
 
     timer::set_next_tigger();
+
+    boards::device_init();
 
     fs::list_apps();
 

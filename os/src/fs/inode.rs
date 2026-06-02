@@ -2,7 +2,7 @@ use crate::drivers::BLOCK_DEVICE;
 use crate::fs::File;
 use crate::mm::UserBuffer;
 use crate::println;
-use crate::sync::UpSafeCell;
+use crate::sync::UpIntrFreeCell;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use bitflags::bitflags;
@@ -24,7 +24,7 @@ pub struct OSInodeInner {
 pub struct OSInode {
     readable: bool,
     writeable: bool,
-    inner: UpSafeCell<OSInodeInner>,
+    inner: UpIntrFreeCell<OSInodeInner>,
 }
 
 impl OSInode {
@@ -32,7 +32,7 @@ impl OSInode {
         Self {
             readable,
             writeable,
-            inner: unsafe { UpSafeCell::new(OSInodeInner { offset: 0, inode }) },
+            inner: unsafe { UpIntrFreeCell::new(OSInodeInner { offset: 0, inode }) },
         }
     }
 

@@ -24,6 +24,12 @@ impl IntrTargetPriority {
     }
 }
 
+///
+/// 中断路由/仲裁器
+///
+/// @author: tryte
+///
+/// @date: 2026/6/2
 #[allow(clippy::upper_case_acronyms)]
 pub struct PLIC {
     /// PLIC寄存器基地址
@@ -31,6 +37,12 @@ pub struct PLIC {
 }
 
 impl PLIC {
+    ///
+    /// 实例化
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/2
     pub unsafe fn new(base_addr: usize) -> Self {
         Self { base_addr }
     }
@@ -131,6 +143,12 @@ impl PLIC {
         (self.base_addr + 0x200_000 + 0x1_000 * id) as *mut u32
     }
 
+    ///
+    /// 根据CPU编号和特权级获取 PLIC Context
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/2
     fn claim_comp_ptr_of_hart_with_priority(
         &self,
         hart_id: usize,
@@ -147,7 +165,7 @@ impl PLIC {
     ///
     /// @date: 2026/6/1
     pub fn set_priority(&mut self, intr_source_id: usize, priority: u32) {
-        assert!(priority < 0);
+        assert!(priority < 8);
         unsafe {
             // 中断优先级不区分 Context，是全局属性，因此直接计算所在位置设置即可
             self.priority_ptr(intr_source_id).write_volatile(priority);
@@ -203,7 +221,7 @@ impl PLIC {
         target_priority: IntrTargetPriority,
         threshold: u32,
     ) {
-        assert!(threshold < 0);
+        assert!(threshold < 8);
         let threshold_ptr = self.threshold_ptr_of_hart_with_priority(hart_id, target_priority);
         // 设置优先级
         unsafe {
@@ -217,6 +235,12 @@ impl PLIC {
         unsafe { threshold_ptr.read_volatile() & 7 }
     }
 
+    ///
+    /// 领取中断
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/2
     pub fn claim(&mut self, hart_id: usize, target_priority: IntrTargetPriority) -> u32 {
         let claim_comp_ptr = self.claim_comp_ptr_of_hart_with_priority(hart_id, target_priority);
         unsafe { claim_comp_ptr.read_volatile() }
