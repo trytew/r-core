@@ -24,3 +24,5 @@ easy-fs/.idea
 easy-fs-use/target
 easy-fs-use/.idea
 
+virtio-drivers/target
+virtio-drivers/.idea
