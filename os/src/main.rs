@@ -20,10 +20,19 @@ mod timer;
 mod trap;
 
 use crate::drivers::chardev::{CharDevice, UART};
+use crate::drivers::{KEYBOARD_DEVICE, MOUSE_DEVICE};
+use crate::sync::UpIntrFreeCell;
 use core::arch::global_asm;
+use lazy_static::lazy_static;
+use log::info;
 
 // 加载入口汇编文件
 global_asm!(include_str!("./entry.asm"));
+
+lazy_static! {
+    pub static ref DEV_NON_BLOCKING_ACCESS: UpIntrFreeCell<bool> =
+        unsafe { UpIntrFreeCell::new(false) };
+}
 
 ///
 /// 清空栈数据
@@ -78,7 +87,15 @@ fn rust_main() -> ! {
     mm::remap_test();
 
     UART.init();
+    info!("KERNEL: init 1");
 
+    info!("KERNEL: init keyboard");
+    let _keyboard = KEYBOARD_DEVICE.clone();
+
+    info!("KERNEL: init mouse");
+    let _mouse = MOUSE_DEVICE.clone();
+
+    info!("KERNEL: init trap");
     trap::init();
     trap::enable_timer_interrupt();
 
@@ -89,6 +106,7 @@ fn rust_main() -> ! {
     fs::list_apps();
 
     task::add_initproc();
+    *DEV_NON_BLOCKING_ACCESS.exclusive_access() = true;
     task::run_tasks();
 
     panic!("Unreachable in rust_main!");

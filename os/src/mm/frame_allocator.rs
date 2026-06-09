@@ -84,6 +84,14 @@ trait FrameAllocator {
     fn alloc(&mut self) -> Option<PhysPageNum>;
 
     ///
+    /// 一次分配多页页帧
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
+    fn alloc_more(&mut self, pages: usize) -> Option<Vec<PhysPageNum>>;
+
+    ///
     /// 回收
     ///
     /// @author: tryte
@@ -160,6 +168,23 @@ impl FrameAllocator for StackFrameAllocator {
     }
 
     ///
+    /// 一次分配多页页帧
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
+    fn alloc_more(&mut self, pages: usize) -> Option<Vec<PhysPageNum>> {
+        if self.current + pages >= self.end {
+            None
+        } else {
+            self.current += pages;
+            let arr: Vec<usize> = (1..pages + 1).collect();
+            let v = arr.iter().map(|x| (self.current - x).into()).collect();
+            Some(v)
+        }
+    }
+
+    ///
     /// 回收物理帧
     ///
     /// @author: tryte
@@ -207,6 +232,19 @@ pub fn frame_alloc() -> Option<FrameTracker> {
 }
 
 ///
+/// 一次分配多页内存
+///
+/// @author: tryte
+///
+/// @date: 2026/6/9
+pub fn frame_alloc_more(num: usize) -> Option<Vec<FrameTracker>> {
+    FRAME_ALLOCATOR
+        .exclusive_access()
+        .alloc_more(num)
+        .map(|x| x.iter().map(|&t| FrameTracker::new(t)).collect())
+}
+
+///
 /// 回收内存页
 ///
 /// @author: tryte
@@ -240,4 +278,21 @@ pub fn frame_allocator_test() {
     }
     drop(v);
     println!("frame_allocator_test passed!");
+}
+
+#[allow(unused)]
+pub fn frame_allocator_more_test() {
+    let mut v: Vec<FrameTracker> = Vec::new();
+    let frames = frame_alloc_more(5).unwrap();
+    for frame in &frames {
+        println!("{:?}", frame);
+    }
+    v.extend(frames);
+    v.clear();
+    let frames = frame_alloc_more(5).unwrap();
+    for frame in &frames {
+        println!("{:?}", frame);
+    }
+    drop(v);
+    println!("frame_allocator_more_test passed!");
 }

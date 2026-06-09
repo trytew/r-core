@@ -168,6 +168,12 @@ impl VirtIOHeader {
         }
     }
 
+    ///
+    /// 获取版本ID
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn vendor_id(&self) -> u32 {
         self.vendor_id.read()
     }
@@ -187,6 +193,12 @@ impl VirtIOHeader {
         self.driver_features.write((driver_features >> 32) as u32);
     }
 
+    ///
+    /// 开始设备初始化
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn begin_init(&mut self, negotiate_features: impl FnOnce(u64) -> u64) {
         self.status.write(DeviceStatus::ACKNOWLEDGE);
         self.status.write(DeviceStatus::DRIVER);
@@ -198,6 +210,12 @@ impl VirtIOHeader {
         self.guest_page_size.write(PAGE_SIZE as u32);
     }
 
+    ///
+    /// 完成设备初始化
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn finish_init(&mut self) {
         self.status.write(DeviceStatus::DRIVER_OK);
     }
@@ -250,10 +268,22 @@ impl VirtIOHeader {
         self.queue_num_max.read()
     }
 
+    ///
+    /// 队列通知
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn notify(&mut self, queue: u32) {
         self.queue_notify.write(queue)
     }
 
+    ///
+    ///
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn ack_interrupt(&mut self) -> bool {
         let interrupt = self.interrupt_status.read();
         if interrupt != 0 {
@@ -264,6 +294,12 @@ impl VirtIOHeader {
         }
     }
 
+    ///
+    ///
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn config_space(&self) -> *mut u64 {
         (self as *const _ as usize + CONFIG_SPACE_OFFSET) as _
     }

@@ -12,6 +12,10 @@ mod header;
 mod input;
 mod queue;
 
+pub use hal::{Hal, PhysAddr, VirtAddr};
+pub use header::VirtIOHeader;
+pub use input::{InputEvent, VirtIOInput};
+
 const PAGE_SIZE: usize = 0x1_000;
 
 /// 虚拟驱动返回类型

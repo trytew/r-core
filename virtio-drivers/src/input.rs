@@ -5,7 +5,6 @@ use crate::AsBuf;
 use crate::Result;
 use alloc::boxed::Box;
 use bitflags::bitflags;
-use log::info;
 use volatile::{ReadOnly, WriteOnly};
 
 const QUEUE_SIZE: usize = 32;
@@ -41,11 +40,20 @@ struct Config {
     data: ReadOnly<[u8; 128]>,
 }
 
+///
+/// 输入事件
+///
+/// @author: tryte
+///
+/// @date: 2026/6/9
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct InputEvent {
+    /// 事件类型
     pub event_type: u16,
+    /// 事件代码
     pub code: u16,
+    /// 事件值
     pub value: u32,
 }
 
@@ -62,6 +70,12 @@ pub enum InputConfigSelect {
     AbsInfo = 0x12,
 }
 
+///
+/// 虚拟IO输入
+///
+/// @author: tryte
+///
+/// @date: 2026/6/9
 pub struct VirtIOInput<'a, H: Hal> {
     header: &'static mut VirtIOHeader,
     event_queue: VirtQueue<'a, H>,
@@ -70,19 +84,29 @@ pub struct VirtIOInput<'a, H: Hal> {
 }
 
 impl<'a, H: Hal> VirtIOInput<'a, H> {
+    ///
+    /// 实例化虚拟IO输入
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn new(header: &'static mut VirtIOHeader) -> Result<Self> {
         let mut event_buf = Box::new([InputEvent::default(); QUEUE_SIZE]);
         header.begin_init(|features| {
             let features = Feature::from_bits_truncate(features);
-            info!("Device features: {:?}", features);
+            // info!("Device features: {:?}", features);
             let supported_features = Feature::empty();
             (features & supported_features).bits()
         });
 
+        // info!("hh0");
         let mut event_queue = VirtQueue::new(header, QUEUE_EVENT, QUEUE_SIZE as u16)?;
-        let status_queue = VirtQueue::new(header, QUEUE_EVENT, QUEUE_STATUS as u16)?;
-        for (i, event) in event_buf.iter_mut().enumerate() {
+        // info!("hh1");
+        let status_queue = VirtQueue::new(header, QUEUE_STATUS, QUEUE_SIZE as u16)?;
+        // info!("hh2");
+        for (i, event) in event_buf.as_mut().iter_mut().enumerate() {
             let token = event_queue.add(&[], &[event.as_buf_mut()])?;
+            // info!("hh3");
             assert_eq!(token, i as u16);
         }
 
@@ -96,20 +120,38 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
         })
     }
 
+    ///
+    ///
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn ack_interrupt(&mut self) -> bool {
         self.header.ack_interrupt()
     }
 
-    pub fn pop_pending_event(&mut self) -> Option<(u16, InputEvent)> {
+    ///
+    ///
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
+    pub fn pop_pending_event(&mut self) -> Option<InputEvent> {
         if let Ok((token, _)) = self.event_queue.pop_used() {
             let event = &mut self.event_buf[token as usize];
             if self.event_queue.add(&[], &[event.as_buf_mut()]).is_ok() {
-                return Some((token, *event));
+                return Some(*event);
             }
         }
         None
     }
 
+    ///
+    ///
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn query_config_select(
         &mut self,
         select: InputConfigSelect,
@@ -125,6 +167,12 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
         size
     }
 
+    ///
+    ///
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn virt_queue_size(&self) -> u16 {
         QUEUE_SIZE as u16
     }

@@ -4,8 +4,10 @@ use crate::Result;
 use crate::{Error, PAGE_SIZE};
 use core::marker::PhantomData;
 
+/// 虚拟地址类型别名
 pub type VirtAddr = usize;
 
+/// 物理地址类型别名
 pub type PhysAddr = usize;
 
 ///

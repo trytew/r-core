@@ -1,5 +1,5 @@
 use crate::drivers::chardev::{CharDevice, UART};
-use crate::drivers::{IntrTargetPriority, PLIC};
+use crate::drivers::{IntrTargetPriority, KEYBOARD_DEVICE, MOUSE_DEVICE, PLIC};
 use riscv::register::sie;
 
 ///
@@ -41,6 +41,12 @@ pub type BlockDeviceImpl = crate::drivers::block::VirtIOBlock;
 /// 字符设备接口
 pub type CharDeviceImpl = crate::drivers::chardev::NS16550a<VIRT_UART>;
 
+///
+/// 初始化设备
+///
+/// @author: tryte
+///
+/// @date: 2026/6/9
 pub fn device_init() {
     // 实例化 PLIC 中断路由器
     let mut plic = unsafe { PLIC::new(VIRT_PLIC) };
@@ -77,6 +83,8 @@ pub fn irq_handler() {
     let intr_src_id = plic.claim(0, IntrTargetPriority::Supervisor);
     // 处理中断
     match intr_src_id {
+        5 => KEYBOARD_DEVICE.handle_irq(),
+        6 => MOUSE_DEVICE.handle_irq(),
         10 => UART.handle_irq(),
         _ => panic!("unsupported IRQ {}", intr_src_id),
     }

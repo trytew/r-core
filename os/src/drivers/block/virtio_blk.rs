@@ -6,7 +6,7 @@ use crate::sync::UpIntrFreeCell;
 use alloc::vec::Vec;
 use easy_fs::BlockDevice;
 use lazy_static::lazy_static;
-use virtio_drivers::{Hal, VirtIOBlk, VirtIOHeader};
+use virtio_drivers_git::{Hal, VirtIOBlk, VirtIOHeader};
 
 const VIRTIO0: usize = 0x10_001_000;
 
