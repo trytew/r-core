@@ -66,6 +66,12 @@ pub struct DMA<H: Hal> {
 }
 
 impl<H: Hal> DMA<H> {
+    ///
+    /// 实例化 DMA
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn new(pages: usize) -> Result<Self> {
         let p_addr = H::dma_alloc(pages);
         if p_addr == 0 {
@@ -86,6 +92,12 @@ impl<H: Hal> DMA<H> {
         H::phys_to_virt(self.p_addr)
     }
 
+    ///
+    /// 获取 DMA 物理内存页号
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/9
     pub fn pfn(&self) -> u32 {
         (self.p_addr >> 12) as u32
     }

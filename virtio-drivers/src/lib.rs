@@ -49,6 +49,12 @@ unsafe trait AsBuf: Sized {
     }
 }
 
+///
+/// 按内存页大小取整
+///
+/// @author: tryte
+///
+/// @date: 2026/6/9
 fn align_up(size: usize) -> usize {
     (size + PAGE_SIZE) & !(PAGE_SIZE - 1)
 }
