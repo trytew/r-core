@@ -16,10 +16,10 @@ lazy_static! {
 }
 
 /// 键盘外设
-const VIRTIO5: usize = 0x10_005_000;
+const VIRTIO5: usize = 0x10005000;
 
 /// 鼠标外设
-const VIRTIO6: usize = 0x10_006_000;
+const VIRTIO6: usize = 0x10006000;
 
 pub trait InputDevice: Send + Sync + Any {
     fn read_event(&self) -> u64;
@@ -41,6 +41,11 @@ impl VirtIOInputWrapper {
     pub fn new(addr: usize) -> Self {
         let inner = VirtIOInputInner {
             virtio_input: unsafe {
+                // let vt = addr as *const u8;
+                // println!("{:#x}", core::ptr::read_volatile(vt.add(0)));
+                // println!("{:#x}", core::ptr::read_volatile(vt.add(1)));
+                // println!("{:#x}", core::ptr::read_volatile(vt.add(2)));
+                // println!("{:#x}", core::ptr::read_volatile(vt.add(3)));
                 VirtIOInput::<VirtioHal>::new(&mut *(addr as *mut VirtIOHeader)).unwrap()
             },
             events: VecDeque::new(),

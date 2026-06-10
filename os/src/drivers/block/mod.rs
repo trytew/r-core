@@ -15,7 +15,6 @@ lazy_static! {
 #[allow(unused)]
 pub fn block_device_test() {
     let block_device = BLOCK_DEVICE.clone();
-    println!("111");
     let mut write_buffer = [0_u8; 512];
     let mut read_buffer = [0_u8; 512];
     for i in 0..512 {

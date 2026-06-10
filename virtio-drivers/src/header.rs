@@ -86,6 +86,7 @@ pub struct VirtIOHeader {
     driver_features: WriteOnly<u32>,
     /// 如 device_features_sel
     driver_features_sel: WriteOnly<u32>,
+    /// 告诉设备操作系统使用的页大小
     guest_page_size: WriteOnly<u32>,
     /// 如 __r1
     __r2: ReadOnly<u32>,
@@ -116,10 +117,15 @@ pub struct VirtIOHeader {
     /// 如 __r1
     __r5: [ReadOnly<u32>; 2],
     /// 设备状态机，驱动必须按规范写：
+    ///
     /// ---> 初始 0
+    ///
     /// ---> 发现设备 (ACKNOWLEDGE)
+    ///
     /// ---> 驱动加载 (ACKNOWLEDGE | DRIVER)
+    ///
     /// ---> 完成 Feature 协商 (ACKNOWLEDGE | DRIVER | FEATURES_OK)
+    ///
     /// ---> 队列初始化完成 (ACKNOWLEDGE | DRIVER | FEATURES_OK | DRIVER_OK)
     status: Volatile<DeviceStatus>,
     /// 如 __r1
@@ -128,14 +134,17 @@ pub struct VirtIOHeader {
     /// 因为 MMIO 一次性只处理 32 位，因此高低地址分两个字段存储，因为 MMIO 一次性只处理 32 位，因此高低地址分两个字段存储
     queue_desc_low: WriteOnly<u32>,
     queue_desc_high: WriteOnly<u32>,
+    /// 如 __r1
     __r7: [ReadOnly<u32>; 2],
     /// 待处理任务列表，驱动告诉设备“这些 Descriptor 可以处理了”，因为 MMIO 一次性只处理 32 位，因此高低地址分两个字段存储
     queue_avail_low: WriteOnly<u32>,
     queue_avail_high: WriteOnly<u32>,
+    /// 如 __r1
     __r8: [ReadOnly<u32>; 2],
     /// 已完成任务列表，设备告诉驱动“这些 Descriptor 已经处理完了”，因为 MMIO 一次性只处理 32 位，因此高低地址分两个字段存储
     queue_used_low: WriteOnly<u32>,
     queue_used_high: WriteOnly<u32>,
+    /// 如 __r1
     __r9: [ReadOnly<u32>; 21],
     /// 配置修改计数器，用于校验配置读取过程中是否有被修改
     config_generation: ReadOnly<u32>,
@@ -178,6 +187,12 @@ impl VirtIOHeader {
         self.vendor_id.read()
     }
 
+    ///
+    /// 读取设备支持的功能
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn read_device_features(&mut self) -> u64 {
         self.device_features_sel.write(0);
         let mut device_features_bits = self.device_features.read().into();
@@ -186,6 +201,12 @@ impl VirtIOHeader {
         device_features_bits
     }
 
+    ///
+    /// 设置启用设备的功能
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn write_driver_features(&mut self, driver_features: u64) {
         self.driver_features_sel.write(0);
         self.driver_features.write(driver_features as u32);

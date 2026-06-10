@@ -22,6 +22,8 @@ cd user
 ./run.sh
 ```
 
+**注：留意 qemu 的启动参数，所有外设都需要添加，否则代码中的 MMIO 地址对应将会错乱，块设备 blk 需要去除 `bus=virtio-mmio-bus.0`，不要指定 BUS 控制器，并修改代码中块设备的 MMIO 地址**
+
 流程简述
 
 1. 点亮CPU

@@ -8,7 +8,7 @@ use easy_fs::BlockDevice;
 use lazy_static::lazy_static;
 use virtio_drivers_git::{Hal, VirtIOBlk, VirtIOHeader};
 
-const VIRTIO0: usize = 0x10_001_000;
+const VIRTIO0: usize = 0x10_008_000;
 
 lazy_static! {
     static ref QUEUE_FRAMES: UpIntrFreeCell<Vec<FrameTracker>> =
@@ -64,6 +64,12 @@ impl BlockDevice for VirtIOBlock {
 pub struct VirtioHal;
 
 impl Hal for VirtioHal {
+    ///
+    /// 分配内存
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn dma_alloc(pages: usize) -> usize {
         let mut ppn_base = PhysPageNum(0);
         for i in 0..pages {
@@ -78,6 +84,12 @@ impl Hal for VirtioHal {
         pa.0
     }
 
+    ///
+    /// 释放内存
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn dma_dealloc(pa: usize, pages: usize) -> i32 {
         let pa = PhysAddr::from(pa);
         let mut ppn_base: PhysPageNum = pa.into();
@@ -88,10 +100,22 @@ impl Hal for VirtioHal {
         0
     }
 
+    ///
+    /// 物理地址转虚拟地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn phys_to_virt(addr: usize) -> usize {
         addr
     }
 
+    ///
+    /// 虚拟地址转物理地址
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn virt_to_phys(vaddr: usize) -> usize {
         PageTable::from_token(kernel_token())
             .translate_va(VirtAddr::from(vaddr))

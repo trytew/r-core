@@ -11,6 +11,7 @@ mod console;
 pub mod drivers;
 pub mod fs;
 mod lang_items;
+mod logging;
 mod mm;
 mod sbi;
 mod sync;
@@ -82,12 +83,12 @@ fn clear_bss() {
 #[unsafe(no_mangle)]
 fn rust_main() -> ! {
     clear_bss();
+    logging::init();
 
     mm::init();
     mm::remap_test();
 
     UART.init();
-    info!("KERNEL: init 1");
 
     info!("KERNEL: init keyboard");
     let _keyboard = KEYBOARD_DEVICE.clone();

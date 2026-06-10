@@ -5,6 +5,7 @@ use crate::{align_up, Error, PAGE_SIZE};
 use bitflags::bitflags;
 use core::slice;
 use core::sync::atomic::{fence, Ordering};
+use log::{error, info};
 use volatile::Volatile;
 
 bitflags! {
@@ -192,6 +193,7 @@ impl<H: Hal> VirtQueue<'_, H> {
         }
         // 判断 size 是否是 2 的幂或者是否超过队列最大可设置长度
         if !size.is_power_of_two() || header.max_queue_size() < size as u32 {
+            info!("max_size: {}", header.max_queue_size());
             return Err(Error::InvalidParam);
         }
         // 分配内存
