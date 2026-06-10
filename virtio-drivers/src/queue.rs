@@ -88,9 +88,9 @@ struct AvailRing {
 #[repr(C)]
 #[derive(Debug)]
 struct UsedElem {
-    /// 任务ID
+    /// 数据缓冲区ID
     id: Volatile<u32>,
-    /// 任务长度
+    /// 数据缓冲区长度
     len: Volatile<u32>,
 }
 
@@ -203,7 +203,7 @@ impl<H: Hal> VirtQueue<'_, H> {
         // 设置队列
         header.queue_set(idx as u32, size as u32, PAGE_SIZE as u32, dma.pfn());
 
-        // 获取队列中数据缓冲区、待完成任务队列、已完成任务队列的起始虚拟内存地址
+        // 设置队列中数据缓冲区、待完成任务队列、已完成任务队列的起始虚拟内存地址
         let desc =
             unsafe { slice::from_raw_parts_mut(dma.vaddr() as *mut Descriptor, size as usize) };
         let avail = unsafe { &mut *((dma.vaddr() + layout.avail_offset) as *mut AvailRing) };
@@ -269,6 +269,8 @@ impl<H: Hal> VirtQueue<'_, H> {
             desc.set_buf::<H>(output);
             desc.flags.write(DescFlags::NEXT | DescFlags::WRITE);
             last = self.free_head;
+            // 在 recycle_descriptors 函数中将原始空闲的数据缓冲区位置保存在最后一个未读已完成的数据缓冲区的 next 字段中了，
+            // 所以这里是还原原始空闲数据缓冲区位置
             self.free_head = desc.next.read();
         }
 
@@ -326,33 +328,60 @@ impl<H: Hal> VirtQueue<'_, H> {
         (self.queue_size - self.num_used) as usize
     }
 
+    ///
+    /// 回收数据缓冲区
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn recycle_descriptors(&mut self, mut head: u16) {
+        // 获取空闲数据缓冲区位置
         let origin_free_head = self.free_head;
+        // 将空闲数据缓冲区位置设置到已完成数据缓冲区起始位置
         self.free_head = head;
         loop {
+            // 获取数据缓冲区位置
             let desc = &mut self.desc[head as usize];
+            // 获取数据缓冲区标识
             let flags = desc.flags.read();
+            // 已使用数据缓冲区队列长度-1
             self.num_used -= 1;
+            // 查看数据缓冲区是否还有下一个可读
             if flags.contains(DescFlags::NEXT) {
+                // 读取下一个数据缓冲区数据
                 head = desc.next.read();
             } else {
+                // 将当前数据缓冲区下一个可写位置设置为原始空闲数据缓冲区位置
                 desc.next.write(origin_free_head);
                 return;
             }
         }
     }
 
+    ///
+    /// 弹出已完成事件
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     pub fn pop_used(&mut self) -> Result<(u16, u32)> {
+        // 查看是否有事件已完成
         if !self.can_pop() {
             return Err(Error::NotReady);
         }
+        // 刷新内存值
         fence(Ordering::SeqCst);
 
+        // 从上次未读已完成的位置开始
         let last_used_slot = self.last_used_idx & (self.queue_size - 1);
+
+        // 获取起始未读已完成的数据缓冲区ID和长度
         let index = self.used.ring[last_used_slot as usize].id.read() as u16;
         let len = self.used.ring[last_used_slot as usize].len.read();
 
+        // 回收任务位置
         self.recycle_descriptors(index);
+
         self.last_used_idx = self.last_used_idx.wrapping_add(1);
 
         Ok((index, len))

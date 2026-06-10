@@ -14,6 +14,7 @@ buddy_system_allocator = "0.6"
 bitflags = "1.2.1"
 riscv = { git = "https://github.com/trytew/riscv", features = ["inline-asm"] }
 lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
+virtio-input-decoder = "0.1.4"
 
 [[bin]]
 name = "initproc"
@@ -338,3 +339,9 @@ name = "condsync-condvar"
 test = false
 bench = false
 path = "src/bin/condsync_condvar.rs"
+
+[[bin]]
+name = "inputdev-event"
+test = false
+bench = false
+path = "src/bin/inputdev_event.rs"

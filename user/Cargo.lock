@@ -157,4 +157,11 @@ dependencies = [
  "buddy_system_allocator",
  "lazy_static",
  "riscv",
+ "virtio-input-decoder",
 ]
+
+[[package]]
+name = "virtio-input-decoder"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7292fc7f4de1afc0ded2e9b6e6c557d9cd594fca27a2217eb97a89d34cf5c6f5"

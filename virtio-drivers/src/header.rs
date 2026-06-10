@@ -48,11 +48,17 @@ bitflags! {
     ///
     /// @date: 2026/6/9
     struct DeviceStatus:u32 {
+        /// 驱动已经“看见”这个设备了
         const ACKNOWLEDGE = 1;
+        /// 驱动已经启动
         const DRIVER = 2;
+        /// 设备或驱动进入失败状态
         const FAILED = 128;
+        /// 特性协商完成
         const FEATURES_OK = 8;
+        /// 驱动完全就绪
         const DRIVER_OK = 4;
+        /// 设备要求重置
         const DEVICE_NEEDS_RESET = 64;
     }
 }
@@ -221,13 +227,17 @@ impl VirtIOHeader {
     ///
     /// @date: 2026/6/9
     pub fn begin_init(&mut self, negotiate_features: impl FnOnce(u64) -> u64) {
+        // 设备加载流程，因为 status 类型为 Volatile，当类型为 Volatile 时会保证内容输出到内存，因此该代码执行成功代表内容已写入设备寄存器
         self.status.write(DeviceStatus::ACKNOWLEDGE);
         self.status.write(DeviceStatus::DRIVER);
 
+        // 读取设备功能
         let features = self.read_device_features();
+        // 设置设备功能
         self.write_driver_features(negotiate_features(features));
+        // 通知设备功能开启设置结束
         self.status.write(DeviceStatus::FEATURES_OK);
-
+        // 告诉设备操作系统的内存页大小
         self.guest_page_size.write(PAGE_SIZE as u32);
     }
 
@@ -300,7 +310,7 @@ impl VirtIOHeader {
     }
 
     ///
-    ///
+    /// 事件应答
     ///
     /// @author: tryte
     ///
@@ -316,12 +326,13 @@ impl VirtIOHeader {
     }
 
     ///
-    ///
+    /// 返回当前设备设置
     ///
     /// @author: tryte
     ///
     /// @date: 2026/6/9
     pub fn config_space(&self) -> *mut u64 {
+        // 返回 VirtIOHeader.driver_features 字段开始的内容
         (self as *const _ as usize + CONFIG_SPACE_OFFSET) as _
     }
 

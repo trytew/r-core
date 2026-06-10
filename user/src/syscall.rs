@@ -91,6 +91,9 @@ const SYSCALL_CONDVAR_SIGNAL: usize = 1031;
 /// 等待条件变量中断号
 const SYSCALL_CONDVAR_WAIT: usize = 1032;
 
+/// 获取事件中断
+const SYSCALL_EVENT_GET: usize = 3000;
+
 ///
 /// 系统调用
 ///
@@ -418,4 +421,14 @@ pub fn sys_condvar_signal(condvar_id: usize) -> isize {
 /// @date: 2026/5/29
 pub fn sys_condvar_wait(condvar_id: usize, mutex_id: usize) -> isize {
     syscall(SYSCALL_CONDVAR_WAIT, [condvar_id, mutex_id, 0])
+}
+
+///
+/// 获取事件
+///
+/// @author: tryte
+///
+/// @date: 2026/6/10
+pub fn sys_event_get() -> isize {
+    syscall(SYSCALL_EVENT_GET, [0, 0, 0])
 }

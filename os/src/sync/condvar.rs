@@ -6,15 +6,34 @@ use crate::task::{
 use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 
+///
+/// 条件变量实现
+///
+/// @author: tryte
+///
+/// @date: 2026/6/10
 pub struct CondVarInner {
+    /// 等待条件满足需要唤醒的线程
     pub wait_queue: VecDeque<Arc<TaskControlBlock>>,
 }
 
+///
+/// 条件变量
+///
+/// @author: tryte
+///
+/// @date: 2026/6/10
 pub struct CondVar {
     pub inner: UpIntrFreeCell<CondVarInner>,
 }
 
 impl CondVar {
+    ///
+    /// 创建条件变量
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     pub fn new() -> Self {
         Self {
             inner: unsafe {
@@ -66,6 +85,13 @@ impl CondVar {
         block_current_task()
     }
 
+    ///
+    /// 通过锁阻塞线程
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
+    #[allow(unused)]
     pub fn wait_with_mutex(&self, mutex: Arc<dyn Mutex>) {
         mutex.unlock();
         self.inner.exclusive_session(|inner| {

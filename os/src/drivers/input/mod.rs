@@ -27,18 +27,41 @@ pub trait InputDevice: Send + Sync + Any {
     fn is_empty(&self) -> bool;
 }
 
+///
+/// 输入驱动
+///
+/// @author: tryte
+///
+/// @date: 2026/6/10
 struct VirtIOInputInner {
+    /// 驱动封装
     virtio_input: VirtIOInput<'static, VirtioHal>,
+    /// 事件
     events: VecDeque<u64>,
 }
 
+///
+/// 输入驱动包装
+///
+/// @author: tryte
+///
+/// @date: 2026/6/10
 struct VirtIOInputWrapper {
+    /// 输入驱动
     inner: UpIntrFreeCell<VirtIOInputInner>,
+    /// 条件变量
     cond_var: CondVar,
 }
 
 impl VirtIOInputWrapper {
+    ///
+    /// 创建虚拟IO驱动
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     pub fn new(addr: usize) -> Self {
+        // 创建驱动
         let inner = VirtIOInputInner {
             virtio_input: unsafe {
                 // let vt = addr as *const u8;
@@ -50,6 +73,7 @@ impl VirtIOInputWrapper {
             },
             events: VecDeque::new(),
         };
+
         Self {
             inner: unsafe { UpIntrFreeCell::new(inner) },
             cond_var: CondVar::new(),
@@ -58,12 +82,20 @@ impl VirtIOInputWrapper {
 }
 
 impl InputDevice for VirtIOInputWrapper {
+    ///
+    /// 读取驱动事件
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn read_event(&self) -> u64 {
         loop {
             let mut inner = self.inner.exclusive_access();
+            // 弹出事件
             if let Some(event) = inner.events.pop_front() {
                 return event;
             } else {
+                // 没有事件，阻塞等待
                 let task_cx_ptr = self.cond_var.wait_no_sched();
                 drop(inner);
                 schedule(task_cx_ptr);
@@ -71,13 +103,23 @@ impl InputDevice for VirtIOInputWrapper {
         }
     }
 
+    ///
+    /// 中断处理
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn handle_irq(&self) {
         let mut count = 0;
         let mut result = 0;
         self.inner.exclusive_session(|inner| {
+            // 应答事件
             inner.virtio_input.ack_interrupt();
+            // 读取事件
             while let Some(event) = inner.virtio_input.pop_pending_event() {
+                // 记录事件数量
                 count += 1;
+                // 记录结果
                 result = (event.event_type as u64) << 48
                     | (event.code as u64) << 32
                     | (event.value) as u64;

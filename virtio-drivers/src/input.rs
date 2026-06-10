@@ -32,6 +32,12 @@ bitflags! {
     }
 }
 
+///
+/// 设备设置
+///
+/// @author: tryte
+///
+/// @date: 2026/6/10
 #[repr(C)]
 struct Config {
     select: WriteOnly<u8>,
@@ -86,13 +92,15 @@ pub struct VirtIOInput<'a, H: Hal> {
 
 impl<'a, H: Hal> VirtIOInput<'a, H> {
     ///
-    /// 创建虚拟IO输入驱动
+    /// 封装输入驱动
     ///
     /// @author: tryte
     ///
     /// @date: 2026/6/9
     pub fn new(header: &'static mut VirtIOHeader) -> Result<Self> {
+        // 创建空白事件队列
         let mut event_buf = Box::new([InputEvent::default(); QUEUE_SIZE]);
+        // 初始化IO外设
         header.begin_init(|features| {
             let features = Feature::from_bits_truncate(features);
             info!("Device features: {:?}", features);
@@ -100,16 +108,19 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
             (features & supported_features).bits()
         });
 
+        // 创建事件队列
         let mut event_queue = VirtQueue::new(header, QUEUE_EVENT, QUEUE_SIZE as u16)?;
+        // 创建状态通知队列
         let status_queue = VirtQueue::new(header, QUEUE_STATUS, QUEUE_SIZE as u16)?;
+
         for (i, event) in event_buf.as_mut().iter_mut().enumerate() {
+            // 填充输出事件
             let token = event_queue.add(&[], &[event.as_buf_mut()])?;
             assert_eq!(token, i as u16);
         }
 
+        // 完成设备初始化
         header.finish_init();
-
-        info!("Device Type: {:?}", header.device_type());
 
         Ok(VirtIOInput {
             header,
@@ -120,7 +131,7 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
     }
 
     ///
-    ///
+    /// 事件应答
     ///
     /// @author: tryte
     ///
@@ -130,14 +141,17 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
     }
 
     ///
-    ///
+    /// 读取已完成任务
     ///
     /// @author: tryte
     ///
     /// @date: 2026/6/9
     pub fn pop_pending_event(&mut self) -> Option<InputEvent> {
+        // 弹出任务
         if let Ok((token, _)) = self.event_queue.pop_used() {
+            // 读取任务
             let event = &mut self.event_buf[token as usize];
+            // 读取队列输出
             if self.event_queue.add(&[], &[event.as_buf_mut()]).is_ok() {
                 return Some(*event);
             }
@@ -167,7 +181,7 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
     }
 
     ///
-    ///
+    /// 返回队列长度
     ///
     /// @author: tryte
     ///
