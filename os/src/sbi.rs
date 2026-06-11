@@ -4,6 +4,7 @@
 /// @author: tryte
 ///
 /// @date: 2025/11/17
+#[allow(unused)]
 pub fn console_put_char(c: usize) {
     #[allow(deprecated)]
     sbi_rt::legacy::console_putchar(c);
@@ -15,6 +16,7 @@ pub fn console_put_char(c: usize) {
 /// @author: tryte
 ///
 /// @date: 2026/3/12
+#[allow(unused)]
 pub fn console_get_char() -> usize {
     #[allow(deprecated)]
     sbi_rt::legacy::console_getchar()

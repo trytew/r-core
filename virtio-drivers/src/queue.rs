@@ -5,7 +5,7 @@ use crate::{align_up, Error, PAGE_SIZE};
 use bitflags::bitflags;
 use core::slice;
 use core::sync::atomic::{fence, Ordering};
-use log::{error, info};
+use log::info;
 use volatile::Volatile;
 
 bitflags! {

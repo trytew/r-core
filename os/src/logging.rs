@@ -4,7 +4,7 @@ use log::{Level, LevelFilter, Log, Metadata, Record};
 struct SimpleLogger;
 
 impl Log for SimpleLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
+    fn enabled(&self, _metadata: &Metadata) -> bool {
         true
     }
 
