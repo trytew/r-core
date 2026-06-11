@@ -1,3 +1,70 @@
+//! PLIC 内存布局图
+//! ```
+//! 0x0C00_0000  PLIC Base
+//! |
+//! |----------------------------------------------
+//! | ① Priority Registers（优先级区）
+//! |
+//! | 0x0C00_0000 + 0x0000
+//! | IRQ0  priority
+//! | IRQ1  priority
+//! | IRQ2  priority
+//! | ...
+//! | 每个IRQ 1个32-bit优先级
+//! |
+//! |----------------------------------------------
+//! | ② Pending Registers（挂起区 / 硬件写）
+//! |
+//! | 0x0C00_1000 + 0x0000
+//! | bit0  → IRQ0 pending
+//! | bit1  → IRQ1 pending
+//! | bit2  → IRQ2 pending
+//! | ...
+//! | （硬件置位：外设来了中断）
+//! |
+//! |----------------------------------------------
+//! | ③ Enable Registers（使能区 / CPU选择）
+//! |
+//! | 0x0C00_2000 + hart * offset
+//! |
+//! | Hart0:
+//! |   bit0 → IRQ0 enable
+//! |   bit1 → IRQ1 enable
+//! |   bit8 → IRQ8 enable
+//! |
+//! | Hart1:
+//! |   ...
+//! |
+//! | = 控制“哪些IRQ可以进这个CPU”
+//! |
+//! |----------------------------------------------
+//! | ④ Contexts（核心：claim / complete）
+//! |
+//! | 0x0C20_0000  Hart0 S-mode
+//! | 0x0C20_1000  Hart0 M-mode
+//! | 0x0C21_0000  Hart1 S-mode
+//! | ...
+//! |
+//! | 每个Context只有两个寄存器：
+//! |
+//! |   |-- Threshold （只有 Priority Registers 中 IRQ 的优先级 > Threshold 的才会被 Claim / Complete 接收）
+//! |   |     (优先级门槛)
+//! |   |
+//! |   |-- Claim / Complete
+//! |         (取IRQ / 结束IRQ)
+//! |
+//! |----------------------------------------------
+//! ```
+//! PLIC 运行条件
+//! 1. Enable Registers 决定了哪个硬件线程使能中断接收
+//! 2. Priority Registers 用来设置不同中断号的优先级
+//! 3. Contexts 是每个硬件线程的不同特权级中断接收区，每个Context只有两个寄存器：Threshold、(Claim / Complete)
+//!     1. 当中断(IRQ)触发的时候由外设写到 Pending Registers
+//!     2. 使能中断的 hart 会去读取 Pending Registers 区的中断通知
+//!     3. 当读取到中断后会根据 Priority Registers 设置的优先级再和对应 hart 的 Context 中 Threshold 做对比，与 hart 对应的多个 Context 都会进行对比
+//!     4. 当 Context 中 Threshold < IRQ Priority 的时候才会放入 Context 中的 (Claim / Complete) 寄存器中等待处理
+//!
+
 ///
 /// PLIC 通知对象
 ///
@@ -47,6 +114,12 @@ impl PLIC {
         Self { base_addr }
     }
 
+    ///
+    /// 获取中断号优先级设置位
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/11
     fn priority_ptr(&self, intr_source_id: usize) -> *mut u32 {
         assert!(intr_source_id > 0 && intr_source_id <= 132);
         (self.base_addr + intr_source_id * 4) as *mut u32
