@@ -52,7 +52,7 @@ impl Descriptor {
     ///
     /// @date: 2026/6/9
     fn set_buf<H: Hal>(&mut self, buf: &[u8]) {
-        // 写入数据
+        // 写入 buffer 地址
         self.addr
             .write(H::virt_to_phys(buf.as_ptr() as usize) as u64);
 
@@ -176,6 +176,7 @@ pub struct VirtQueue<'a, H: Hal> {
     free_head: u16,
     /// 空闲待处理任务位置
     avail_idx: u16,
+    /// 下一个待读取已完成任务位置
     last_used_idx: u16,
 }
 
@@ -271,6 +272,7 @@ impl<H: Hal> VirtQueue<'_, H> {
             last = self.free_head;
             // 在 recycle_descriptors 函数中将原始空闲的数据缓冲区位置保存在最后一个未读已完成的数据缓冲区的 next 字段中了，
             // 所以这里是还原原始空闲数据缓冲区位置
+            // 这并不是常规做法，是 rCore 单线程环境下的取巧，正常来说需要加锁等防止并发的操作
             self.free_head = desc.next.read();
         }
 
@@ -299,7 +301,7 @@ impl<H: Hal> VirtQueue<'_, H> {
         // 这句代码不代表 cpu 指令不会乱序执行，在 cpu 指令执行过程中不会立马将内存新值刷进内存，CPU有多级缓存，
         // 在计算的过程中会先将值放入缓存，待计算结果完成后才会将新值刷进内存，因此多个变量的内存值可能不会同步更新，如先刷了变量a，
         // 然后变量b因后续有还有计算先放入缓存，在这个过程中就会有多个内存观察者读取的内存不是最新的情况，
-        // 这句代码就是保证在它之前的内存值所有观察者读取的都是一致的
+        // 这句代码就是保证在它之前的内存值所有观察者读取的都是一致的，即将数据强制刷入内存
         fence(Ordering::SeqCst);
 
         // 设置下个待处理任务位置
@@ -382,6 +384,7 @@ impl<H: Hal> VirtQueue<'_, H> {
         // 回收任务位置
         self.recycle_descriptors(index);
 
+        // 待读已完成事件位置+1
         self.last_used_idx = self.last_used_idx.wrapping_add(1);
 
         Ok((index, len))

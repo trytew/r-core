@@ -131,6 +131,12 @@ impl InputDevice for VirtIOInputWrapper {
         }
     }
 
+    ///
+    /// 是否没有输入设备事件
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/11
     fn is_empty(&self) -> bool {
         self.inner.exclusive_access().events.is_empty()
     }

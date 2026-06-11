@@ -47,6 +47,12 @@ impl PLIC {
         Self { base_addr }
     }
 
+    ///
+    /// 获取中断优先级设置位
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/11
     fn priority_ptr(&self, intr_source_id: usize) -> *mut u32 {
         assert!(intr_source_id > 0 && intr_source_id <= 132);
         (self.base_addr + intr_source_id * 4) as *mut u32
