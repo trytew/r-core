@@ -1,6 +1,6 @@
-I/O设备管理
+# I/O设备管理
 
-第九章第五节
+### 第九章第五节
 
 easy-fs-use:
 cd easy-fs-use
@@ -24,7 +24,47 @@ cd user
 
 **注：留意 qemu 的启动参数，所有外设都需要添加，否则代码中的 MMIO 地址对应将会错乱，块设备 blk 需要去除 `bus=virtio-mmio-bus.0`，不要指定 BUS 控制器，并修改代码中块设备的 MMIO 地址**
 
-流程简述
+### QUME外设说明
+
+- `-nographic`
+  
+  当 `qemu` 的启动参数携带 `-nographic` 时，实际上的交互流程如下：
+  
+  ```shell
+  物理键盘
+      ↓
+  宿主机终端(xterm/bash)
+      ↓
+  QEMU
+      ↓
+  NS16550A UART
+      ↓
+  rCore UART驱动
+      ↓
+  getchar()
+  ```
+
+- `-device virtio-keyboard-device/-device virtio-mouse-device`
+  
+  当使用启动参数 `-device virtio-keyboard-device/-device virtio-mouse-device` 的时候虚拟键盘/鼠标是需要通过 `qemu` 窗口来接收事件的
+  
+  ```shell
+  物理键盘
+      ↓
+  QEMU窗口
+      ↓
+  VirtIO Input Device
+      ↓
+  VirtIO Queue
+      ↓
+  rCore virtio_input驱动
+  ```
+
+- `-serial stdio`
+  
+  测试的时候我们需要通过终端将需要运行的程序通过终端将字符发送到 `qemu` 然后让 `qemu` 发送数据到  `UART` 串口，在由操作系统接受`UART` 串口中断读取 `UART` 串口数据。但是在用户程序 `inputdev-event` 中我们又需要`qemu` 窗口来接收键盘/鼠标的中断，因此可以去掉`-nographic`参数，添加 `-serial stdio` 实现两个数据流程。具体体现为当焦点在 `qemu` 窗口的时候键盘/鼠标的事件会通过 `qemu` 窗口发送到 `VirtIO Input Device`虚拟IO设备，然后如正常设备一样产生中断、输入输出数据到操作系统的 `MMIO`，即综合上面两个启动参数的效果，通过 `qemu` 窗口是否失焦走不同的数据通路。
+
+# OS流程简述
 
 1. 点亮CPU
    

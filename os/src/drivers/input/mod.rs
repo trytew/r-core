@@ -22,8 +22,28 @@ const VIRTIO5: usize = 0x10005000;
 const VIRTIO6: usize = 0x10006000;
 
 pub trait InputDevice: Send + Sync + Any {
+    ///
+    /// 读取驱动事件
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn read_event(&self) -> u64;
+
+    ///
+    /// 中断处理
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/10
     fn handle_irq(&self);
+
+    ///
+    /// 是否没有输入设备事件
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/11
     fn is_empty(&self) -> bool;
 }
 

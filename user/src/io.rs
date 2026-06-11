@@ -34,6 +34,12 @@ impl From<u64> for InputEvent {
     }
 }
 
+///
+/// 获取中断事件
+///
+/// @author: tryte
+///
+/// @date: 2026/6/11
 pub fn event_get() -> Option<InputEvent> {
     let raw_value = sys_event_get();
     if raw_value == 0 {

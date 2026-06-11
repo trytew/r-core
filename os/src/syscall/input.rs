@@ -1,6 +1,12 @@
 use crate::drivers::chardev::UART;
 use crate::drivers::{KEYBOARD_DEVICE, MOUSE_DEVICE};
 
+///
+/// 获取中断事件
+///
+/// @author: tryte
+///
+/// @date: 2026/6/11
 pub fn sys_event_get() -> isize {
     let kb = KEYBOARD_DEVICE.clone();
     let mouse = MOUSE_DEVICE.clone();
