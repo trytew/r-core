@@ -14,8 +14,13 @@ user/.idea
 os/target
 os/.idea
 os/src/linker_app.asm
+<<<<<<< HEAD
 os/riscv64-virt.dts
 os/riscv64-virt.dtb
+=======
+os/riscv64-virt.dtb
+os/riscv64-virt.dts
+>>>>>>> lv_25
 
 script/target
 script/.idea
