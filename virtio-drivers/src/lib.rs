@@ -7,6 +7,7 @@
 
 extern crate alloc;
 
+mod blk;
 mod hal;
 mod header;
 mod input;

@@ -25,6 +25,7 @@ struct Task {
 }
 
 impl Task {
+    #[allow(clippy::needless_lifetimes)]
     fn waiter<'a>(&'a mut self) -> Waiter<'a> {
         Waiter { task: self }
     }
