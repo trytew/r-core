@@ -16,6 +16,7 @@ mod queue;
 pub use hal::{Hal, PhysAddr, VirtAddr};
 pub use header::VirtIOHeader;
 pub use input::{InputEvent, VirtIOInput};
+pub use blk::{VirtIOBlk};
 
 const PAGE_SIZE: usize = 0x1_000;
 

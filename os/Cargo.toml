@@ -15,8 +15,6 @@ debug = true
 sbi-rt = { version = "0.0.2", features = ["legacy"] }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 riscv = { git = "https://github.com/trytew/riscv", features = ["inline-asm"] }
-# 指定 commit id = 4ee80e5 的代码版本
-virtio-drivers-git = { package = "virtio-drivers", git = "https://github.com/trytew/virtio-drivers", rev = "4ee80e5" }
 virtio-drivers = { path = "../virtio-drivers" }
 buddy_system_allocator = "0.6"
 bitflags = "1.2.1"

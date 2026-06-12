@@ -6,7 +6,7 @@ use crate::sync::UpIntrFreeCell;
 use alloc::vec::Vec;
 use easy_fs::BlockDevice;
 use lazy_static::lazy_static;
-use virtio_drivers_git::{Hal, VirtIOBlk, VirtIOHeader};
+use virtio_drivers::{Hal, VirtIOBlk, VirtIOHeader};
 
 const VIRTIO0: usize = 0x10_008_000;
 
@@ -24,6 +24,12 @@ lazy_static! {
 pub struct VirtIOBlock(UpIntrFreeCell<VirtIOBlk<'static, VirtioHal>>);
 
 impl VirtIOBlock {
+    ///
+    /// 创建块设备驱动
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/12
     pub fn new() -> Self {
         unsafe {
             Self(UpIntrFreeCell::new(

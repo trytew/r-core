@@ -157,7 +157,7 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
         // 初始化IO外设
         header.begin_init(|features| {
             let features = Feature::from_bits_truncate(features);
-            info!("Device features: {:?}", features);
+            info!("device features: {:?}", features);
             let supported_features = Feature::empty();
             (features & supported_features).bits()
         });
@@ -205,7 +205,7 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
         if let Ok((token, _)) = self.event_queue.pop_used() {
             // 读取任务输出数据
             let event = &mut self.event_buf[token as usize];
-            // 将数据缓冲区放回待处理任务队列，这个时候 event 的数据是有可能被设备覆盖的，只是 Copy 的事件很短，没有做考虑
+            // 将数据缓冲区放回待处理任务队列，这个时候 event 的数据是有可能被设备覆盖的，只是 Copy 的时间很短，没有做考虑
             if self.event_queue.add(&[], &[event.as_buf_mut()]).is_ok() {
                 // InputEvent 实现了 Copy 语义，这里的数据会被 Copy 返回
                 return Some(*event);
