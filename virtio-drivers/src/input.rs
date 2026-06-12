@@ -205,7 +205,8 @@ impl<'a, H: Hal> VirtIOInput<'a, H> {
         if let Ok((token, _)) = self.event_queue.pop_used() {
             // 读取任务输出数据
             let event = &mut self.event_buf[token as usize];
-            // 将数据缓冲区放回待处理任务队列，这个时候 event 的数据是有可能被设备覆盖的，只是 Copy 的时间很短，没有做考虑
+            // 将数据缓冲区放回待处理任务队列，这个时候 event 的数据是有可能被设备覆盖的，因为 event 是作为 desc 的输出 buffer，
+            // 只是 Copy 的时间很短，没有做考虑，也意味着键盘/鼠标的事件对操作系统来说是允许丢失的
             if self.event_queue.add(&[], &[event.as_buf_mut()]).is_ok() {
                 // InputEvent 实现了 Copy 语义，这里的数据会被 Copy 返回
                 return Some(*event);
