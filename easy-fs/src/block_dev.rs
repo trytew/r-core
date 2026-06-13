@@ -22,4 +22,11 @@ pub trait BlockDevice: Send + Sync + Any {
     ///
     /// @date: 2026/3/16
     fn write_block(&self, block_id: usize, buf: &[u8]);
+    ///
+    /// 中断处理
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/13
+    fn handle_irq(&self);
 }

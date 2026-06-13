@@ -1,5 +1,5 @@
 use crate::drivers::chardev::{CharDevice, UART};
-use crate::drivers::{IntrTargetPriority, KEYBOARD_DEVICE, MOUSE_DEVICE, PLIC};
+use crate::drivers::{IntrTargetPriority, BLOCK_DEVICE, KEYBOARD_DEVICE, MOUSE_DEVICE, PLIC};
 use riscv::register::sie;
 
 ///
@@ -60,7 +60,7 @@ pub fn device_init() {
     plic.set_threshold(hart_id, supervisor, 0);
     plic.set_threshold(hart_id, machine, 1);
     // 使能串口中断并设置优先级
-    for intr_src_id in [5_usize, 6, 10] {
+    for intr_src_id in [5_usize, 6, 8, 10] {
         // 使能中断
         plic.enable(hart_id, supervisor, intr_src_id);
         // 设置中断优先级
@@ -85,6 +85,7 @@ pub fn irq_handler() {
     match intr_src_id {
         5 => KEYBOARD_DEVICE.handle_irq(),
         6 => MOUSE_DEVICE.handle_irq(),
+        8 => BLOCK_DEVICE.handle_irq(),
         10 => UART.handle_irq(),
         _ => panic!("unsupported IRQ {}", intr_src_id),
     }
