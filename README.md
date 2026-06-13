@@ -1,6 +1,6 @@
 # I/O设备管理
 
-### 第九章第五节
+### 第九章第六节
 
 easy-fs-use:
 cd easy-fs-use
