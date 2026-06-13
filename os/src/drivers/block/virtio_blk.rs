@@ -2,11 +2,15 @@ use crate::mm::{
     frame_alloc, frame_dealloc, kernel_token, FrameTracker, PageTable, PhysAddr, PhysPageNum,
     StepByOne, VirtAddr,
 };
-use crate::sync::UpIntrFreeCell;
+use crate::sync::{CondVar, UpIntrFreeCell};
+use crate::task::schedule;
+use crate::DEV_NON_BLOCKING_ACCESS;
+use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use easy_fs::BlockDevice;
 use lazy_static::lazy_static;
-use virtio_drivers::{Hal, VirtIOBlk, VirtIOHeader};
+use log::info;
+use virtio_drivers::{BlkResp, Hal, RespStatus, VirtIOBlk, VirtIOHeader};
 
 const VIRTIO0: usize = 0x10_008_000;
 
@@ -21,7 +25,10 @@ lazy_static! {
 /// @author: tryte
 ///
 /// @date: 2026/4/3
-pub struct VirtIOBlock(UpIntrFreeCell<VirtIOBlk<'static, VirtioHal>>);
+pub struct VirtIOBlock {
+    virtio_blk: UpIntrFreeCell<VirtIOBlk<'static, VirtioHal>>,
+    cond_vars: BTreeMap<u16, CondVar>,
+}
 
 impl VirtIOBlock {
     ///
@@ -31,10 +38,21 @@ impl VirtIOBlock {
     ///
     /// @date: 2026/6/12
     pub fn new() -> Self {
-        unsafe {
-            Self(UpIntrFreeCell::new(
+        let virtio_blk = unsafe {
+            UpIntrFreeCell::new(
                 VirtIOBlk::<VirtioHal>::new(&mut *(VIRTIO0 as *mut VirtIOHeader)).unwrap(),
-            ))
+            )
+        };
+        let mut cond_vars = BTreeMap::new();
+        let channels = virtio_blk.exclusive_access().virt_queue_size();
+        info!("channels: {}", channels);
+        for i in 0..channels {
+            let cond_var = CondVar::new();
+            cond_vars.insert(i, cond_var);
+        }
+        Self {
+            virtio_blk,
+            cond_vars,
         }
     }
 }
@@ -47,10 +65,27 @@ impl BlockDevice for VirtIOBlock {
     ///
     /// @date: 2026/4/3
     fn read_block(&self, block_id: usize, buf: &mut [u8]) {
-        self.0
-            .exclusive_access()
-            .read_block(block_id, buf)
-            .expect("Error when reading VirtBlock");
+        let nb = *DEV_NON_BLOCKING_ACCESS.exclusive_access();
+        if nb {
+            // 非阻塞读
+            let mut resp = BlkResp::default();
+            let task_cx_ptr = self.virtio_blk.exclusive_session(|blk| {
+                let token = unsafe { blk.read_block_nb(block_id, buf, &mut resp).unwrap() };
+                self.cond_vars.get(&token).unwrap().wait_no_sched()
+            });
+            schedule(task_cx_ptr);
+            assert_eq!(
+                resp.status(),
+                RespStatus::Ok,
+                "Error when reading VirtIOBlk"
+            );
+        } else {
+            // 阻塞读
+            self.virtio_blk
+                .exclusive_access()
+                .read_block(block_id, buf)
+                .expect("Error when reading VirtBlock");
+        }
     }
 
     ///
@@ -60,10 +95,40 @@ impl BlockDevice for VirtIOBlock {
     ///
     /// @date: 2026/4/3
     fn write_block(&self, block_id: usize, buf: &[u8]) {
-        self.0
-            .exclusive_access()
-            .write_block(block_id, buf)
-            .expect("Error where writing VirtBlock");
+        let nb = *DEV_NON_BLOCKING_ACCESS.exclusive_access();
+        if nb {
+            // 非阻塞写
+            let mut resp = BlkResp::default();
+            let task_cx_ptr = self.virtio_blk.exclusive_session(|blk| {
+                let token = unsafe { blk.write_block_nb(block_id, buf, &mut resp).unwrap() };
+                self.cond_vars.get(&token).unwrap().wait_no_sched()
+            });
+            schedule(task_cx_ptr);
+            assert_eq!(
+                resp.status(),
+                RespStatus::Ok,
+                "Error when writing VirtIOBlk"
+            );
+        } else {
+            self.virtio_blk
+                .exclusive_access()
+                .write_block(block_id, buf)
+                .expect("Error where writing VirtBlock");
+        }
+    }
+
+    ///
+    /// 中断处理
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/13
+    fn handle_irq(&self) {
+        self.virtio_blk.exclusive_session(|blk| {
+            while let Ok(token) = blk.pop_used() {
+                self.cond_vars.get(&token).unwrap().signal();
+            }
+        });
     }
 }
 

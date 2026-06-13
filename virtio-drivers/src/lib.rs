@@ -14,7 +14,7 @@ mod header;
 mod input;
 mod queue;
 
-pub use blk::VirtIOBlk;
+pub use blk::{BlkResp, RespStatus, VirtIOBlk};
 pub use gpu::VirtIOGpu;
 pub use hal::{Hal, PhysAddr, VirtAddr};
 pub use header::VirtIOHeader;

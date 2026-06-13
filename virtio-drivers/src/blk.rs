@@ -111,15 +111,31 @@ struct BlkReq {
 
 unsafe impl AsBuf for BlkReq {}
 
+///
+/// 响应状态
+///
+/// @author: tryte
+///
+/// @date: 2026/6/13
 #[repr(u8)]
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum RespStatus {
+    /// 成功
     Ok = 0,
+    /// IO 错误
     IoErr = 1,
+    /// 不支持的功能
     Unsupported = 2,
+    /// 设备未准备好
     _NotReady = 3,
 }
 
+///
+/// 块设备响应
+///
+/// @author: tryte
+///
+/// @date: 2026/6/13
 #[repr(C)]
 #[derive(Debug)]
 pub struct BlkResp {
@@ -127,6 +143,12 @@ pub struct BlkResp {
 }
 
 impl BlkResp {
+    ///
+    /// 获取响应状态
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/13
     pub fn status(&self) -> RespStatus {
         self.status
     }
