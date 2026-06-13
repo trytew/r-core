@@ -11,17 +11,35 @@ const BLK_SIZE: usize = 512;
 
 bitflags! {
     struct BlkFeature:u64 {
+        /// 支持写屏障（Write Barrier）
+        /// 保证前面的写请求全部落盘后才执行后面的写请求。用于保证写入顺序。现在基本被 FLUSH 替代
         const BARRIR       = 1 << 0;
+        /// 设备告诉驱动：单个 segment 最大允许多大
+        /// 对应 config 中的 size_max 字段
         const SIZE_MAX     = 1 << 1;
+        /// 设备告诉驱动：一个请求最多能包含多少个 descriptor/segment
+        /// 对应 config 中的 seg_max。
         const SEG_MAX      = 1 << 2;
+        /// 提供传统磁盘几何信息（柱面、磁头、扇区）。主要给老系统兼容用。现代系统基本不用
         const GEOMETRY     = 1 << 4;
+        /// Read Only。设备只读，禁止写入
         const RO           = 1 << 5;
+        /// 提供逻辑块大小（block size）
+        /// 对应 config 中的 blk_size
         const BLK_SIZE     = 1 << 6;
+        /// 支持通过 VirtIO 传递 SCSI 命令
         const SCSI         = 1 << 7;
+        /// 支持 Flush 请求
+        /// 驱动可以要求设备把缓存数据真正写入磁盘
         const FLUSH        = 1 << 9;
+        /// 提供磁盘拓扑信息，比如物理块大小、对齐要求等
         const TOPOLOGY     = 1 << 10;
+        /// 支持配置 Write Cache Enable（写缓存开关）
         const CONFIG_WCE   = 1 << 11;
+        /// 支持丢弃块（类似 SSD 的 TRIM）
+        /// 告诉设备这些块已经不用了
         const DISCARD      = 1 << 13;
+        /// 支持快速把一段区域写成 0。比驱动自己循环写 0 快很多
         const WRITE_ZEROES = 1 << 14;
 
         // 以下特征位参考 input.rs 的 Feature 说明
