@@ -15,6 +15,7 @@ mod input;
 mod queue;
 
 pub use blk::VirtIOBlk;
+pub use gpu::VirtIOGpu;
 pub use hal::{Hal, PhysAddr, VirtAddr};
 pub use header::VirtIOHeader;
 pub use input::{InputEvent, VirtIOInput};
@@ -64,4 +65,8 @@ unsafe trait AsBuf: Sized {
 /// @date: 2026/6/9
 fn align_up(size: usize) -> usize {
     (size + PAGE_SIZE) & !(PAGE_SIZE - 1)
+}
+
+fn pages(size: usize) -> usize {
+    (size * PAGE_SIZE - 1) / PAGE_SIZE
 }

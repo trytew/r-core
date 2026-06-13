@@ -104,7 +104,13 @@ impl<H: Hal> DMA<H> {
         (self.p_addr >> 12) as u32
     }
 
-    pub unsafe fn as_buff(&self) -> &'static mut [u8] {
+    ///
+    /// 将内容当 u8 数组输出
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/13
+    pub unsafe fn as_buf(&self) -> &'static mut [u8] {
         unsafe { core::slice::from_raw_parts_mut(self.vaddr() as _, PAGE_SIZE * self.pages) }
     }
 }

@@ -1,5 +1,5 @@
 use crate::drivers::chardev::{CharDevice, UART};
-use crate::drivers::{IntrTargetPriority, KEYBOARD_DEVICE, MOUSE_DEVICE, PLIC};
+use crate::drivers::{IntrTargetPriority, BLOCK_DEVICE, KEYBOARD_DEVICE, MOUSE_DEVICE, PLIC};
 use riscv::register::sie;
 
 ///
@@ -85,6 +85,7 @@ pub fn irq_handler() {
     match intr_src_id {
         5 => KEYBOARD_DEVICE.handle_irq(),
         6 => MOUSE_DEVICE.handle_irq(),
+        8 => BLOCK_DEVICE.handle_irq(),
         10 => UART.handle_irq(),
         _ => panic!("unsupported IRQ {}", intr_src_id),
     }

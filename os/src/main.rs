@@ -21,7 +21,7 @@ mod timer;
 mod trap;
 
 use crate::drivers::chardev::{CharDevice, UART};
-use crate::drivers::{KEYBOARD_DEVICE, MOUSE_DEVICE};
+use crate::drivers::{GPU_DEVICE, KEYBOARD_DEVICE, MOUSE_DEVICE};
 use crate::sync::UpIntrFreeCell;
 use core::arch::global_asm;
 use lazy_static::lazy_static;
@@ -90,13 +90,16 @@ fn rust_main() -> ! {
 
     UART.init();
 
-    info!("KERNEL: init keyboard");
+    info!("Kernel: init gpu");
+    let _gpu = GPU_DEVICE.clone();
+
+    info!("Kernel: init keyboard");
     let _keyboard = KEYBOARD_DEVICE.clone();
 
-    info!("KERNEL: init mouse");
+    info!("Kernel: init mouse");
     let _mouse = MOUSE_DEVICE.clone();
 
-    info!("KERNEL: init trap");
+    info!("Kernel: init trap");
     trap::init();
     trap::enable_timer_interrupt();
 

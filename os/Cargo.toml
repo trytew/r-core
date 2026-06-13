@@ -22,3 +22,5 @@ xmas-elf = "0.7.0"
 volatile = "0.3"
 easy-fs = { path = "../easy-fs" }
 log = "0.4.29"
+embedded-graphics = "0.7.1"
+tinybmp = "0.3.1"
