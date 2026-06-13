@@ -68,5 +68,5 @@ fn align_up(size: usize) -> usize {
 }
 
 fn pages(size: usize) -> usize {
-    (size * PAGE_SIZE - 1) / PAGE_SIZE
+    (size + PAGE_SIZE - 1) / PAGE_SIZE
 }

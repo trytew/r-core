@@ -90,16 +90,16 @@ fn rust_main() -> ! {
 
     UART.init();
 
-    info!("Kernel: init gpu");
+    info!("KERNEL: init gpu");
     let _gpu = GPU_DEVICE.clone();
 
-    info!("Kernel: init keyboard");
+    info!("KERNEL: init keyboard");
     let _keyboard = KEYBOARD_DEVICE.clone();
 
-    info!("Kernel: init mouse");
+    info!("KERNEL: init mouse");
     let _mouse = MOUSE_DEVICE.clone();
 
-    info!("Kernel: init trap");
+    info!("KERNEL: init trap");
     trap::init();
     trap::enable_timer_interrupt();
 

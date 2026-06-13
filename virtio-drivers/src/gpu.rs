@@ -6,7 +6,6 @@ use bitflags::bitflags;
 use core::fmt;
 use core::fmt::Formatter;
 use core::hint::spin_loop;
-use core::ptr::dangling;
 use log::info;
 use volatile::{ReadOnly, Volatile, WriteOnly};
 

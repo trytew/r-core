@@ -8,13 +8,13 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 use lazy_static::lazy_static;
 
-type FrameAllocatorImpl = StackFrameAllocator;
-
 lazy_static! {
     // 创建全局物理页帧管理器
     pub static ref FRAME_ALLOCATOR: UpIntrFreeCell<FrameAllocatorImpl> =
         unsafe { UpIntrFreeCell::new(FrameAllocatorImpl::new()) };
 }
+
+type FrameAllocatorImpl = StackFrameAllocator;
 
 ///
 /// 帧追踪器
