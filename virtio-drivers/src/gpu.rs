@@ -36,6 +36,7 @@ bitflags! {
     struct Features:u64 {
         const VIRGL = 1 << 0;
         const EDID = 1 << 1;
+        const F_CURSOR = 1 << 4;
 
         // 以下特征位参考 input.rs 的 Feature 说明
         const NOTIFY_ON_EMPTY    = 1 << 24;
@@ -689,6 +690,12 @@ impl<H: Hal> VirtIOGpu<'_, H> {
             resource_id,
             hot_x,
             hot_y,
+            _padding: 0,
+        })?;
+        self.cursor_request(StResourceFlush {
+            header: CtrlHeader::with_type(Command::ResourceFlush),
+            rect: self.rect,
+            resource_id,
             _padding: 0,
         })
     }
