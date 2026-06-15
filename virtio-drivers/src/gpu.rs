@@ -560,6 +560,12 @@ impl<H: Hal> VirtIOGpu<'_, H> {
         Ok(unsafe { (self.queue_buf_recv.as_ptr() as *const Rsp).read() })
     }
 
+    ///
+    /// 光标请求
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/15
     fn cursor_request<Req>(&mut self, req: Req) -> Result {
         unsafe {
             (self.queue_buf_send.as_mut_ptr() as *mut Req).write(req);
@@ -690,12 +696,6 @@ impl<H: Hal> VirtIOGpu<'_, H> {
             resource_id,
             hot_x,
             hot_y,
-            _padding: 0,
-        })?;
-        self.cursor_request(StResourceFlush {
-            header: CtrlHeader::with_type(Command::ResourceFlush),
-            rect: self.rect,
-            resource_id,
             _padding: 0,
         })
     }
