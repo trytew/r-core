@@ -91,6 +91,12 @@ const SYSCALL_CONDVAR_SIGNAL: usize = 1031;
 /// 等待条件变量中断号
 const SYSCALL_CONDVAR_WAIT: usize = 1032;
 
+/// 分配缓存中断号页
+const SYSCALL_FRAMEBUFFER: usize = 2000;
+
+/// 刷入数据到缓存页中断号
+const SYSCALL_FRAMEBUFFER_FLUSH: usize = 2001;
+
 /// 获取事件中断
 const SYSCALL_EVENT_GET: usize = 3000;
 
@@ -421,6 +427,26 @@ pub fn sys_condvar_signal(condvar_id: usize) -> isize {
 /// @date: 2026/5/29
 pub fn sys_condvar_wait(condvar_id: usize, mutex_id: usize) -> isize {
     syscall(SYSCALL_CONDVAR_WAIT, [condvar_id, mutex_id, 0])
+}
+
+///
+/// 分配缓存页
+///
+/// @author: tryte
+///
+/// @date: 2026/6/15
+pub fn sys_framebuffer() -> isize {
+    syscall(SYSCALL_FRAMEBUFFER, [0, 0, 0])
+}
+
+///
+/// 将数据刷入缓存页
+///
+/// @author: tryte
+///
+/// @date: 2026/6/15
+pub fn sys_framebuffer_flush() -> isize {
+    syscall(SYSCALL_FRAMEBUFFER_FLUSH, [0, 0, 0])
 }
 
 ///

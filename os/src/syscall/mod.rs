@@ -1,4 +1,5 @@
 use crate::syscall::fs::{sys_close, sys_dup, sys_open, sys_pipe, sys_read, sys_write};
+use crate::syscall::gui::{sys_framebuffer, sys_framebuffer_flush};
 use crate::syscall::input::{sys_event_get, sys_key_pressed};
 use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_kill, sys_waitpid, sys_yield,
@@ -10,6 +11,7 @@ use crate::syscall::sync::{
 use crate::syscall::thread::{sys_get_tid, sys_thread_create, sys_wait_tid};
 
 mod fs;
+mod gui;
 mod input;
 mod process;
 mod sync;
@@ -108,6 +110,12 @@ const SYSCALL_CONDVAR_SIGNAL: usize = 1031;
 /// 等待条件变量中断号
 const SYSCALL_CONDVAR_WAIT: usize = 1032;
 
+/// 分配缓存页中断号
+const SYSCALL_FRAMEBUFFER: usize = 2000;
+
+/// 将数据刷入缓存页中断号
+const SYSCALL_FRAMEBUFFER_FLUSH: usize = 2001;
+
 /// 获取事件中断
 const SYSCALL_EVENT_GET: usize = 3000;
 
@@ -149,6 +157,8 @@ pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
         SYSCALL_CONDVAR_CREATE => sys_condvar_create(),
         SYSCALL_CONDVAR_SIGNAL => sys_condvar_signal(args[0]),
         SYSCALL_CONDVAR_WAIT => sys_condvar_wait(args[0], args[1]),
+        SYSCALL_FRAMEBUFFER => sys_framebuffer(),
+        SYSCALL_FRAMEBUFFER_FLUSH => sys_framebuffer_flush(),
         SYSCALL_EVENT_GET => sys_event_get(),
         SYSCALL_KEY_PRESSED => sys_key_pressed(),
         _ => panic!("Unsupported syscall_id: {}", syscall_id),

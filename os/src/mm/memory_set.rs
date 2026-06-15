@@ -38,8 +38,9 @@ bitflags! {
 /// @date: 2026/1/21
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum MapType {
-    Identical, // 恒等映射
-    Framed,    // 每个虚拟页面都有一个新分配的物理页帧与之对应
+    Identical,     // 恒等映射
+    Framed,        // 每个虚拟页面都有一个新分配的物理页帧与之对应
+    Linear(isize), // 偏移指定页数建立映射
 }
 
 ///
@@ -99,6 +100,11 @@ impl MapArea {
                 let frame = frame_alloc().unwrap();
                 ppn = frame.ppn;
                 self.data_frames.insert(vpn, frame);
+            }
+            MapType::Linear(pn_offset) => {
+                // 带偏移映射
+                assert!(vpn.0 < (1_usize << 27));
+                ppn = PhysPageNum((vpn.0 as isize + pn_offset) as usize)
             }
         }
         // 添加页表项标志位
