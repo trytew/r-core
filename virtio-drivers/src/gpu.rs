@@ -9,7 +9,9 @@ use core::hint::spin_loop;
 use log::info;
 use volatile::{ReadOnly, Volatile, WriteOnly};
 
+/// GPU 控制队列
 const QUEUE_TRANSMIT: usize = 0;
+/// GPU 光标队列
 const QUEUE_CURSOR: usize = 1;
 
 /// 显示器ID
@@ -86,11 +88,11 @@ enum Command {
     ResourceCreate2d = 0x101,
     /// 删除 2D 图像资源
     ResourceUnRef = 0x102,
-    /// 显示输出设置，把某个资源（图片/帧缓冲）显示到屏幕的某一块区域
+    /// 显示输出设置，设置把某个资源（图片/帧缓冲）显示到屏幕的某一块区域
     SetScanout = 0x103,
-    /// 将数据刷入 GPU
+    /// 通知 GPU 刷新屏幕
     ResourceFlush = 0x104,
-    /// 数据上传/刷新
+    /// 将修改的缓存内容同步到 GPU Resource
     TransferToHost2d = 0x105,
     /// 绑定图像资源内存地址
     ResourceAttachBacking = 0x106,
@@ -100,7 +102,9 @@ enum Command {
     GetCapSet = 0x109,
     GetEdId = 0x10A,
 
+    /// 更新光标图像，并设置位置
     UpdateCursor = 0x300,
+    /// 只移动光标位置，不修改光标图像
     MoveCursor = 0x301,
 
     OkNoData = 0x1100,
@@ -517,7 +521,7 @@ impl<H: Hal> VirtIOGpu<'_, H> {
         self.resource_create_2d(RESOURCE_ID_CURSOR, CURSOR_RECT.width, CURSOR_RECT.height)?;
         // 设置光标内存操作地址
         self.resource_attach_backing(RESOURCE_ID_CURSOR, cursor_buffer_dma.p_addr() as u64, size)?;
-        // 将数据写入 GPU
+        // 将数据同步到 GPU
         self.transfer_to_host_2d(CURSOR_RECT, 0, RESOURCE_ID_CURSOR)?;
         // 更新光标位置
         self.update_cursor(RESOURCE_ID_CURSOR, SCANOUT_ID, pos_x, pos_y, hot_x, hot_y, false)?;
@@ -613,6 +617,12 @@ impl<H: Hal> VirtIOGpu<'_, H> {
         rsp.check_type(Command::OkNoData)
     }
 
+    ///
+    /// 设置图像输出显示器
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/16
     fn set_scanout(&mut self, rect: Rect, scanout_id: u32, resource_id: u32) -> Result {
         let rsp: CtrlHeader = self.request(StSetScanout {
             header: CtrlHeader::with_type(Command::SetScanout),

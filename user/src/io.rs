@@ -1,4 +1,4 @@
-use crate::syscall::{sys_event_get, sys_framebuffer, sys_framebuffer_flush};
+use crate::syscall::{sys_event_get, sys_framebuffer, sys_framebuffer_flush, sys_key_pressed};
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::{DrawTarget, OriginDimensions, RgbColor, Size};
 use embedded_graphics::Pixel;
@@ -160,4 +160,14 @@ pub fn event_get() -> Option<InputEvent> {
     } else {
         Some((raw_value as u64).into())
     }
+}
+
+///
+/// 键盘是否按下
+///
+/// @author: tryte
+///
+/// @date: 2026/6/16
+pub fn key_pressed() -> bool {
+    if sys_key_pressed() == 1 { true } else { false }
 }

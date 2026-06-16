@@ -100,6 +100,8 @@ const SYSCALL_FRAMEBUFFER_FLUSH: usize = 2001;
 /// 获取事件中断
 const SYSCALL_EVENT_GET: usize = 3000;
 
+const SYSCALL_KEY_PRESSED: usize = 3001;
+
 ///
 /// 系统调用
 ///
@@ -457,4 +459,14 @@ pub fn sys_framebuffer_flush() -> isize {
 /// @date: 2026/6/10
 pub fn sys_event_get() -> isize {
     syscall(SYSCALL_EVENT_GET, [0, 0, 0])
+}
+
+///
+/// 键盘是否按下
+///
+/// @author: tryte
+///
+/// @date: 2026/6/16
+pub fn sys_key_pressed() -> isize {
+    syscall(SYSCALL_KEY_PRESSED, [0, 0, 0])
 }

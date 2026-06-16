@@ -2,6 +2,7 @@ use crate::drivers::GPU_DEVICE;
 use crate::mm::{MapArea, MapPermission, MapType, PhysAddr, VirtAddr};
 use crate::task::current_process;
 
+/// 显示器操作内存虚拟地址
 const FB_VADDR: usize = 0x10_000_000;
 
 ///
@@ -18,6 +19,7 @@ pub fn sys_framebuffer() -> isize {
     assert!(fb_start_pa.aligned());
     let fb_start_ppn = fb_start_pa.floor();
     let fb_start_vpn = VirtAddr::from(FB_VADDR).floor();
+    // 计算物理内存页和虚拟内存页的偏移，映射内存区域的时候就可以直接通过虚拟内存页号 + offset 计算出物理内存页地址
     let pn_offset = fb_start_ppn.0 as isize - fb_start_vpn.0 as isize;
 
     // 将显示器图像的操作地址映射进进程内存空间
