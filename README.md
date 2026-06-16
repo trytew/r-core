@@ -20,11 +20,8 @@
 
 ```shell
 cd os
-./build.sh
 ./run.sh
 ```
-
-
 
 ### QUME外设说明
 
