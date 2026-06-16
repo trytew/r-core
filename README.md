@@ -8,7 +8,7 @@
 
 # 项目说明
 
-    项目教程地址为：[rCore-Tutorial-Book-v3 3.6.0-alpha.1 文档](https://rcore-os.cn/rCore-Tutorial-Book-v3/index.html)，每个章节的代码可以切换仓库分支逐节查看，每个分支的 Readme 都会说明该分支是哪个章节的代码，若有跳节代表被跳过的章节是理论章节，不含代码。感谢 rCore 社区的开源贡献，让我完成了手写 OS 的初体验。代码的注释以及 Readme 的说明不是全部正确，也没有心思和时间去纠正了，将就着看吧，对理解 rCore 自我感觉有一定的帮助。所有分支的代码均可正常运行，也尽量减少了 IDE 的误报，除了个别 IDE 实在无法识别的宏。
+    项目教程地址为：[rCore-Tutorial-Book-v3 3.6.0-alpha.1 文档](https://rcore-os.cn/rCore-Tutorial-Book-v3/index.html)，每个章节的代码可以切换仓库分支逐节查看，每个分支的 Readme 都会说明该分支是哪个章节的代码，若有跳节代表被跳过的章节是理论章节，不含代码。感谢 rCore 社区的开源，让我完成了手写 OS 的初体验。代码的注释以及 Readme 的说明不是全部正确，也没有心思和时间去纠正了，将就着看吧，对理解 rCore 自我感觉有一定的帮助。所有分支的代码均可正常运行，也尽量减少了 IDE 的误报，除了个别 IDE 实在无法识别的宏。
 
     有点遗憾的就是操作系统的 `bootloader` 步骤被简化了直接使用 `rustsbi-qemu.bin` 文件完成。有兴趣的可以看看教程：`https://b23.tv/K99Y5Vj` 类比补充一下这块的知识。该教程刚好只更新了 `bootloader` 相关的内容就停更了，哈哈哈。
 
@@ -16,11 +16,7 @@
 
 ### 第九章第七节
 
-easy-fs-use:
-cd easy-fs-use
-./build.sh
-
-os:
+运行:
 
 ```shell
 cd os
@@ -28,15 +24,7 @@ cd os
 ./run.sh
 ```
 
-user:
 
-```shell
-cd user
-./build.sh
-./run.sh
-```
-
-**注：留意 qemu 的启动参数，所有外设都需要添加，否则代码中的 MMIO 地址对应将会错乱，块设备 blk 需要去除 `bus=virtio-mmio-bus.0`，不要指定 BUS 控制器，并修改代码中块设备的 MMIO 地址**
 
 ### QUME外设说明
 
