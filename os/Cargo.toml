@@ -3,7 +3,24 @@ name = "os"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "os"
+test = false
+bench = false
+
+[profile.release]
+debug = true
+
 [dependencies]
-sbi-rt = { version = "0.0.3", features = ["legacy"] }
-lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
-riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+sbi-rt = { version = "0.0.2", features = ["legacy"] }
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+riscv = { git = "https://github.com/trytew/riscv", features = ["inline-asm"] }
+virtio-drivers = { path = "../virtio-drivers" }
+buddy_system_allocator = "0.6"
+bitflags = "1.2.1"
+xmas-elf = "0.7.0"
+volatile = "0.3"
+easy-fs = { path = "../easy-fs" }
+log = "0.4.29"
+embedded-graphics = "0.7.1"
+tinybmp = "0.3.1"

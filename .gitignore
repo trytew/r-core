@@ -7,8 +7,29 @@
 **/*.rs.bk
 
 /.idea
+
 user/target
 user/.idea
+
 os/target
 os/.idea
-os/src/linker_app.asm 
+os/src/linker_app.asm
+<<<<<<< HEAD
+os/riscv64-virt.dts
+os/riscv64-virt.dtb
+=======
+os/riscv64-virt.dtb
+os/riscv64-virt.dts
+>>>>>>> lv_25
+
+script/target
+script/.idea
+
+easy-fs/target
+easy-fs/.idea
+
+easy-fs-use/target
+easy-fs-use/.idea
+
+virtio-drivers/target
+virtio-drivers/.idea

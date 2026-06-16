@@ -10,11 +10,21 @@ SECTIONS
     stext = .;
     .text : {
         *(.text.entry)
+
+        /* 对齐到 4K，给 trampoline 使用 */
+        . = ALIGN(4K);
+        strampoline = .;
+        *(.text.trampoline);
+
+        . = ALIGN(4K);
         *(.text .text.*)
     }
+    /* 对齐到 4K，给 etext  使用，etext 和 srodata 地址是同一个 */
     . = ALIGN(4K);
     etext = .;
 
+    /* data 是已初始化的静态数据 */
+    /* data 数据条件 1.有非 0 初始值； 2.这些值 必须存进 ELF； 3.启动时 从 ELF 拷贝到内存； */
     srodata = .;
     .rodata : {
         *(.rodata .rodata.*)
@@ -31,6 +41,9 @@ SECTIONS
     . = ALIGN(4K);
     edata = .;
 
+    /* bss 是未初始化（或初始化为 0）的静态数据 */
+    /* bss 数据条件 1.未显式初始化； 2.或者 初始化为全 0； 3.不需要在 ELF 里存内容； 4.启动时统一 memset(0) */
+    sbss_with_stack = .;
     .bss : {
         *(.bss.stack)
         sbss = .;

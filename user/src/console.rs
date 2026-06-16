@@ -1,6 +1,7 @@
-use crate::write;
+use crate::{read, write};
 use core::fmt::{self, Write};
 
+const STDIN: usize = 0;
 const STDOUT: usize = 1;
 
 struct Stdout;
@@ -34,4 +35,16 @@ macro_rules! println {
      ($fmt: literal $(,$($arg: tt)+)?) => {
         $crate::console::print(format_args!(concat!($fmt, "\n") $(,$($arg)+)?));
     };
+}
+
+///
+/// 从终端读取输入字符
+///
+/// @author: tryte
+///
+/// @date: 2026/3/10
+pub fn getchar() -> u8 {
+    let mut c = [0u8; 1];
+    read(STDIN, &mut c);
+    c[0]
 }
