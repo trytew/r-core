@@ -352,3 +352,15 @@ name = "gui-tri"
 test = false
 bench = false
 path = "src/bin/gui_tri.rs"
+
+[[bin]]
+name = "gui-shape"
+test = false
+bench = false
+path = "src/bin/gui_shape.rs"
+
+[[bin]]
+name = "gui-move"
+test = false
+bench = false
+path = "src/bin/gui_move.rs"
