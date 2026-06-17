@@ -16,6 +16,7 @@ riscv = { git = "https://github.com/trytew/riscv", features = ["inline-asm"] }
 lazy_static = { version = "1.5.0", features = ["spin_no_std"] }
 virtio-input-decoder = "0.1.4"
 embedded-graphics = "0.7.1"
+oorandom = "11"
 
 [[bin]]
 name = "initproc"
@@ -364,3 +365,9 @@ name = "gui-move"
 test = false
 bench = false
 path = "src/bin/gui_move.rs"
+
+[[bin]]
+name = "gui-snake"
+test = false
+bench = false
+path = "src/bin/gui_snake.rs"
