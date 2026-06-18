@@ -13,6 +13,7 @@ pub mod fs;
 mod lang_items;
 mod logging;
 mod mm;
+mod net;
 mod sbi;
 mod sync;
 mod syscall;

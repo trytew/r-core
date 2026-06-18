@@ -13,12 +13,14 @@ mod hal;
 mod header;
 mod input;
 mod queue;
+mod net;
 
 pub use blk::{BlkResp, RespStatus, VirtIOBlk};
 pub use gpu::VirtIOGpu;
 pub use hal::{Hal, PhysAddr, VirtAddr};
 pub use header::VirtIOHeader;
 pub use input::{InputEvent, VirtIOInput};
+pub use net::VirtIONet;
 
 const PAGE_SIZE: usize = 0x1_000;
 
