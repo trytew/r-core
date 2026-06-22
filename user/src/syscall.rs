@@ -4,7 +4,7 @@ use core::arch::asm;
 ///
 const SYSCALL_DUP: usize = 24;
 
-/// 连接服务器中断号
+/// 创建UDP中断号
 const SYSCALL_CONNECT: usize = 29;
 
 /// 监听端口中断号
@@ -136,7 +136,7 @@ pub fn sys_dup(fd: usize) -> isize {
 }
 
 ///
-/// 连接服务器
+/// 创建UDP
 ///
 /// @author: tryte
 ///

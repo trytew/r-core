@@ -1,7 +1,7 @@
 use crate::syscall::fs::{sys_close, sys_dup, sys_open, sys_pipe, sys_read, sys_write};
 use crate::syscall::gui::{sys_framebuffer, sys_framebuffer_flush};
 use crate::syscall::input::{sys_event_get, sys_key_pressed};
-use crate::syscall::net::{sys_accept, sys_listen};
+use crate::syscall::net::{sys_accept, sys_connect, sys_listen};
 use crate::syscall::process::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_getpid, sys_kill, sys_waitpid, sys_yield,
 };
@@ -21,6 +21,9 @@ pub mod thread;
 
 /// 复制文件描述符中断号
 const SYSCALL_DUP: usize = 24;
+
+/// 创建UPD中断号
+const SYSCALL_UDP: usize = 29;
 
 /// 监听端口中断号
 const SYSCALL_LISTEN: usize = 30;
@@ -139,6 +142,7 @@ const SYSCALL_KEY_PRESSED: usize = 3001;
 pub fn sys_call(syscall_id: usize, args: [usize; 3]) -> isize {
     match syscall_id {
         SYSCALL_DUP => sys_dup(args[0]),
+        SYSCALL_UDP => sys_connect(args[0] as _, args[1] as _, args[2] as _),
         SYSCALL_LISTEN => sys_listen(args[0] as _),
         SYSCALL_ACCEPT => sys_accept(args[0] as _),
         SYSCALL_OPEN => sys_open(args[0] as *const u8, args[1] as u32),

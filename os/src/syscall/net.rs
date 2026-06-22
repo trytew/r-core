@@ -5,10 +5,26 @@
 //     let udp_node = UDP()
 // }
 
-use crate::net::{accept, listen, net_interrupt_handler, port_acceptable, PortFd};
+use crate::net::{accept, listen, net_interrupt_handler, port_acceptable, PortFd, UDP};
 use crate::println;
 use crate::task::{current_process, current_task, current_trap_cx};
 use alloc::sync::Arc;
+use lose_net_stack::IPv4;
+
+///
+/// 创建UDP
+///
+/// @author: tryte
+///
+/// @date: 2026/6/22
+pub fn sys_connect(r_addr: u32, l_port: u16, r_port: u16) -> isize {
+    let process = current_process();
+    let mut inner = process.inner_exclusive_access();
+    let fd = inner.alloc_fd();
+    let udp_node = UDP::new(IPv4::from_u32(r_addr), l_port, r_port);
+    inner.fd_table[fd] = Some(Arc::new(udp_node));
+    fd as isize
+}
 
 ///
 /// 监听端口

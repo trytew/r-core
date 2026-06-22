@@ -11,8 +11,11 @@ use lose_net_stack::{IPv4, LoseStack, MacAddress, TcpFlags};
 mod port_table;
 mod socket;
 mod tcp;
+mod udp;
 
 pub use port_table::{accept, listen, port_acceptable, PortFd};
+
+pub use udp::UDP;
 
 lazy_static! {
     static ref LOCK_NET_STACK: Arc<NetStack> = Arc::new(NetStack::new());
@@ -77,11 +80,15 @@ pub fn net_interrupt_handler() {
         }
         // UDP 包
         Packet::UDP(udp_packet) => {
+            // 客户端IP
             let target = udp_packet.source_ip;
+            // 客户端目标端口号，即本地监听端口
             let l_port = udp_packet.dest_port;
+            // 客户端端口号
             let r_port = udp_packet.source_port;
 
             if let Some(source_index) = get_socket(target, l_port, r_port) {
+                // 记录队列数据
                 push_data(source_index, udp_packet.data.to_vec());
             }
         }
@@ -89,7 +96,7 @@ pub fn net_interrupt_handler() {
         Packet::TCP(tcp_packet) => {
             // 客户端IP
             let target = tcp_packet.source_ip;
-            // 客户端目标端口好，即本地监听端口
+            // 客户端目标端口号，即本地监听端口
             let l_port = tcp_packet.dest_port;
             // 客户端端口号
             let r_port = tcp_packet.source_port;
