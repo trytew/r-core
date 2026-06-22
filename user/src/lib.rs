@@ -6,6 +6,7 @@ extern crate alloc;
 pub mod console;
 mod io;
 mod lang_items;
+mod net;
 mod signal;
 mod syscall;
 
@@ -14,6 +15,7 @@ use bitflags::bitflags;
 use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
 pub use io::*;
+pub use net::*;
 pub use signal::*;
 use syscall::*;
 

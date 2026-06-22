@@ -115,6 +115,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "lose-net-stack"
+version = "0.1.0"
+source = "git+https://github.com/trytew/lose-net-stack?rev=db42380#db4238008f0bb97f0b82550ef949c9a32ead59d2"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
 name = "memchr"
 version = "2.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -155,6 +163,7 @@ dependencies = [
  "embedded-graphics",
  "lazy_static",
  "log",
+ "lose-net-stack",
  "riscv",
  "sbi-rt",
  "tinybmp",
