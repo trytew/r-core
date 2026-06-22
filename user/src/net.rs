@@ -1,7 +1,7 @@
 use crate::syscall::{sys_accept, sys_connect, sys_listen};
 
 ///
-/// 连接服务器
+/// 创建UDP
 ///
 /// @author: tryte
 ///

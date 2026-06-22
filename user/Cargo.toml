@@ -373,6 +373,12 @@ bench = false
 path = "src/bin/gui_snake.rs"
 
 [[bin]]
+name = "udp"
+test = false
+bench = false
+path = "src/bin/udp.rs"
+
+[[bin]]
 name = "tcp-simple-http"
 test = false
 bench = false
