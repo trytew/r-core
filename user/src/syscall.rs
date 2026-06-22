@@ -4,6 +4,15 @@ use core::arch::asm;
 ///
 const SYSCALL_DUP: usize = 24;
 
+/// 连接服务器中断号
+const SYSCALL_CONNECT: usize = 29;
+
+/// 监听端口中断号
+const SYSCALL_LISTEN: usize = 30;
+
+/// 建立连接中断号
+const SYSCALL_ACCEPT: usize = 31;
+
 /// 打开中断号
 const SYSCALL_OPEN: usize = 56;
 
@@ -124,6 +133,39 @@ fn syscall(id: usize, args: [usize; 3]) -> isize {
 
 pub fn sys_dup(fd: usize) -> isize {
     syscall(SYSCALL_DUP, [fd, 0, 0])
+}
+
+///
+/// 连接服务器
+///
+/// @author: tryte
+///
+/// @date: 2026/6/22
+pub fn sys_connect(dest: u32, s_port: u16, d_port: u16) -> isize {
+    syscall(
+        SYSCALL_CONNECT,
+        [dest as usize, s_port as usize, d_port as usize],
+    )
+}
+
+///
+/// 监听连接
+///
+/// @author: tryte
+///
+/// @date: 2026/6/22
+pub fn sys_listen(s_port: u16) -> isize {
+    syscall(SYSCALL_LISTEN, [s_port as usize, 0, 0])
+}
+
+///
+/// 建立连接
+///
+/// @author: tryte
+///
+/// @date: 2026/6/22
+pub fn sys_accept(socket_fd: usize) -> isize {
+    syscall(SYSCALL_ACCEPT, [socket_fd, 0, 0])
 }
 
 ///

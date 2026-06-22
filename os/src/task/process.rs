@@ -126,6 +126,12 @@ impl ProcessControlBlockInner {
         self.memory_set.token()
     }
 
+    ///
+    /// 分配线程套接字
+    ///
+    /// @author: tryte
+    ///
+    /// @date: 2026/6/22
     pub fn alloc_fd(&mut self) -> usize {
         // 查找空文件描述符
         if let Some(fd) = (0..self.fd_table.len()).find(|fd| self.fd_table[*fd].is_none()) {
